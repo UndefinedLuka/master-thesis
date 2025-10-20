@@ -1,0 +1,167 @@
+\documentclass[a4paper, 12pt]{article}
+\usepackage[slovene]{babel}
+\usepackage{lmodern}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{url}
+\usepackage{xcolor}
+
+\definecolor{munsell}{rgb}{0.0, 0.5, 0.69}
+\newcommand\cmnt[1]{\textcolor{munsell}{#1}}
+
+\topmargin=0cm
+\topskip=0cm
+\textheight=25cm
+\headheight=0cm
+\headsep=0cm
+\oddsidemargin=0cm
+\evensidemargin=0cm
+\textwidth=16cm
+\parindent=0cm
+\parskip=12pt
+
+\renewcommand{\baselinestretch}{1.2}
+
+\begin{document}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%% Filled out by the candidate! %%%%%%%%%%%%%%%%%%%%%%%%%%
+\newcommand{\ImeKandidata}{Luka} % Name
+\newcommand{\PriimekKandidata}{Pavićević} % Surname
+\newcommand{\VpisnaStevilka}{63220489} % Enrollment number
+\newcommand{\StudyProgramme}{Computer and information science, MAG} % Study programme
+\newcommand{\NaslovBivalisca}{ Moškričeva 30, Ljubljana, Slovenija } % the candidate address
+\newcommand{\SLONaslov}{Naslov dela v slovenščini} % Slovenian title
+\newcommand{\ENGNaslov}{Designing and Implementing a Multi-User Interface for Cross-System Data Synhronization and Mapping} % English title
+%%%%%%%%%%%%%%%%%%%%%%%%%% End of filling in  %%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+\newcommand{\Kandidat}{\ImeKandidata~\PriimekKandidata}
+\noindent
+\Kandidat\\
+\NaslovBivalisca \\
+Study programme: \StudyProgramme \\
+Enrollment number: \VpisnaStevilka
+\bigskip
+
+{\bf Committee for Student Affairs}\\
+Univerza v Ljubljani, Fakulteta za računalništvo in informatiko\\
+Večna pot 113, 1000 Ljubljana\\
+
+{\Large\bf
+{\centering
+    The master’s thesis topic proposal \\%[2mm]
+\large Candidate: \Kandidat \\[10mm]}}
+
+
+I, \Kandidat, a student of the 2nd cycle study programme at the Faculty of computer and information science, am submitting a thesis topic proposal to be considered by the Committee for Student Affairs with the following title:
+
+%\hfill\begin{minipage}{\dimexpr\textwidth-2cm}
+Slovenian: {\bf \SLONaslov}\\
+English: {\bf \ENGNaslov}
+%\end{minipage}
+
+This topic was already approved last year: {\textit{NO}}
+ 
+
+I declare that the mentors listed below have approved the submission of the thesis topic proposal described in the remainder of this document.
+
+I would like to write the thesis in English with the following reason, Slovenian is my second language, and it would be easier for me to write it in English.
+
+I propose the following mentor:
+
+%%%%%%%%%%%%%%%%%%%%%%%%%% Filled in by the candidate! %%%%%%%%%%%%%%%%%%%%%%%%%%
+\hfill\begin{minipage}{\dimexpr\textwidth-2cm}
+Name, surname and title: <doc. dr. Pavle Novak>\\
+Institution: \\
+E-mail:
+\end{minipage}
+
+I propose the following co-mentor:
+
+\hfill\begin{minipage}{\dimexpr\textwidth-2cm}
+Name and surname, title: Dragoslav Radin, mag. sci.\\
+Institution: \\
+E-mail: dr@devrev.ai
+\end{minipage}
+%%%%%%%%%%%%%%%%%%%%%%%%%% End of filling in %%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\bigskip
+
+\hfill Ljubljana, \today.
+
+
+\clearpage
+\section*{Proposal of the masters thesis topic}
+
+\section{The narrow field of the thesis topic}
+
+ e.g. computer science, computer architecture
+
+
+\section{Key-words}
+
+% list keywords that best match your topic
+
+\section{Detailed thesis proposal}
+% V nadaljevanju opredelite izhodišča magistrskega dela in utemeljite znanstveno ali strokovno relevantnost predlagane teme.
+
+\textbf{Past approvements of the proposed thesis topic:}\\
+The proposed thesis has not been submitted nor approved in previous years.
+
+% In case you are submitting a topic that has already been approved in the previous years, please state this here and explain the potential differences to that topic.
+
+\subsection{Introduction and problem formulation}
+
+When we look at the majority of existing businesses today, we commonly see a clear divide into a fe core areas of focus throughout the product/service lifecycle. We can break down this lifecycle into four quadrants: Build, Operate, Support, and Grow. These models are usually siloed and built using a bunch of disconnected and non-integrated systems. This leads to duplication, inconsistency ad lack of coordination across teams, as they see things differently. 
+
+The DevRev platform was conceived to address these problems. It aims to to be a single platform (replace some systems and augment others), and integrate with systems to gather events and context. The process of integrating with other systems involves connecting to an external platform, selecting relevant data (e.g. ticket, issues, users), and mapping these fields from external system to their counterparts. 
+
+The original implementation of data mapping in DevRev platform, did not allow for draft mapping versions. This fact had a huge impact on the customer experience, as it did not allow for different users to collaborate on the task of choosing the way the date is mapped into the application. This presented a huge limitation as in the real world it is rarely a job of a single person to configure the mapping for the whole external system. Another problem that arose, is that the users could not split their work into multiple chunks when doing the mapping, this is a problem as configuring the mapping for some systems required choosing the methods for a slew of objects, and could be interrupted thus causing the loss of all the progress. 
+
+The new implementation plans to enable versioning for object mapping, incremental changes, and collaboration. This system would allow users to make incremental changes to the mapping, and save them. These saved changes would visible to other users, which would be able to add their own changes. This new system would also allow us to optimize the data that is being sent to the back end for processing, because we would need to make multiple smaller API calls (each incremental change would be in its own request), as opposed to making one big request with the whole mapping configuration. 
+
+
+\subsection{Related work}
+
+\cmnt{
+Guideline (delete from the final version):
+Prepare an overview of the related work that is directly related to your problem. Describe the main highlights of each related work in a few sentences. Point out pros and drawbacks. Reference the works listed in the References section. The related work should be focused. Approximate length: 1/2 - 2/3 A4 page.}
+
+\subsection{Expected contributions}
+
+This thesis aims to contribute a new design and user interface implementation, for collaborative, version controlled data mapping from external systems. We plan to replace old monolithic workflow, with a slew of smaller incremental changes. We expect this new design to make the workflow of creating a new mapping more robust, and decrease the number of unsuccessful requests to our back end services. It should also improve the overall user experience with the process. Finally we plan to provide empirical proof that the new system has increased robustness, and user experience. 
+
+
+\subsection{Methodology}
+
+We plan to employee User Centered Design methodology, which contains four phases. First phase consists of understanding the context, by conducting review of the users' needs. By collecting this data it will allow us to understand the requirements, and pinpoint any user pain points.
+
+Second step, involves specifying requirements. We need to identify the detailed technical requirements of the product. This will later aid us in the planning and development process. By creating detailed requirements it will allow us to set goals for the later stages of the development.
+
+Next steps, involves creating designs and developing the product. Based on the set goals, and defined requirements we are going to iteratively create design, test, and refine the final implementation. 
+
+Finally, we are going to be collecting feedback and conduct usability testing in each of the steps of this process. 
+
+
+\subsection{References}
+\label{literatura}
+
+\cmnt{
+Guideline (delete from the final version):
+List all the references that you cite in the proposal. Use the scientific standard of citing, e.g.,
+\cite{Zivkovic2004}. The list should contain at least a few works published in the recent years. Preferably, the references should include publications from conferences, journals or other well-accepted sources in your field.
+}
+
+\renewcommand\refname{}
+\vspace{-50px}
+\bibliographystyle{elsarticle-num}
+\bibliography{./bibliografija/bibliography}
+
+
+
+
+%\bigskip
+%
+%Ljubljana, \today .
+
+\end{document}
