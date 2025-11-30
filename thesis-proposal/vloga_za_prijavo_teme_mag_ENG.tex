@@ -1,0 +1,115 @@
+\documentclass[a4paper, 12pt]{article}
+\usepackage{lmodern}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{url}
+\usepackage{xcolor}
+\usepackage[square,numbers,sort&compress]{natbib}
+\bibliographystyle{elsarticle-num}
+
+
+\definecolor{munsell}{rgb}{0.0, 0.5, 0.69}
+\newcommand\cmnt[1]{\textcolor{munsell}{#1}}
+
+\topmargin=0cm
+\topskip=0cm
+\textheight=25cm
+\headheight=0cm
+\headsep=0cm
+\oddsidemargin=0cm
+\evensidemargin=0cm
+\textwidth=16cm
+\parindent=0cm
+\parskip=12pt
+
+\renewcommand{\baselinestretch}{1.2}
+
+\begin{document}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%% Filled out by the candidate! %%%%%%%%%%%%%%%%%%%%%%%%%%
+\newcommand{\ImeKandidata}{Luka} % Name
+\newcommand{\PriimekKandidata}{Pavićević} % Surname
+\newcommand{\VpisnaStevilka}{63220489   } % Enrollment number
+\newcommand{\StudyProgramme}{Computer and information science, MAG} % Study programme
+\newcommand{\NaslovBivalisca}{ Moškričeva 30, 1000 Ljubljana, Slovenia } % the candidate address
+\newcommand{\SLONaslov}{Analiza pristopov za pridobivanje informacij iz strulturianih podatkov z uporabo velikih jezikovnih modelov} % Slovenian title
+\newcommand{\ENGNaslov}{Analysis of approaches for extracting information from structured data using large language models} % English title
+%%%%%%%%%%%%%%%%%%%%%%%%%% End of filling in  %%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+\newcommand{\ProblemParagraph}{\noindent\textbf{Problem \& State of the Art.} }
+\newcommand{\ContributionsParagraph}{\noindent\textbf{Expected Contributions / Technical outcome. } }
+\newcommand{\MethodologyParagraph}{\noindent\textbf{Methodology \& Validation. } }
+
+\newcommand{\Kandidat}{\ImeKandidata~\PriimekKandidata}
+\noindent
+\Kandidat\\
+\NaslovBivalisca \\
+Study programme: \StudyProgramme \\
+Enrollment number: \VpisnaStevilka
+\bigskip
+
+{\bf Committee for Student Affairs}\\
+Univerza v Ljubljani, Fakulteta za računalništvo in informatiko\\
+Večna pot 113, 1000 Ljubljana\\
+
+{\Large\bf
+{\centering
+    The master’s thesis topic proposal \\%[2mm]
+\large Candidate: \Kandidat \\[10mm]}}
+
+
+I, \Kandidat, a student of the 2nd cycle study programme at the Faculty of computer and information science, am submitting a thesis topic proposal to be considered by the Committee for Student Affairs with the following title:
+
+%\hfill\begin{minipage}{\dimexpr\textwidth-2cm}
+Slovenian: {\bf \SLONaslov}\\
+English: {\bf \ENGNaslov}
+%\end{minipage}
+
+This topic was already approved last year: \textit{NO} 
+ 
+I declare that the mentors listed below have approved the submission of the thesis topic proposal described in the remainder of this document.
+
+I would like to write the thesis in English with the following reason: Because Slovenian is not my native language, and I can express myself better in English.
+
+I propose the following mentor:
+
+%%%%%%%%%%%%%%%%%%%%%%%%%% Filled in by the candidate! %%%%%%%%%%%%%%%%%%%%%%%%%%
+\hfill\begin{minipage}{\dimexpr\textwidth-2cm}
+Name, surname and title: prof. dr. Damjan Vavpotič\\
+Institution: University of Ljubljana, Faculty of Computer Science \\
+E-mail: damjan.vavpotic@fri.uni-lj.si
+\end{minipage}
+
+I propose the following co-mentor:
+
+\hfill\begin{minipage}{\dimexpr\textwidth-2cm}
+Name, surname and title: Mag. Dragoslav Radin \\
+Institution: DevRev \\
+E-mail:
+\end{minipage}
+%%%%%%%%%%%%%%%%%%%%%%%%%% End of filling in %%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\bigskip
+
+\hfill Ljubljana, \today. \newpage
+
+
+\section*{Key-words}
+Large Language Model, Structured data
+ 
+\section*{Detailed thesis proposal}
+
+\ProblemParagraph 
+A lot of companies' date is being stored in the form of structured data. But accessing that date requires specialized querying languages like SQL or domain-specific knowledge of the underlying schema. When providing data the serialization format is of great importance as presented ~\cite{struct-text-eval}. As we can see from the aforementioned work, the serialization format influences the overall accuracy. But the method of providing the whole dataset in context is not always viable and in those cases we have to utilize text-to-SQL generation ~\cite{gao2023text, li2023can}. Although the current works provide accuracy for each technique, they fail to consider token consumption and latency. These factors are important for businesses because they equate to money spent.
+
+\ContributionsParagraph
+We plan to deliver concrete metrics for tokens consumed and latency, based on different formats of data that is being provided. We plan analyze at what point does it become more efficient to generate SQL prompt, than to try to give a direct answer from the in context data.
+
+\MethodologyParagraph
+We will measure the impact of the following serialization formats (Markdown \cite{}, JSON \cite{}, \LaTeX \cite{}, CSV \cite{}, XML \cite{}, YAML \cite{}, TOML \cite{}, TOON \cite{}). We plan to run in context direct answers and text-to-SQL methods on all of these formats to measure their latency and token used. For the models we plan to utilize open source models, GPT-oss \cite{}, Gemma-3 \cite{}, and Qwen3 \cite{}. For running SQL prompts locally we plan to utilize duckDB \cite{} and PostgreSQL \cite{}.
+ 
+ 
+\bibliography{bib/references}
+ 
+\end{document}

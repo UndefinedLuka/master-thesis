@@ -1,0 +1,114 @@
+\documentclass[a4paper, 12pt]{article}
+\usepackage{lmodern}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{url}
+\usepackage{xcolor}
+\usepackage[square,numbers,sort&compress]{natbib}
+\bibliographystyle{elsarticle-num}
+
+
+\definecolor{munsell}{rgb}{0.0, 0.5, 0.69}
+\newcommand\cmnt[1]{\textcolor{munsell}{#1}}
+
+\topmargin=0cm
+\topskip=0cm
+\textheight=25cm
+\headheight=0cm
+\headsep=0cm
+\oddsidemargin=0cm
+\evensidemargin=0cm
+\textwidth=16cm
+\parindent=0cm
+\parskip=12pt
+
+\renewcommand{\baselinestretch}{1.2}
+
+\begin{document}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%% Filled out by the candidate! %%%%%%%%%%%%%%%%%%%%%%%%%%
+\newcommand{\ImeKandidata}{Luka} % Name
+\newcommand{\PriimekKandidata}{Pavićević} % Surname
+\newcommand{\VpisnaStevilka}{63220489   } % Enrollment number
+\newcommand{\StudyProgramme}{Computer and information science, MAG} % Study programme
+\newcommand{\NaslovBivalisca}{ Moškričeva 30, 1000 Ljubljana, Slovenia } % the candidate address
+\newcommand{\SLONaslov}{Večuporabniški vmesnik za sinhronizacijo podatkov med sistemi} % Slovenian title
+\newcommand{\ENGNaslov}{Multi-User Interface for Cross-System Data Sznhronization} % English title
+%%%%%%%%%%%%%%%%%%%%%%%%%% End of filling in  %%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+\newcommand{\ProblemParagraph}{\noindent\textbf{Problem \& State of the Art.} }
+\newcommand{\ContributionsParagraph}{\noindent\textbf{Expected Contributions / Technical outcome. } }
+\newcommand{\MethodologyParagraph}{\noindent\textbf{Methodology \& Validation. } }
+
+\newcommand{\Kandidat}{\ImeKandidata~\PriimekKandidata}
+\noindent
+\Kandidat\\
+\NaslovBivalisca \\
+Study programme: \StudyProgramme \\
+Enrollment number: \VpisnaStevilka
+\bigskip
+
+{\bf Committee for Student Affairs}\\
+Univerza v Ljubljani, Fakulteta za računalništvo in informatiko\\
+Večna pot 113, 1000 Ljubljana\\
+
+{\Large\bf
+{\centering
+    The master’s thesis topic proposal \\%[2mm]
+\large Candidate: \Kandidat \\[10mm]}}
+
+
+I, \Kandidat, a student of the 2nd cycle study programme at the Faculty of computer and information science, am submitting a thesis topic proposal to be considered by the Committee for Student Affairs with the following title:
+
+%\hfill\begin{minipage}{\dimexpr\textwidth-2cm}
+Slovenian: {\bf \SLONaslov}\\
+English: {\bf \ENGNaslov}
+%\end{minipage}
+
+This topic was already approved last year:  \textit{NO} 
+ 
+I declare that the mentors listed below have approved the submission of the thesis topic proposal described in the remainder of this document.
+
+I would like to write the thesis in English with the following reason: I am not a native speaker and I have a foreign co-mentor.
+
+I propose the following mentor:
+
+%%%%%%%%%%%%%%%%%%%%%%%%%% Filled in by the candidate! %%%%%%%%%%%%%%%%%%%%%%%%%%
+\hfill\begin{minipage}{\dimexpr\textwidth-2cm}
+Name, surname and title: doc. dr. Pavle Novak\\
+Institution: Fakulteta za računalništvo in informatiko, Univerza v Ljubljani\\
+E-mail: pavle.novak@fri.uni-lj.si
+\end{minipage}
+
+I propose the following co-mentor:
+
+\hfill\begin{minipage}{\dimexpr\textwidth-2cm}
+Name, surname and title: assoc. prof. John Doe \\
+Institution: Faculty of Physics, University of Cuba\\
+E-mail: john.doe@fop.ucu.cu
+\end{minipage}
+%%%%%%%%%%%%%%%%%%%%%%%%%% End of filling in %%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\bigskip
+
+\hfill Ljubljana, \today. \newpage
+
+
+\section*{Key-words}
+
+Computer science, interdisciplinary, geophysics, deep learning, time-series prediction, diffusion models
+ 
+\section*{Detailed thesis proposal}
+ 
+\ProblemParagraph~Oceans regulate Earth’s climate, and sea surface temperature (SST) is a key driver of air–sea exchanges, cloud formation, cyclogenesis, and rainfall. Satellite SST fields are often incomplete because of cloud cover and limited swath widths, yet weather and climate models require gap-free inputs. Classical DINEOF~\cite{AlveraAzcarate2007Multivariate} methods recover large-scale patterns but miss high-frequency details. Deep models improved accuracy — DINCAE2 (UNet + uncertainty)~\cite{Barth2022DINCAE2}, MAESSTRO (MAE + attention; limited temporal context, synthetic cloud masks)~\cite{Goh2024MAESSTRO}, and CRITER (transformer coarse stage + iterative refinement)~\cite{Muc2025} —but still struggle with fine structures and long-range spatiotemporal dependencies. Diffusion models (DDPM~\cite{Ho2020DDPM}, Latent Diffusion~\cite{Rombach2022LDM}, DiT~\cite{Peebles2023DiT}) and cascaded diffusion~\cite{Ho2022CDM}, are promising for inpainting and super-resolution, yet preserving high-frequency SST features and leveraging temporal cues remain open challenges.
+ 
+\ContributionsParagraph~We will develop a diffusion-based architecture for sequential SST gap filling that (i) exploits temporal conditioning, (ii) reconstructs high-resolution details, and (iii) learns robustly from incomplete ground truth. The method is expected to improve high-frequency content.
+
+\MethodologyParagraph~We will use Pytorch, benchmark computer vision methods such as ProPainter~\cite{Zhou2023ProPainter}, then design a temporally conditioned diffusion with cascaded/iterative refinement. Training/testing will use Adriatic (1981–2022), Mediterranean (2008–2021), and Atlantic (1982–2022) SST datasets. The method will be compared against current state-of-the-art DINCAE2~\cite{Barth2022DINCAE2}, MAESSTRO~\cite{Goh2024MAESSTRO}, and CRITER~\cite{Muc2025} using standard metrics.
+
+{\small
+\bibliography{bib/references}
+ }
+
+\end{document}
