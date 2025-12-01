@@ -84,9 +84,9 @@ E-mail: damjan.vavpotic@fri.uni-lj.si
 I propose the following co-mentor:
 
 \hfill\begin{minipage}{\dimexpr\textwidth-2cm}
-Name, surname and title: Mag. Dragoslav Radin \\
+Name, surname and title: mag. Dragoslav Radin\\
 Institution: DevRev \\
-E-mail:
+E-mail: dr@devrev.ai
 \end{minipage}
 %%%%%%%%%%%%%%%%%%%%%%%%%% End of filling in %%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -96,19 +96,20 @@ E-mail:
 
 
 \section*{Key-words}
-Large Language Model, Structured data, Information Extraction, Text-to-SQL
+Large Language Model, Data Serialization, Structured data, Information Extraction, Text-to-SQL
  
 \section*{Detailed thesis proposal}
 
 \ProblemParagraph 
-A lot of companies' date is being stored in the form of structured data. But accessing that date requires specialized querying languages like SQL or domain-specific knowledge of the underlying schema. When providing data the serialization format is of great importance as presented ~\cite{struct-text-eval}. As we can see from the aforementioned work, the serialization format influences the overall accuracy. But the method of providing the whole dataset in context is not always viable and in those cases we have to utilize text-to-SQL generation ~\cite{gao2023text, li2023can}. Although the current works provide accuracy for each technique, they fail to consider token consumption and latency. These factors are important for businesses because they equate to money spent.
+When working with Large Language Models, for structured data processing, we have to consider three aspects, accuracy, latency, and cost. When providing such data in LLM's context we have to choose appropriate format, such as JSON, YAML, TOML. While there are works that consider the accuracy, based on different data formats \cite{struct-text-eval}, there are non that take other two aspects into consideration. Because these formats are easily convertible between each other, by choosing the optimal one we can directly influence our cost and latency with minimal penalty. Furthermore there are two possibilities for extracting information with LLMs, feeding raw data directly into LLM \cite{struct-text-eval} and generating code/SQL prompts \cite{gao2023text, li2023can, gao2023pal}. We want to see if it is more cost efficient to utilize the second method compared to direct inference from context. 
 
-\ContributionsParagraph
-We plan to deliver concrete metrics for tokens consumed and latency, based on different formats of data that is being provided. We plan analyze at what point does it become more efficient to generate SQL prompt, than to try to give a direct answer from the in context data.
+\ContributionsParagraph 
+We plan to propose a decision framework defining which combination of format and method yields the lowest latency and cost for datasets of varying sizes (e.g. <1k tokens vs. >100k tokens). These results will be validated through reproducible experiments measuring Time-to-First-Token (TTFT), total generation time, and extraction accuracy.
+
 
 \MethodologyParagraph
-We will measure the impact of the following serialization formats (Markdown \cite{}, JSON \cite{}, \LaTeX \cite{}, CSV \cite{}, XML \cite{}, YAML \cite{}, TOML \cite{}, TOON \cite{}). We plan to run in context direct answers and text-to-SQL methods on all of these formats to measure their latency and token used. For the models we plan to utilize open source models, GPT-oss \cite{}, Gemma-3 \cite{}, and Qwen3 \cite{}. For running SQL prompts locally we plan to utilize duckDB \cite{} and PostgreSQL \cite{}.
- 
+We will utilize a diverse dataset which will be serialized in different data formats (Markdown , JSON , \LaTeX , CSV , XML , YAML , TOML , TOON ). We will be testing two distinct methods, injecting serialized data into the prompt and instructing the LLM to extract answers directly. The second method would include providing the LLM only with the limited data examples and prompting it to generate a DuckDB compatible SQL prompt. We will measure performance across multiple LLMs (e.g. GPT-oss \cite{agarwal2025gpt}, Gemma-3 \cite{team2025gemma}, and Deepseek-R1 \cite{guo2025deepseek}) using metrics such as input/output token count, Time-to-First-Token, and overall accuracy.
+
  
 \bibliography{bib/references}
  
