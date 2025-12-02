@@ -108,7 +108,7 @@ We plan to propose a decision framework defining which combination of format and
 
 
 \MethodologyParagraph
-We will utilize a diverse dataset which will be serialized in different data formats (Markdown , JSON , \LaTeX , CSV , XML , YAML , TOML , TOON ). We will be testing two distinct methods, injecting serialized data into the prompt and instructing the LLM to extract answers directly. The second method would include providing the LLM only with the limited data examples and prompting it to generate a DuckDB compatible SQL prompt. We will measure performance across multiple LLMs (e.g. GPT-oss \cite{agarwal2025gpt}, Gemma-3 \cite{team2025gemma}, and Deepseek-R1 \cite{guo2025deepseek}) using metrics such as input/output token count, Time-to-First-Token, and overall accuracy.
+We will utilize a diverse dataset which will be serialized in different data formats (Markdown , JSON , \LaTeX , CSV , XML , YAML , TOML , TOON \cite{toon2025spec} ). We will be testing two distinct methods, injecting serialized data into the prompt and instructing the LLM to extract answers directly. The second method would include providing the LLM only with the limited data examples and prompting it to generate an SQL prompt. We will measure performance across multiple LLMs (e.g. GPT-oss \cite{agarwal2025gpt}, Gemma-3 \cite{team2025gemma}, and Deepseek-R1 \cite{guo2025deepseek}) using metrics such as input/output token count, Time-to-First-Token, and overall accuracy.
 
  
 \bibliography{bib/references}
