@@ -1,0 +1,72 @@
+%----------------------------------------------------------------
+% Poglavje (Chapter) 4
+%----------------------------------------------------------------
+\chapter{Razno}
+\label{ch:razno}
+
+\section{Notacije}
+\label{sec:notacije}
+
+Za notacijo spremenljivk ter skalarjev uporabimo običajno notacijo, t.j., spremenljivka $x$ in skalar $a$.
+Pri notaciji matrik ter vektorjev pa se poslužujemo krepega fonta. Torej, matrika $\boldsymbol{A}$ ter vektor
+$\boldsymbol{v}$,
+\begin{equation}
+  \boldsymbol{A} =
+  \begin{bmatrix}
+    a_{11} & a_{12} & \dots & a_{1q}  \\
+    a_{21} & a_{22} & \dots & a_{2q}  \\
+    \vdots  \\
+    a_{p1} & a_{p2} & \dots & a_{pq}  \\
+  \end{bmatrix}, \quad
+  \boldsymbol{v} =
+  \begin{bmatrix}
+    x_1  \\
+    x_2  \\
+    \vdots  \\
+    x_q  \\
+  \end{bmatrix}. \nonumber
+\end{equation}
+
+%----------------------------------------------------------------
+\section{Lepe tabele in psevdokoda}
+\label{sec:psevdokoda}
+
+Psevdokoda~\ref{alg:primer} prikazuje primer delovanja genetskega algoritma, medtem ko
+Tabela~\ref{tab:params} prikazuje primer lepe tabele brez vertikalnih črt.
+
+\begin{algorithm}
+  \caption{Psevdokoda genetskega algoritma}
+  \label{alg:primer}
+  \begin{algorithmic}[1]
+    \footnotesize
+    \STATE $t \gets 0$
+    \STATE $InitPopulation[P(t)] \gets$ inicializiraj populacijo
+    \STATE $EvalPopulation[P(t)] \gets$ evaluiraj populacijo
+    \REPEAT
+    \STATE $P'(t) \gets Variation[P(t)] \gets $ generiraj novo populacijo
+    \STATE $EvalPopulation[P'(t)] \gets$ evaluiraj novo populacijo
+    \STATE $P(t+1) \gets ApplyGeneticOperators[P'(t) \in Q]$
+    \STATE $t \gets t+1$
+    \UNTIL{prekinitev}
+    \IF{rezultat dovolj dober}
+    \STATE shrani rezultat
+    \ENDIF
+  \end{algorithmic}
+\end{algorithm}
+
+%---------------------------------------------------------------
+\begin{table}
+  \caption{Primer enostavne tabele.}
+  \centering
+  \scalebox{0.82}{
+    \begin{tabular}{c c c}
+      \toprule
+      Ime & Vrednost & Opis \\
+      \midrule
+      \textit{ $a$ } & 0.03 &  skalar \\
+      \textit{ $x$ } & -1 & spremenljivka \\
+      \bottomrule
+    \end{tabular}
+  }
+  \label{tab:params}
+\end{table}

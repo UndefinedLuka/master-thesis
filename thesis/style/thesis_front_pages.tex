@@ -4,7 +4,7 @@
 % ENG: define metadata for the file thesis_template.tex
 %----------------------------------------------------------------
 %----------------------------------------------------------------
-%	HYPERREF SETUP
+%  HYPERREF SETUP
 % SLO: ustrezno popravi e-mail
 % ENG: edit the e-mail accordingly
 %----------------------------------------------------------------
@@ -28,11 +28,11 @@
 % \convertDate converts D:20080419103507+02'00' to 2008-04-19T10:35:07+02:00
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \def\convertDate{%
-    \getYear
+  \getYear
 }
 
 {\catcode`\D=12
- \gdef\getYear D:#1#2#3#4{\edef\xYear{#1#2#3#4}\getMonth}
+  \gdef\getYear D:#1#2#3#4{\edef\xYear{#1#2#3#4}\getMonth}
 }
 \def\getMonth#1#2{\edef\xMonth{#1#2}\getDay}
 \def\getDay#1#2{\edef\xDay{#1#2}\getHour}
@@ -41,8 +41,8 @@
 \def\getSec#1#2{\edef\xSec{#1#2}\getTZh}
 \def\getTZh +#1#2{\edef\xTZh{#1#2}\getTZm}
 \def\getTZm '#1#2'{%
-    \edef\xTZm{#1#2}%
-    \edef\convDate{\xYear-\xMonth-\xDay T\xHour:\xMin:\xSec+\xTZh:\xTZm}%
+  \edef\xTZm{#1#2}%
+  \edef\convDate{\xYear-\xMonth-\xDay T\xHour:\xMin:\xSec+\xTZh:\xTZm}%
 }
 
 \expandafter\convertDate\pdfcreationdate
@@ -66,12 +66,12 @@
 % pdfInfo
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \pdfinfo{%
-    /Title    (\ttitle)
-    /Author   (\tauthor, \temail)
-    /Subject  (\ttitleEn)
-    /Keywords (\tkeywordsEn)
-    /ModDate  (\pdfcreationdate)
-    /Trapped  /False
+  /Title    (\ttitle)h
+  /Author   (\tauthor, \temail)
+  /Subject  (\ttitleEn)
+  /Keywords (\tkeywordsEn)
+  /ModDate  (\pdfcreationdate)
+  /Trapped  /False
 }
 
 %================================================================
@@ -82,10 +82,10 @@
 % ENG: hyper referencing setup
 \definecolor{black}{rgb}{0,0,0}
 \hypersetup{
-	colorlinks = true,
-	linkcolor = black,
-	citecolor = black,
-	urlcolor = black
+  colorlinks = true,
+  linkcolor = black,
+  citecolor = black,
+  urlcolor = black
 }
 
 %----------------------------------------------------------------
@@ -93,8 +93,8 @@
 % ENG: add paths to files containing figures
 %----------------------------------------------------------------
 \graphicspath{
-	{figures/}
-	{tables/}
+  {figures/}
+  {tables/}
 }
 %----------------------------------------------------------------
 % SLO: moji paketi
@@ -110,13 +110,13 @@
 \newenvironment{dokaz}{\emph{Dokaz.}\ }{\hspace{\fill}{$\Box$}}
 
 \newcommand{\CcImageCc}[1]{%
-	\includegraphics[scale=#1]{cc-licenca/cc_cc_30.pdf}%
+  \includegraphics[scale=#1]{cc-licenca/cc_cc_30.pdf}%
 }
 \newcommand{\CcImageBy}[1]{%
-	\includegraphics[scale=#1]{cc-licenca/cc_by_30.pdf}%
+  \includegraphics[scale=#1]{cc-licenca/cc_by_30.pdf}%
 }
 \newcommand{\CcImageSa}[1]{%
-	\includegraphics[scale=#1]{cc-licenca/cc_sa_30.pdf}%
+  \includegraphics[scale=#1]{cc-licenca/cc_sa_30.pdf}%
 }
 
 
@@ -134,31 +134,31 @@
 %----------------------------------------------------------------
 
 \ifSLO
-    % SLO: definiraj slovensko besedo za kazalo
-    \renewcommand{\contentsname}{Kazalo}
-	
-    % SLO: naslovnica
-    \input{front_pages/slo/naslovnica} \clearemptydoublepage
-    % SLO: avtorske pravice
-    \input{front_pages/slo/avtorske_pravice2} \clearemptydoublepage
-    % SLO: izjava o avtorstvu (ni več del vezane izdaje, ločena oddaja)
-    % SLO: zahvala
-    \input{front_pages/slo/zahvala} \clearemptydoublepage
-    % SLO: posvetilo
-    \input{front_pages/slo/posvetilo} \clearemptydoublepage
+% SLO: definiraj slovensko besedo za kazalo
+\renewcommand{\contentsname}{Kazalo}
+
+% SLO: naslovnica
+\input{front_pages/slo/naslovnica} \clearemptydoublepage
+% SLO: avtorske pravice
+\input{front_pages/slo/avtorske_pravice2} \clearemptydoublepage
+% SLO: izjava o avtorstvu (ni več del vezane izdaje, ločena oddaja)
+% SLO: zahvala
+\input{front_pages/slo/zahvala} \clearemptydoublepage
+% SLO: posvetilo
+\input{front_pages/slo/posvetilo} \clearemptydoublepage
 \else
 
-    % ENG: title page ENG
-    \input{front_pages/eng/title_page} \clearemptydoublepage
-    % ENG: title page SLO
-    \input{front_pages/slo/naslovnica} \clearemptydoublepage
-    % ENG: copyright
-    \input{front_pages/eng/copyright2} \clearemptydoublepage
-    % ENG: declaration of authorship (not part of paper edition, turn in separately)
-    % ENG: acknowledgements
-    \input{front_pages/eng/acknowledgments} \clearemptydoublepage
-    % ENG: dedication
-    \input{front_pages/eng/dedication} \clearemptydoublepage
+% ENG: title page ENG
+\input{front_pages/eng/title_page} \clearemptydoublepage
+% ENG: title page SLO
+\input{front_pages/slo/naslovnica} \clearemptydoublepage
+% ENG: copyright
+\input{front_pages/eng/copyright2} \clearemptydoublepage
+% ENG: declaration of authorship (not part of paper edition, turn in separately)
+% ENG: acknowledgements
+\input{front_pages/eng/acknowledgments} \clearemptydoublepage
+% ENG: dedication
+\input{front_pages/eng/dedication} \clearemptydoublepage
 \fi
 
 %----------------------------------------------------------------
@@ -166,20 +166,20 @@
 % ENG: contents
 %----------------------------------------------------------------
 \begingroup
-	\hypersetup{colorlinks=true,linkcolor=black}
-	\def\thepage{}
-	\tableofcontents{}
-	\clearemptydoublepage
+\hypersetup{colorlinks=true,linkcolor=black}
+\def\thepage{}
+\tableofcontents{}
+\clearemptydoublepage
 \endgroup
 
 
 \ifSLO
-    % SLO: seznam kratic
-    \input{front_pages/slo/kratice} \clearemptydoublepage
-    % SLO: glavne strani diplomskega dela
+% SLO: seznam kratic
+\input{front_pages/slo/kratice} \clearemptydoublepage
+% SLO: glavne strani diplomskega dela
 \else
-    % ENG: list of acronmys
-    \input{front_pages/eng/acronyms} \clearemptydoublepage
+% ENG: list of acronmys
+\input{front_pages/eng/acronyms} \clearemptydoublepage
 \fi
 
 \frontmatter
@@ -189,31 +189,31 @@
 
 % Include extended abstract [Razširjeni povzetek v slovenščini-- le za dela pisana v angleščini]
 \ifSLO
-    % include Slovenian abstract
-    \input{front_pages/slo/povzetek}
-    % include English abstract
-    \input{front_pages/eng/abstract}
+% include Slovenian abstract
+\input{front_pages/slo/povzetek}
+% include English abstract
+\input{front_pages/eng/abstract}
 \else
-    % include English abstract
-    \input{front_pages/eng/abstract}
-    % include Slovenian abstract
-    \input{front_pages/slo/povzetek}
+% include English abstract
+\input{front_pages/eng/abstract}
+% include Slovenian abstract
+\input{front_pages/slo/povzetek}
 
-  %  \cleardoublepage
-    \let\oldthesection=\thesection %Special section numbering for this chapter - remember default one
-    \let\oldthesubsection=\thesubsection
-    \renewcommand{\thesection}{\Roman{section}} %Special section numbering for this chapter
-    \renewcommand{\thesubsection}{\thesection.\Roman{subsection}}
+%  \cleardoublepage
+\let\oldthesection=\thesection %Special section numbering for this chapter - remember default one
+\let\oldthesubsection=\thesubsection
+\renewcommand{\thesection}{\Roman{section}} %Special section numbering for this chapter
+\renewcommand{\thesubsection}{\thesection.\Roman{subsection}}
 
-    % set roman page numbering
-    \pagenumbering{roman}
-    % set slovene language
-    \selectlanguage{slovene}
-    % insert extended abstract
-    \input{extended_abstract}
+% set roman page numbering
+\pagenumbering{roman}
+% set slovene language
+\selectlanguage{slovene}
+% insert extended abstract
+\input{extended_abstract}
 
-    \let\thesection=\oldthesection % Restore default section numbering
-    \let\thesubsection=\oldthesubsection
+\let\thesection=\oldthesection % Restore default section numbering
+\let\thesubsection=\oldthesubsection
 \fi
 
 %----------------------------------------------------------------
@@ -221,9 +221,9 @@
 % ENG: Switch to chosen language
 %----------------------------------------------------------------
 \ifSLO
-    \selectlanguage{slovene} % Preklopi na slovenski jezik
+\selectlanguage{slovene} % Preklopi na slovenski jezik
 \else
-    \selectlanguage{english}  % Switch to english language
+\selectlanguage{english}  % Switch to english language
 \fi
 
 % SLO: vklopi številčenje poglavji, ponastavi številčenje strani in uporabi arabske številkami za številčenje strani

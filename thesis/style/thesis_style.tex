@@ -17,15 +17,15 @@
 \usepackage{graphicx}
 \usepackage{caption}
 \captionsetup[figure]{labelfont=bf} % SLO: napis "Slika #" v krepkem tisku
-									% ENG: wirte "Figure #" caption in bold
+% ENG: wirte "Figure #" caption in bold
 \captionsetup[table]{labelfont=bf} % SLO: napis "Tabela #" v krepkem tisku
-								   % ENG: wirte "Table #" caption in bold
+% ENG: wirte "Table #" caption in bold
 % SLO: za pisanje psevdokode
 % ENG: for writing pseudocode
 \usepackage{algorithm}
 \usepackage{algorithmic}
 \floatname{algorithm}{\footnotesize Algorithm} % SLO: napis "Algoritem #" v krepkem tisku
-											   % ENG: write "Algorithm #" caption in bold
+% ENG: write "Algorithm #" caption in bold
 % SLO: poveže reference slik/tabel in slike/tabele znotraj dokumenta
 % ENG: links image/table references with the images/tables within the document
 \usepackage[pdfa]{hyperref}
@@ -59,8 +59,6 @@
 \usepackage{colortbl}
 \usepackage{url}
 
-
-
 %================================================================
 % SLO: nastavitve dokumenta
 % ENG: document properties
@@ -81,16 +79,16 @@
 \renewcommand{\footrulewidth}{0pt} % Footer rule
 %
 \fancypagestyle{frontmatter}{%
-	\fancyhf{} % Clear all headers and footers first
-	\fancyhead[LE, RO]{\sl \thepage}
-	%\fancyhead[LO]{\sl \rightmark}
-	%\fancyhead[RE]{\sl \leftmark}
+  \fancyhf{} % Clear all headers and footers first
+  \fancyhead[LE, RO]{\sl \thepage}
+  %\fancyhead[LO]{\sl \rightmark}
+  %\fancyhead[RE]{\sl \leftmark}
 }
 \fancypagestyle{mainmatter}{%
-  	\fancyhf{} % Clear all headers and footers first
-	\fancyhead[LE,RO]{\sl \thepage}
-	\fancyhead[LO]{\sl \rightmark}
-	\fancyhead[RE]{\sl \leftmark}
+  \fancyhf{} % Clear all headers and footers first
+  \fancyhead[LE,RO]{\sl \thepage}
+  \fancyhead[LO]{\sl \rightmark}
+  \fancyhead[RE]{\sl \leftmark}
 }
 % SLO: font za ime avtorja
 % ENG: font for author name
@@ -109,5 +107,3 @@
 \newcommand{\trackname}{!undefined!}
 
 \newcommand{\BibTeX}{{\sc Bib}\TeX}
-
-
