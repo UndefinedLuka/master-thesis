@@ -1,17 +1,33 @@
 import glob
-from helpers.circular_foreign_keys import has_circular_foreign_key
-from helpers.read_db_data import get_db_foreign_keys
+import json
+from pathlib import Path
+from helpers.db_data import dump_db_to_json, dump_db_to_yaml, save_db_to_all_formats
+from helpers.questions import get_all_questions, get_answers
+from helpers.circular_foreign_keys import find_root_node, has_circular_foreign_key  
+from helpers.read_db_metadata import get_db_foreign_keys
 
 
 def main():
     sqlite_paths = glob.glob("data/spider_data/**/**/*.sqlite")
 
-    for path in sqlite_paths:
-        foreign_keys = get_db_foreign_keys(path=path)
-        has_cycle = has_circular_foreign_key(foreign_keys)
-        if has_cycle:
-            print(has_cycle, path)
-            print(foreign_keys)
+    for path_str in sqlite_paths:
+        path = Path(path_str)
+        print("Reading: ", path)
+
+        # foreign_keys = get_db_foreign_keys(path=path.as_posix())
+        # print(find_root_node(foreign_keys))
+        # print_database_connections(foreign_keys, path)
+        # has_cycle = has_circular_foreign_key(foreign_keys)
+        save_db_to_all_formats(path=path.as_posix(), save_path=Path("temp", path.parent).as_posix())
+
+
+        # if has_cycle:
+        #     print(has_cycle, path)
+        #     print(foreign_keys)
+
+    # print(get_all_questions("data/spider_data/dev.json"))
+
+    get_answers("data/spider_data/dev.json")
 
 
 if __name__ == "__main__":

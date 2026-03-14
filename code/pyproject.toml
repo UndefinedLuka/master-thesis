@@ -5,10 +5,14 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [
-    "adbc-driver-sqlite>=1.10.0",
+    "dicttoxml>=1.7.16",
     "networkx>=3.6.1",
     "polars>=1.38.1",
+    "pyarrow>=23.0.1",
+    "pyyaml>=6.0.3",
     "ruff>=0.15.1",
+    "toml>=0.10.2",
+    "toon>=0.15.9",
 ]
 
 [dependency-groups]

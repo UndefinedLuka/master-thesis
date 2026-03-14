@@ -1,11 +1,21 @@
+import sqlite3
 from typing import Dict, List
 
 import polars as pl
 
-def query_sqlite(path: str, query: str) -> pl.DataFrame:
-    uri = f"sqlite:///{path}"
 
-    return pl.read_database_uri(query=query, uri=uri, engine="adbc")
+def query_sqlite(path: str, query: str) -> pl.DataFrame:
+    conn = sqlite3.connect(path)
+
+    conn.text_factory = lambda b: b.decode(errors="replace")  # type: ignore
+
+    df: pl.DataFrame = pl.read_database(
+        query=query, connection=conn, infer_schema_length=None
+    )
+
+    conn.close()
+
+    return df
 
 
 def get_all_table_names(path: str) -> List[str]:
@@ -34,9 +44,10 @@ def get_db_foreign_keys(path: str) -> Dict[str, List[str]]:
 
     return db_foreign_keys
 
+
 def get_db_schema(path: str) -> List[str]:
     query = "SELECT * FROM sqlite_master WHERE type='table' AND sql IS NOT NULL;"
 
     df = query_sqlite(path=path, query=query)
 
-    return df['sql'].to_list()
+    return df["sql"].to_list()
