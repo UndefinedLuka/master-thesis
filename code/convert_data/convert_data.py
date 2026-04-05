@@ -8,6 +8,7 @@ import polars as pl
 import tomlkit
 import toon
 import yaml
+from dict2xml import dict2xml
 
 
 def query_sqlite(path: str, query: str) -> pl.DataFrame:
@@ -88,7 +89,7 @@ def dump_db_to_toml(contents: Dict[str, List[Dict]], save_path: str) -> None:
             return data.item()
         return data
 
-    toml_string = tomlkit.dumps(to_toml_compatible(contents))
+    toml_string = tomlkit.dumps(to_toml_compatible(contents))  # pyright: ignore[reportArgumentType]
 
     with open(save_path, "w", encoding="utf-8") as f:
         f.write(toml_string)
@@ -113,6 +114,12 @@ def dump_db_to_toon(contents: Dict[str, List[Dict]], save_path: str) -> None:
         f.write(toon.encode(contents))
 
 
+def dump_db_to_xml(contents: Dict[str, List[Dict]], save_path: str) -> None:
+    ensure_path_exists(save_path)
+    with open(save_path, "w", encoding="utf-8") as f:
+        f.write(dict2xml(contents, wrap="root", indent="\t"))
+
+
 def save_db_to_all_formats(path: str, save_path: str) -> None:
     contents = get_db_contents(path=path)
     file_name = Path(path).stem.replace(".sqlite", "")
@@ -131,6 +138,9 @@ def save_db_to_all_formats(path: str, save_path: str) -> None:
     )
     dump_db_to_toon(
         save_path=Path(save_path, file_name + ".toon").as_posix(), contents=contents
+    )
+    dump_db_to_xml(
+        save_path=Path(save_path, file_name + ".xml").as_posix(), contents=contents
     )
     dump_db_to_csv(save_path=Path(save_path, "csv").as_posix(), contents=contents)
 
