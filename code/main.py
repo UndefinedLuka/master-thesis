@@ -1,10 +1,8 @@
 import glob
-import json
 from pathlib import Path
-from helpers.db_data import dump_db_to_json, dump_db_to_yaml, save_db_to_all_formats
-from helpers.questions import get_all_questions, get_answers
-from helpers.circular_foreign_keys import find_root_node, has_circular_foreign_key  
-from helpers.read_db_metadata import get_db_foreign_keys
+
+from helpers.db_data import save_db_to_all_formats
+from helpers.questions import get_answers
 
 
 def main():
@@ -18,8 +16,9 @@ def main():
         # print(find_root_node(foreign_keys))
         # print_database_connections(foreign_keys, path)
         # has_cycle = has_circular_foreign_key(foreign_keys)
-        save_db_to_all_formats(path=path.as_posix(), save_path=Path("temp", path.parent).as_posix())
-
+        save_db_to_all_formats(
+            path=path.as_posix(), save_path=Path("temp", path.parent).as_posix()
+        )
 
         # if has_cycle:
         #     print(has_cycle, path)

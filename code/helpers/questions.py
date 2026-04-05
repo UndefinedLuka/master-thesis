@@ -1,6 +1,7 @@
-from collections import defaultdict
 import json
+from collections import defaultdict
 from typing import Any, Dict, List, Tuple
+
 import polars as pl
 
 from helpers.read_db_metadata import query_sqlite
@@ -42,9 +43,9 @@ def get_answers(path: str) -> None:
                     tbl_hide_dataframe_shape=True,
                     tbl_hide_column_names=True,
                     fmt_float="mixed",
-                    float_precision=3
+                    float_precision=3,
                 )
                 print(df)
                 print("=" * 25)
-            except:
+            except:  # noqa: E722
                 print("!" * 20, "Something went wrong")
