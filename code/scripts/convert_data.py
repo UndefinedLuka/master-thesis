@@ -1,6 +1,5 @@
 import csv
 import json
-import sqlite3
 from pathlib import Path
 from typing import Dict, List
 
@@ -10,19 +9,7 @@ import toon
 import yaml
 from dict2xml import dict2xml
 
-
-def query_sqlite(path: str, query: str) -> pl.DataFrame:
-    conn = sqlite3.connect(path)
-
-    conn.text_factory = lambda b: b.decode(errors="replace")  # type: ignore
-
-    df: pl.DataFrame = pl.read_database(
-        query=query, connection=conn, infer_schema_length=None
-    )
-
-    conn.close()
-
-    return df
+from helpers import query_sqlite
 
 
 def get_all_table_names(path: str) -> List[str]:

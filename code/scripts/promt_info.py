@@ -4,16 +4,16 @@ from pathlib import Path
 from types import SimpleNamespace
 
 import polars as pl
-from read_db_metadata import query_sqlite
+
+from helpers import query_sqlite
 
 
 def get_prompt_information(table_id: str, format: str):
     base_path = Path(
         Path(__file__).resolve().parent,
         "..",
-        "temp",
         "data",
-        "spider_data",
+        "spider_data_processed",
         "test_database",
         table_id,
     )
@@ -44,8 +44,10 @@ def get_sql_data(file_name: str):
     content = path.read_text(encoding="utf-8")
     data = json.loads(content, object_hook=lambda d: SimpleNamespace(**d))
 
+    unique_dbs = {}
     # 3. Access elements with '.' notation
     for item in data:
+        unique_dbs[item.db_id] = len(get_prompt_information(item.db_id, "toon"))
         print(f"ID:       {item.db_id}")
         print(f"Question: {item.question}")
         print(f"SQL:      {item.query}")
@@ -64,14 +66,15 @@ def get_sql_data(file_name: str):
                 float_precision=3,
             )
             print(df)
-            print("=" * 25)
+
         except:  # noqa: E722
             print("!" * 20, "Something went wrong")
         print("-" * 30)
+
+    print(unique_dbs)
 
     return data
 
 
 if __name__ == "__main__":
-    # Replace 'data.json' with your filename
     my_data = get_sql_data("data/spider_data/dev.json")
