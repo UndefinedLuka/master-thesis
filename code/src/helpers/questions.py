@@ -4,7 +4,7 @@ from typing import Any, Dict, List, Tuple
 
 import polars as pl
 
-from helpers.read_db_metadata import query_sqlite
+from scripts.helpers import query_sqlite
 
 
 def read_json(path: str) -> Any:

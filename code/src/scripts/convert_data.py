@@ -133,8 +133,9 @@ def save_db_to_all_formats(path: str, save_path: str) -> None:
 
 
 if __name__ == "__main__":
-    data_path = Path(Path(__file__).parent.parent, "data", "spider_data")
-    save_path_base = Path(Path(__file__).parent.parent, "data", "spider_data_processed")
+    base_path = Path(__file__).parent.parent.parent
+    data_path = Path(base_path, "data", "spider_data")
+    save_path_base = Path(base_path, "data", "spider_data_processed")
 
     for sqlit_path in data_path.rglob("*.sqlite"):
         save_path = save_path_base / sqlit_path.relative_to(data_path).parent

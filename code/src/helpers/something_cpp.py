@@ -67,7 +67,7 @@ def run_inference_with_metrics(model: Llama, system_context, question):
 
 
 if __name__ == "__main__":
-    model_path = "./gemma-4-E4B-it-Q8_0.gguf"
+    model_path = "./models/gemma-4-E4B-it-Q8_0.gguf"
 
     llm = Llama(model_path=model_path, n_ctx=0, n_gpu_layers=-1)
 
@@ -93,12 +93,20 @@ if __name__ == "__main__":
 
         return content
 
-    db_id = "singer"
-    question = "Show the names of singers and the total sales of their songs."
-    query = 'SELECT count(*) FROM country WHERE GovernmentForm  =  "Republic"'
-    data_json = get_prompt_information(db_id, "json")
+    db_id = "real_estate_properties"
+    question = "What are the names of properties that are either houses or apartments with more than 1 room?"
+    query = 'SELECT property_name FROM Properties WHERE property_type_code  =  "House" UNION SELECT property_name FROM Properties WHERE property_type_code  =  "Apartment" AND room_count  >  1'
+    data_json = get_prompt_information(db_id, "xml")
 
-    with open("./helpers/prompt.md") as promt_file:
+    # SELECT
+    #   T1.property_name
+    # FROM Properties AS T1
+    # INNER JOIN Ref_Property_Types AS T2
+    #   ON T1.property_type_code = T2.property_type_code
+    # WHERE
+    #   T2.property_type_description LIKE '%House%' OR T2.property_type_description LIKE '%Apartment%' AND T1.room_count > 1;
+
+    with open("./helpers/sql_prompt.md") as promt_file:
         SYSTEM_PROMPT = promt_file.read().replace("<data>", data_json)
 
     USER_QUESTION = question
