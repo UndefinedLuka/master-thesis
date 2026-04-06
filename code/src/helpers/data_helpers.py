@@ -2,7 +2,7 @@ import glob
 import json
 from collections import defaultdict
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Any, Dict, List, Optional, Tuple, TypedDict
 
 from tqdm import tqdm
 
@@ -23,10 +23,18 @@ def get_all_questions(path: str) -> Dict[str, List[Tuple[str, str]]]:
     return questions_per_db
 
 
+class DBAnswer(TypedDict):
+    question: str
+    db_id: str
+    query: str
+    answer: Optional[Any]
+    error: Optional[str]
+
+
 def get_answers(path: str) -> None:
     questions = get_all_questions(path=path)
 
-    benchmark_results = []
+    benchmark_results: List[DBAnswer] = []
     pbar = tqdm(questions.items(), desc="Starting benchmarks")
 
     for db_id, question_list in pbar:
@@ -47,14 +55,15 @@ def get_answers(path: str) -> None:
 
                 answer_data = df.to_dicts()
 
-                entry = {
-                    "question": question,
-                    "db_id": db_id,
-                    "query": query,
-                    "answer": answer_data,
-                }
-
-                benchmark_results.append(entry)
+                benchmark_results.append(
+                    {
+                        "question": question,
+                        "db_id": db_id,
+                        "query": query,
+                        "answer": answer_data,
+                        "error": None,
+                    }
+                )
             except Exception as e:
                 # Using postfix to show errors without breaking the bar flow
                 pbar.set_postfix(last_error=db_id)
