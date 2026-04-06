@@ -5,13 +5,13 @@ from types import SimpleNamespace
 
 import polars as pl
 
-from helpers import query_sqlite
+from helpers.path_helpers import base_path
+from helpers.sqlite_helpers import query_sqlite
 
 
 def get_prompt_information(table_id: str, format: str):
-    base_path = Path(
-        Path(__file__).resolve().parent,
-        "..",
+    path_to_data = Path(
+        base_path,
         "data",
         "spider_data_processed",
         "test_database",
@@ -19,13 +19,13 @@ def get_prompt_information(table_id: str, format: str):
     )
 
     if format == "csv":
-        csv_paths = glob.glob(Path(base_path, "csv", "*.csv").as_posix())
+        csv_paths = glob.glob(Path(path_to_data, "csv", "*.csv").as_posix())
         content = ""
         for path_str in csv_paths:
             with open(path_str, "r", encoding="utf-8") as file:
                 content += file.read() + "\n"
     else:
-        path = Path(base_path, table_id + "." + format)
+        path = Path(path_to_data, table_id + "." + format)
         with open(path, "r", encoding="utf-8") as file:
             content = file.read()
 

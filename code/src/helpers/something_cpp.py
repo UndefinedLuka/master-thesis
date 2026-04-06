@@ -1,8 +1,8 @@
-import glob
 import time
-from pathlib import Path
 
 from llama_cpp import Llama
+
+from scripts.promt_info import get_prompt_information
 
 
 def run_inference_with_metrics(model: Llama, system_context, question):
@@ -70,28 +70,6 @@ if __name__ == "__main__":
     model_path = "./models/gemma-4-E4B-it-Q8_0.gguf"
 
     llm = Llama(model_path=model_path, n_ctx=0, n_gpu_layers=-1)
-
-    def get_prompt_information(table_id: str, format: str):
-        base_path = Path(
-            Path(__file__).resolve().parent.parent,
-            "data",
-            "spider_data_processed",
-            "test_database",
-            table_id,
-        )
-
-        if format == "csv":
-            csv_paths = glob.glob(Path(base_path, "csv", "*.csv").as_posix())
-            content = ""
-            for path_str in csv_paths:
-                with open(path_str, "r", encoding="utf-8") as file:
-                    content += file.read() + "\n"
-        else:
-            path = Path(base_path, table_id + "." + format)
-            with open(path, "r", encoding="utf-8") as file:
-                content = file.read()
-
-        return content
 
     db_id = "real_estate_properties"
     question = "What are the names of properties that are either houses or apartments with more than 1 room?"

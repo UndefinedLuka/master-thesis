@@ -8,8 +8,10 @@ import tomlkit
 import toon
 import yaml
 from dict2xml import dict2xml
+from tqdm import tqdm
 
-from helpers import query_sqlite
+from helpers.path_helpers import base_path
+from helpers.sqlite_helpers import query_sqlite
 
 
 def get_all_table_names(path: str) -> List[str]:
@@ -133,14 +135,14 @@ def save_db_to_all_formats(path: str, save_path: str) -> None:
 
 
 if __name__ == "__main__":
-    base_path = Path(__file__).parent.parent.parent
     data_path = Path(base_path, "data", "spider_data")
     save_path_base = Path(base_path, "data", "spider_data_processed")
 
-    for sqlit_path in data_path.rglob("*.sqlite"):
-        save_path = save_path_base / sqlit_path.relative_to(data_path).parent
+    pbar = tqdm(list(data_path.rglob("*.sqlite")))
 
-        print("Reading: ", sqlit_path)
+    for sqlit_path in pbar:
+        pbar.set_description(f"Processing {sqlit_path.name}")
+        save_path = save_path_base / sqlit_path.relative_to(data_path).parent
 
         save_db_to_all_formats(
             path=sqlit_path.as_posix(), save_path=save_path.as_posix()
