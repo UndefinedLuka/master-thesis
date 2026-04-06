@@ -1,8 +1,8 @@
 import glob
 from pathlib import Path
 
-from helpers.db_data import save_db_to_all_formats
-from helpers.questions import get_answers
+from helpers.data_helpers import get_answers
+from scripts.convert_data import save_db_to_all_formats
 
 
 def main():

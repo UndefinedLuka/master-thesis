@@ -1,80 +1,8 @@
-import glob
-import json
 from pathlib import Path
-from types import SimpleNamespace
 
-import polars as pl
-
+from helpers.data_helpers import get_answers
 from helpers.path_helpers import base_path
-from helpers.sqlite_helpers import query_sqlite
-
-
-def get_prompt_information(table_id: str, format: str):
-    path_to_data = Path(
-        base_path,
-        "data",
-        "spider_data_processed",
-        "test_database",
-        table_id,
-    )
-
-    if format == "csv":
-        csv_paths = glob.glob(Path(path_to_data, "csv", "*.csv").as_posix())
-        content = ""
-        for path_str in csv_paths:
-            with open(path_str, "r", encoding="utf-8") as file:
-                content += file.read() + "\n"
-    else:
-        path = Path(path_to_data, table_id + "." + format)
-        with open(path, "r", encoding="utf-8") as file:
-            content = file.read()
-
-    return content
-
-
-def get_sql_data(file_name: str):
-    path = Path(__file__).parent.parent / file_name
-
-    if not path.exists():
-        print(f"File {file_name} not found.")
-        return []
-
-    # 2. Read file and convert to objects using SimpleNamespace
-    # The object_hook transforms every {key: value} into an object
-    content = path.read_text(encoding="utf-8")
-    data = json.loads(content, object_hook=lambda d: SimpleNamespace(**d))
-
-    unique_dbs = {}
-    # 3. Access elements with '.' notation
-    for item in data:
-        unique_dbs[item.db_id] = len(get_prompt_information(item.db_id, "toon"))
-        print(f"ID:       {item.db_id}")
-        print(f"Question: {item.question}")
-        print(f"SQL:      {item.query}")
-        print(f"Data:     {len(get_prompt_information(item.db_id, 'toon'))}")
-        try:
-            df = query_sqlite(
-                path=f"data/spider_data/database/{item.db_id}/{item.db_id}.sqlite",
-                query=item.query,
-            )
-            pl.Config(
-                tbl_formatting="NOTHING",
-                tbl_hide_column_data_types=True,
-                tbl_hide_dataframe_shape=True,
-                tbl_hide_column_names=True,
-                fmt_float="mixed",
-                float_precision=3,
-            )
-            print(df)
-
-        except:  # noqa: E722
-            print("!" * 20, "Something went wrong")
-        print("-" * 30)
-
-    print(unique_dbs)
-
-    return data
-
 
 if __name__ == "__main__":
-    my_data = get_sql_data("data/spider_data/dev.json")
+    get_answers(Path(base_path, "data", "spider_data", "train_spider.json").as_posix())
+    # my_data = get_sql_data()
