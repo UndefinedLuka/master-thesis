@@ -1,13 +1,18 @@
 import time
-from typing import Any, Optional, TypedDict
+from pathlib import Path
+from typing import Iterator, Optional, TypedDict, cast
 
-from llama_cpp import Llama
+from llama_cpp import CreateChatCompletionStreamResponse, Llama
+
+from helpers.path_helpers import base_path
 
 LLM: Llama | None = None
 
 
-def get_llm_model(model_path="./models/gemma-4-E4B-it-Q8_0.gguf"):
+def get_llm_model(model_name="gemma-4-E4B-it-Q8_0.gguf"):
     global LLM
+
+    model_path = Path(base_path, "models", model_name).as_posix()
 
     if LLM is not None:
         return LLM
@@ -37,7 +42,7 @@ class LLMMetrics(TypedDict):
 
 
 def benchmark_chat_completion(
-    model: Any, system_context: str, question: str
+    model: Llama, system_context: str, question: str
 ) -> LLMMetrics:
 
     metrics: LLMMetrics = {
@@ -65,28 +70,18 @@ def benchmark_chat_completion(
         first_token_received = False
         token_count = 0
 
-        for chunk in stream:
+        for chunk in cast(Iterator[CreateChatCompletionStreamResponse], stream):
             if not first_token_received:
                 metrics["time_to_first_token"] = time.perf_counter() - start_time
                 first_token_received = True
 
             # Extract text content (structure varies slightly by provider)
-            delta = chunk["choices"][0].get("delta", {})
+            delta = chunk.get("choices", [])[0].get("delta", {})
             content = delta.get("content", "")
 
             if content:
                 metrics["full_response"] += content
                 token_count += 1
-
-            # 3. Check for usage metadata in the final chunk
-            if "usage" in chunk and chunk["usage"]:
-                metrics["input_tokens"] = chunk["usage"].get(
-                    "prompt_tokens",
-                    len(
-                        model.tokenize(f"{system_context}\n{question}".encode("utf-8"))
-                    ),
-                )
-                metrics["output_tokens"] = chunk["usage"].get("completion_tokens", 0)
 
             if chunk["choices"][0].get("finish_reason"):
                 metrics["stop_reason"] = chunk["choices"][0]["finish_reason"]
@@ -94,6 +89,12 @@ def benchmark_chat_completion(
         # 4. Final Calculations
         end_time = time.perf_counter()
         metrics["total_response_time"] = end_time - start_time
+
+        metrics["input_tokens"] = len(
+            model.tokenize(f"{system_context}\n{question}".encode("utf-8"))
+        )
+
+        metrics["output_tokens"] = len(metrics["full_response"])
 
         # Fallback if metadata wasn't provided by the API
         if metrics["output_tokens"] == 0:
