@@ -9,7 +9,7 @@ from helpers.path_helpers import base_path
 LLM: Llama | None = None
 
 
-def get_llm_model(model_name="gemma-4-E4B-it-Q8_0.gguf"):
+def get_llm_model(model_name="Qwen3.5-9B.Q8_0.gguf"):
     global LLM
 
     model_path = Path(base_path, "models", model_name).as_posix()
@@ -18,7 +18,12 @@ def get_llm_model(model_name="gemma-4-E4B-it-Q8_0.gguf"):
         return LLM
 
     try:
-        LLM = Llama(model_path=model_path, n_ctx=0, n_gpu_layers=-1)
+        LLM = Llama(
+            model_path=model_path,
+            n_ctx=126_000,
+            n_gpu_layers=0,
+            n_threads=8,
+        )
     except FileNotFoundError:
         print("Error: Could not find the model file at")
     except Exception as e:

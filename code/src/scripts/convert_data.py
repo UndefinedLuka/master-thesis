@@ -45,6 +45,7 @@ def dump_db_schema(path: str, save_path: str) -> None:
 
     df = query_sqlite(path=path, query=query)
 
+    ensure_path_exists(save_path)
     with open(save_path, "w", encoding="utf-8") as f:
         f.write("\n\n".join(df["sql"].to_list()))
 
