@@ -25,12 +25,9 @@ def get_llm_model(model_name="Qwen3.5-9B.Q8_0.gguf"):
             n_threads=8,
         )
     except FileNotFoundError:
-        print("Error: Could not find the model file at")
+        raise Exception(f"Error: Could not find the model file at {model_path}")
     except Exception as e:
-        print(f"An error occurred: {e}")
-
-    if LLM is None:
-        raise Exception("Could not Load the specified model")
+        raise Exception(f"An error occurred: {e}")
 
     return LLM
 
