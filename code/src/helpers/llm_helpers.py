@@ -47,6 +47,8 @@ def benchmark_chat_completion(
     model: Llama, system_context: str, question: str
 ) -> LLMMetrics:
 
+    model.reset()
+
     metrics: LLMMetrics = {
         "input_tokens": 0,
         "output_tokens": 0,
