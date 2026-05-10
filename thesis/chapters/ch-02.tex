@@ -1,33 +1,45 @@
 %----------------------------------------------------------------
 % Poglavje (Chapter) 2
 %----------------------------------------------------------------
-\chapter{Sklicevanje na besedilne konstrukte}
-\label{ch:sklicevanje}
+\chapter{Related work}
+\label{ch:related_work}
 
-Matematična ali popolna indukcija je eno prvih orodij, ki jih spoznamo za dokazovanje trditev pri
-matematičnih predmetih.
-\begin{izrek}
-  \label{iz:1}
-  Za vsako naravno število $n$ velja
-  \begin{equation}
-    n < 2^n.
-    \label{eq:1}
-  \end{equation}
-\end{izrek}
-\begin{dokaz}
-  Dokazovanje z indukcijo zahteva, da neenakost~\eqref{eq:1} najprej preverimo za najmanjše naravno število
-  --- $0$. Res, ker je $0 < 1 = 2^0$, je neenačba~\eqref{eq:1} za $n=0$ izpolnjena.
+The research into the relationship between data serialization and performance of LLMs has grown from a prompt
+engineering concern, to the important questions a lot of experts are asking. As LLMs are increasingly
+integrated into enterprise pipelines, the way data is structured, be it JSON, XML, CSV, Markdown, has been
+shown to hold a significant influence over the overall performance of the models (cost, accuracy, efficiency).
+This is not a mere question of our format preference, the benchmarks such as StrucText-Eval
+\cite{struct-text-eval} has given us insight how such formats influence the overall accuracy of the models.
 
-  Sledi indukcijski korak. S predpostavko, da je neenakost~\eqref{eq:1} veljavna pri nekem naravnem številu
-  $n$, je potrebno pokazati, da je ista neenakost v veljavi tudi pri njegovem nasledniku --- naravnem številu
-  $n+1$. Izračun zapišemo s tremi vrsticami, ki jih končamo s piko, saj do del tega stavka:
-  \begin{align}
-    n+1 &< 2^n + 1,  \label{eq:2}\\
-    &\le 2^n + 2^n, \label{eq:3}\\
-    &= 2^{n+1}. \nonumber
-  \end{align}
-  Neenakost~\eqref{eq:2} je posledica indukcijske predpostavke, neenakost~\eqref{eq:3} pa enostavno dejstvo,
-  da je za vsako naravno število $n$ izraz $2^n$ vsaj tako velik kot 1. S tem je dokaz Izreka~\ref{iz:1} zaključen.
-\end{dokaz}
+\section{A Survey of Structured Data Representations}
 
-Opazimo, da je \LaTeX\ številko izreka podredil številki poglavja.
+To understand how format influences models, it's paramount to have a way of organizing structured data
+representations that we are going to be using. We can identify several main categories of data representation, as
+shown by the StrucText-Eval \cite{struct-text-eval}. These categories show the range of data formats, from
+those that are strictly structured to those that are semi-structured. Structured data is consistent and
+organized. This makes it easy for computers
+to process, but it also creates some overhead when LLMs are tokenizing the data. The most common
+classification system divides these into four main types:
+\begin{itemize}
+  \item \textbf{Tree and Tabular Formats:} These includes CVS files and custom hierarchical notation. In these
+    formats, relationships are defined either by positional alignment (as in CSV) or explicit pointers (as in
+    tree structures). However, CSV fundamentally cannot represent nested structures, limiting its
+    applicability to flat tabular data.
+  \item \textbf{Object Notation:} This category represents the most common data interchange languages in
+    software development, notably JSON (JavaScript Object Notation), YAML (YAML Ain't Markup Language), and
+    TOML. These formats rely on key-value pairs and nesting to represent multi-dimensional data
+  \item \textbf{Markup Languages:} Semi-structured data types like Markdown, LaTeX, and Org represent
+    information in a human-readable form while embedding structural metadata (headings, lists, and semantic
+    tags). Markdown has become the de facto standard for general-purpose LLM interactions due to its presence
+    in training data.
+  \item \textbf{Code Based Formats:} These include HTML, JSX, SVG, and XML. These formats are special
+    because they are measured not only by how well they follow the rules of language, but also by how well they
+    can create a visual or logical output that meets the requirements of the user.
+
+\end{itemize}
+
+% The categorization of these formats is critical because each imposes a different "tokenization
+% overhead." For instance, JSON requires significant structural punctuation (braces, quotes, colons), whereas
+% YAML relies on whitespace and indentation. The structural density of a format influences the model's ability
+% to maintain context over long sequences, as redundant tokens can "dilute" the attention allocated to the
+% actual semantic content.
