@@ -20,6 +20,7 @@ those that are strictly structured to those that are semi-structured. Structured
 organized. This makes it easy for computers
 to process, but it also creates some overhead when LLMs are tokenizing the data. The most common
 classification system divides these into four main types:
+% TODO: Add citations for all of the data formats !!!
 \begin{itemize}
   \item \textbf{Tree and Tabular Formats:} These includes CVS files and custom hierarchical notation. In these
     formats, relationships are defined either by positional alignment (as in CSV) or explicit pointers (as in
@@ -43,3 +44,27 @@ classification system divides these into four main types:
 % YAML relies on whitespace and indentation. The structural density of a format influences the model's ability
 % to maintain context over long sequences, as redundant tokens can "dilute" the attention allocated to the
 % actual semantic content.
+
+\section{Token Efficiency and Economic Impact of Data Serialization}
+
+The choice of data format has direct impact on the computational cost of LLMs. Format verbosity determines
+token token usage of the model, and this has a knock on effect for other factors, such as latency, API cost,
+and effective context window.
+
+Formats like JSON and XML are inefficient with token usage, as they have been designed for data exchange
+between information systems, where self description and compatibility were more important than their
+verbosity. These formats are designed in such a way that each fields carries its own description, through
+repeated key words, which create overhead when working with LLMs. The experiments performed in \cite{}, were
+carried out across $1.000$ IoT telemetry records. They have shown that majority of encoding tokens used for
+encoding data in the JSON format is used up by field names and punctuation ($60.500$ tokens), while the
+actual semantic values take up only $14.274$ tokens, out of $79.774$ tokens. This overhead is problematic in
+the current age, as most pricing is done based on the input and output tokens used, with this higher token
+usage directly translates to higher operational costs for the users. Also in the same experiment it was shown
+that reduction in tokens used directly correlates to lower latency, when compared to their custom ONTO format.
+
+In order to address these inefficiencies, there have been multiple efforts aimed at them, in form of ONTO
+(Object Notation for Token Optimization) and TOON (Token Optimized Object Notation). Both formats are
+oriented at fixing the problem of repeated schema for each record, they fix this by declaring all the fields
+only once at the top of the record, and values are arrange in pipe delimited rows with indentation based
+hierarchy. Both of these models claim to use significantly less tokens (TOON $39.9\%$ fewer tokens compared
+to JSON, and ONTO $46-51\%$ compared to JSON ) while minimal impacts on accuracy.
