@@ -68,7 +68,7 @@ only once at the top of the record, and values are arrange in pipe delimited row
 hierarchy. Both of these models claim to use significantly less tokens (TOON $39,9\%$ fewer tokens compared
 to JSON, and ONTO $46-51\%$ compared to JSON ) while minimal impacts on accuracy.
 
-\section{Text2SQL}
+\section{Large Language Models for Text-to-SQL}
 
 Translating natural language to executable Structured Query Language (SQL) is a long standing problem. The first
 attempts at this problem operated primarily on rigid, handcrafted grammar rules and pattern-matching frameworks[7][6]
@@ -92,7 +92,7 @@ When optimizing for text2SQL accuracy there are multiple strategies to achieve i
     tools [24], [25].
 \end{itemize}
 
-\section{Datasets}
+\section{Overview of Evaluation Datasets}
 
 There has been a lot of effort in the last years to curate datasets which can be utilized for testing
 (andtraining) models on task of SQL generation.First notable datasets came to the scene in 2017, WikiSQL
@@ -124,3 +124,5 @@ that require knowledge of external documentation. The change in size and complex
 simple one shot examples into multi step agentic workflows where queries stretch more than 100 lines. The
 contrast is clear when looking at leader boards, where top model has achieved $91,6\%$ accuracy for the
 Spider dataset, the top model in the Spider 2.0 only manages $21.3\%$
+
+\
