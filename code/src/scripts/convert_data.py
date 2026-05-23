@@ -123,9 +123,9 @@ def save_db_to_all_formats(path: str, save_path: str) -> None:
     dump_db_to_yaml(
         save_path=Path(save_path, file_name + ".yaml").as_posix(), contents=contents
     )
-    dump_db_to_toml(
-        save_path=Path(save_path, file_name + ".toml").as_posix(), contents=contents
-    )
+    # dump_db_to_toml(
+    #     save_path=Path(save_path, file_name + ".toml").as_posix(), contents=contents
+    # )
     dump_db_to_toon(
         save_path=Path(save_path, file_name + ".toon").as_posix(), contents=contents
     )
