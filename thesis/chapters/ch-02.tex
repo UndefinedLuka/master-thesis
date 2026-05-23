@@ -125,4 +125,22 @@ simple one shot examples into multi step agentic workflows where queries stretch
 contrast is clear when looking at leader boards, where top model has achieved $91,6\%$ accuracy for the
 Spider dataset, the top model in the Spider 2.0 only manages $21.3\%$
 
-\
+\section{Metrics for Automated Output Verification}
+
+In order to evaluate the performance of each model and check its alignment with the ground truth data, we
+need a well defined metrics which are going to tell us how correct the provided answer is. These evaluation
+metrics can be categorized along these $3$ ideas, which range from checking for literal match to deep
+validation. The first section is \emph{Lexical-Level and String Overlap Metrics}, which check for literal
+text similarity, after it we have \emph{Semantic and Embedding-Based Alignment Metrics} which tries to
+capture contextual meaning beyond the exact word matches. Finally, for the Text2SQL purposes we are also
+going to take a look at \emph{ Code-Execution-Based Semantic Equivalence Metrics}, these metrics are going to
+check programmatic correctness of outputs by executing them against an isolated environment.
+
+\subsection{Lexical-Level and String Overlap Metrics}
+
+These metrics represent historical foundation of natural language generation evaluation, they relay on direct
+token comparisons between candidate outputs and ground truths. While they are computationally inexpensive and
+simple to implement, they fall short when trying to score the outputs that have the same meaning but are
+different in structure.
+
+\subsubsection{Exact Match and Token-Level F1 Score}

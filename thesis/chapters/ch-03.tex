@@ -1,54 +1,5 @@
 %----------------------------------------------------------------
 % Poglavje (Chapter) 3
 %----------------------------------------------------------------
-\chapter{Plovke: slike in tabele}
-\label{ch:plovke}
-
-Slike in daljše tabele praviloma vključujemo v dokument kot plovke. Pozicija plovke v končnem izdelku ni
-pogojena s tekom besedila, temveč z izgledom strani. \LaTeX\ bo skušal plovko postaviti samostojno, praviloma
-na vrh strani, na kateri se na takšno plovko prvič sklicujemo. Pri tem pa bo na vsako stran končnega izdelka
-želel postaviti tudi sorazmerno velik del besedila. V skrajnem primeru, če imamo res preveč plovk, se bo
-odločil za stran popolnoma zapolnjeno s plovkami.
-
-\section{Formati slik}
-Bitne slike, vektorske slike, kakršnekoli slike, z \LaTeX{}om lahko vključimo vse.
-Slika~\ref{pic1} je v {\tt .pdf} formatu.
-\begin{figure}
-  \begin{center}
-    \includegraphics[width=10cm]{pic1.pdf}
-  \end{center}
-  \caption{Herschelov graf, vektorska grafika.}
-  \label{pic1}
-\end{figure}
-Pa res lahko vključimo slike katerihkoli formatov? Žal ne. Programski paket \LaTeX\ lahko uporabljamo v več
-dialektih. Ukaz {\tt latex} ne mara vključenih slik v formatu Portable Document Format {\tt .pdf}, ukaz {\tt
-pdflatex} pa ne prebavi slik v Encapsulated Postscript Formatu {\tt .eps}.
-Strnjeno v Tabeli~\ref{tbl:1}.
-
-\begin{table}
-  \caption{}
-  \begin{center}
-    \begin{tabular}{l|ccc}
-      ukaz/format & {\tt .pdf} & {\tt .eps} & ostali formati \\ \hline
-      {\tt pdflatex} & da & ne & da \\
-      {\tt latex}   & ne & da  & da
-    \end{tabular}
-  \end{center}
-  \label{tbl:1}
-\end{table}
-
-Nasvet? Odločite se za uporabo ukaza {\tt pdflatex}. Vaš izdelek bo brez vmesnih stopenj na voljo v {.pdf}
-formatu in ga lahko odnesete v vsako tiskarno. Če morate na vsak način vključiti sliko, ki jo imate v {\tt
-.eps} formatu, jo vnaprej pretvorite v alternativni format, denimo {\tt .pdf}.
-
-Včasih se da v okolju za uporabo programskega paketa \LaTeX\ nastaviti na kakšen način bomo prebavljali
-vhodne dokumente. Spustni meni na Sliki~\ref{pic2} odkriva uporabo \LaTeX{}a v njegovi pdf inkarnaciji ---
-{\tt pdflatex}.
-\begin{figure}
-  \begin{center}
-    \includegraphics[width=10cm]{pic2.png}
-  \end{center}
-  \caption{Kateri dialekt uporabljati?}
-  \label{pic2}
-\end{figure}
-Vključena Slika~\ref{pic2} je seveda bitna.
+\chapter{Methodology}
+\label{ch:methodolgy}
