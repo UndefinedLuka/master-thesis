@@ -7,14 +7,14 @@
 The research into the relationship between data serialization and performance of LLMs has grown from a prompt
 engineering concern, to the important questions a lot of experts are asking. As LLMs are increasingly
 integrated into enterprise pipelines, the way data is structured, be it JSON, XML, CSV, Markdown, has been
-shown to hold a significant influence over the overall performance of the models (cost, accuracy, efficiency).
-This is not a mere question of our format preference, the benchmarks such as StrucText-Eval
+shown to hold a significant influence over the overall performance of the models (cost, accuracy,
+efficiency). This is not a mere question of our format preference, the benchmarks such as StrucText-Eval
 \cite{struct-text-eval} has given us insight how such formats influence the overall accuracy of the models.
-Results point to most common formats (CSV and JSON) performing the best over different models. For example for
-Llama-3.1-405B we can see that the most common formats achieve the following accuracies respectively, 96.6\% and
-82.0\%, while all the other formats record a significant drop off in accuracy. These results point that LLM's
-understanding of the structured data remains tied to patterns present in the training data rather than true
-grasp of the data structure.
+Results point to most common formats (CSV and JSON) performing the best over different models. For example
+for Llama-3.1-405B we can see that the most common formats achieve the following accuracies respectively,
+96.6\% and 82.0\%, while all the other formats record a significant drop off in accuracy. These results point
+that LLM's understanding of the structured data remains tied to patterns present in the training data rather
+than true grasp of the data structure.
 
 \section{A Survey of Structured Data Representations}
 
@@ -43,12 +43,6 @@ classification system divides these into four main types:
     can create a visual or logical output that meets the requirements of the user.
 
 \end{itemize}
-
-% The categorization of these formats is critical because each imposes a different "tokenization
-% overhead." For instance, JSON requires significant structural punctuation (braces, quotes, colons), whereas
-% YAML relies on whitespace and indentation. The structural density of a format influences the model's ability
-% to maintain context over long sequences, as redundant tokens can "dilute" the attention allocated to the
-% actual semantic content.
 
 \section{Token Efficiency and Economic Impact of Data Serialization}
 
@@ -87,57 +81,46 @@ boards] are covered with LLMs in their top 10 entries.
 
 When optimizing for text2SQL accuracy there are multiple strategies to achieve it:
 \begin{itemize}
-  \item \textbf{Prompt:} By utilizing a prompts we attempt to guide LLMs to generate more accurate queries,
-    zero-shot[13][14], or few-shots[15,16]
+  \item \textbf{Prompt:} By utilizing a well crafted prompt we attempt to guide LLMs to generate more
+    accurate queries, zero-shot[13][14], or few-shots[15,16]
   \item \textbf{Finetuning:} the LLMs to adapt to the text-to-SQL task, including full-parameters fine-tuning
     [17], [18] and parameter-efficient fine-tuning [19], [20].
-  \item \textbf{Task-training:} They train a task-
-    specific text-to-SQL model with training strategies similar
-    to LLMs, such as Transformers [21], [22] and mixture of
-    experts [23].
-  \item \textbf{LLM Agent:} They collaborate with multiple intelligences,
-    dynamically generate and correct SQL queries, handle
-    database matching issues, and improve query accuracy
-    and execution through external tools [24], [25].
+  \item \textbf{Task-training:} They train a task specific text-to-SQL model with training strategies similar
+    to LLMs, such as Transformers [21], [22] and mixture of experts [23].
+  \item \textbf{LLM Agent:} They collaborate with multiple intelligences, dynamically generate and correct
+    SQL queries, handle database matching issues, and improve query accuracy and execution through external
+    tools [24], [25].
 \end{itemize}
 
 \section{Datasets}
 
-There has been a lot of effort in the last years to curate datasets which can be utilized for testing (and
-training) models on task of SQL generation.
-First notable datasets came to the scene in 2017, WikiSQL [57], researchers have annotated data based on
-Wikipedia, it cover $24.241$ database tables, and has more than $80.000$ pairs of natural language questions
-and corresponding query.
+There has been a lot of effort in the last years to curate datasets which can be utilized for testing
+(andtraining) models on task of SQL generation.First notable datasets came to the scene in 2017, WikiSQL
+[57], researchers have annotated data based onWikipedia, it cover $24.241$ database tables, and has more than
+$80.000$ pairs of natural language questionsand corresponding query.
 
-WikiSQL has a problem; it only
-involves one table per question and only supports simple SQL
-operations, which is not representative of expectations we have of these system when deployed in real world.
-In order to overcome these challenges the Spider [12] dataset was introduced, which is one of the most complex
-Text2SQL datasets. Same as WikiSQL it is multi domain, it covers more than $100$ domains with over 200
-databases, where each database has
-$5.1$ tables on average. One more feature is that the tables appearing in the test set are distinct from the
-ones that appear on the train set.
-Compared to the datasets which were present at that time the queries were more complex, including aggregate
-functions, ordering of the results,
-and nested queries, which were divided into 4 levels of difficulty, based on their complexity. This is
-important to consider because all the question present in the
-WikiSQL dataset were classified as EASY.
+WikiSQL has a problem; it only involves one table per question and only supports simple SQL operations, which
+is not representative of expectations we have of these system when deployed in real world. In order to
+overcome these challenges the Spider [12] dataset was introduced, which is one of the most complex Text2SQL
+datasets. Same as WikiSQL it is multi domain, it covers more than $100$ domains with over 200 databases,
+where each database has $5.1$ tables on average. One more feature is that the tables appearing in the test
+set are distinct from the ones that appear on the train set. Compared to the datasets which were present at
+that time the queries were more complex, including aggregate functions, ordering of the results, and nested
+queries, which were divided into 4 levels of difficulty, based on their complexity. This is important to
+consider because all the question present in the WikiSQL dataset were classified as EASY.
 
 Even though the Spider data set introduced a lot of improvements, it still was not a perfect. All of the data
-present is Spider dataset is clean and
-does not suffer from real life problems, such as integer values being stored as string, and other
-inconsistencies. It also significantly increased the sizes of the databases. As stated before this introduced
-new challenges, dealing with dirty database contents (both values and schemas),
+present is Spider dataset is clean and does not suffer from real life problems, such as integer values being
+stored as string, and other inconsistencies. It also significantly increased the sizes of the databases. As
+stated before this introduced new challenges, dealing with dirty database contents (both values and schemas),
 requiring external knowledge about the data in order to link the natural language question to the present database.
 
 The newest addition to these benchmarks is Spider 2.0 [], it introduces data directly pulled from enterprise
-environments like
-Google Analytic and Salesforce. It pulls the real world tasks from these environments, and moves away from
-small and unrealistically clean datasets present in the original Spider dataset. Besides moving away from
-tidy data it also
-introduces another challenge in form of massive cloud schemas which are averaging over 800 columns, intricate
-nested structures, and distinct dialects like BigQuery and Snowflake that require knowledge of external
-documentation. The change in size and complexity moves this task from simple one shot examples into multi
-step agentic workflows where
-queries stretch more than 100 lines. The contrast is clear when looking at leader boards, where top model has
-achieved $91,6\%$ accuracy for the Spider dataset, the top model in the Spider 2.0 only manages $21.3\%$
+environments like Google Analytic and Salesforce. It pulls the real world tasks from these environments, and
+moves away from small and unrealistically clean datasets present in the original Spider dataset. Besides
+moving away from tidy data it also introduces another challenge in form of massive cloud schemas which are
+averaging over 800 columns, intricate nested structures, and distinct dialects like BigQuery and Snowflake
+that require knowledge of external documentation. The change in size and complexity moves this task from
+simple one shot examples into multi step agentic workflows where queries stretch more than 100 lines. The
+contrast is clear when looking at leader boards, where top model has achieved $91,6\%$ accuracy for the
+Spider dataset, the top model in the Spider 2.0 only manages $21.3\%$
