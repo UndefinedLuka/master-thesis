@@ -144,3 +144,118 @@ simple to implement, they fall short when trying to score the outputs that have 
 different in structure.
 
 \subsubsection{Exact Match and Token-Level F1 Score}
+
+The simplest metric is the Exact Match (EM) and token level F1 score. They were popularized by early benchmarks like
+Stanford Question Answering Dataset (SQuAD). EM is  a strict binary indicator, giving a score of $100$ only
+if the normalized candidate is completely the same as ground truth. Otherwise it gives the score of $0$. This
+is effective for short answers and answers that are part of a strict set (single digits, dates, or specific
+keys). They have problem with longer answers because a single missplaced can cause the whole answer to be
+penalized and considered as wrong.
+
+To provide a more granular evaluation, we first calculate token level precision and recall between proposed
+answer and ground truth, with these two we can then compute F1 score. This formula rewards partial
+correctness and is not a strict binary indicator.
+
+\subsubsection{Bilingual Evaluation Understudy}
+
+Originally it was designed for scoring machine translations, the BLEU metric measures precision of $n$-grams
+in a candidate answer compared to the reference text. Brevity penalty was added to prevent models from
+outputting excessively short sequences.
+
+\begin{equation}
+  \text{BLEU} = \text{BP} \cdot \exp {\left( \sum_{n=1}^{N} w_n \log p_n \right)}
+  \quad
+  \text{BP} =
+  \begin{cases}
+    1 & \text{if } c > r \\
+    e^{1-\frac{r}{c}} & \text{if } c \le r
+  \end{cases}
+\end{equation}
+
+% From Re-evaluating the Role of BLEU in Machine Translation Research
+
+Still the metric has shortcomings, it cannot distinguish between synonyms, all the words are equally weighted
+and missing content-bearing words brings no additional penalty. The brevity penalty is an attempt to
+compensate for a shortcoming that it cannot compute recall.
+
+\subsubsection{Recall-Oriented Understudy for Gisting Evaluation}
+
+Recall-Oriented Understudy for Gisting Evaluation (ROUGE), calculates overlap of n-grams, and structural
+similarities between generated candidate and reference. This metric prioritizes recall to ensure that model
+successfully captures the core information present in the reference. Special version ROUGE-L, relies on
+Longest common subsequence algorithm, which identifies the longest sequence of words that appear in both the
+generated and reference texts in the same relative order.
+
+\subsection{Semantic and Embedding based Metrics}
+
+To overcome the limitations of the Lexical-level metrics, sematic and embedding metrics leverage vector
+representations of the answers. These answers are represented in continues embedding space, and compared
+between each other.
+
+\subsubsection{BERTScore}
+
+BERTScore utilizes contextual token embeddings of the pre trained language models. These token embeddings are
+used to calculate cosine similarity between reference  answer and the candidate answer. In order to calculate
+the score, we compare pairwise cosine similarity between these embeddings, and we add a greedy matching step
+which pairs together the most similar tokens.
+
+We can use this score to calculate precision and recall. In order to get precision we need to normalize this
+greedy cosine similarity with candidate length, and for recall we should normalize it with the length of the
+reference text. These two can later be used to calculate F1 score
+
+\subsubsection{Large Language Model Evaluators}
+
+The general idea is to use a superior LLM to score the results of an LLM which has fewer parameters. The idea
+is that the model will be able to capture subtle differences between answers. Two papers present different
+ideas of how to apply this idea in practice.
+
+\begin{itemize}
+  \item \textbf{G-Eval:} it utilizes LLMs (specifically GPT-4), as evaluators, by combining an automatic
+    Chain-of-thought approach with form filling paradigm. When provided with a specific evaluation criteria,
+    the model first generates its own instructions for evaluation. The model then scores the proposed answer
+    against the reference by following the the steps it has created beforehand.
+    This method demonstrates strong alignment with human references, outperforming the metric which were used
+    up until that point. But still some limitations are still present, it shows bias towards machine
+    generated text compared to superior human written content.
+  \item \textbf{MT-Bench:} it proposes 3 LLM as a judge variations.
+    \begin{itemize}
+      \item \emph{Pairwise comparison} An LLM judge is presented with two answers and it needs to determine
+        which one is better. (It utilizes place swapping between two answers in order to account for position bias)
+      \item \emph{Single answer grading} LLM is tasked with assigning a score to a single answer.
+      \item \emph{Reference-guided grading} In some cases it might be beneficial to provide a reference
+        solution if applicable.
+    \end{itemize}
+    All of these methods have their shortcomings. For example, pairwise comparison is not scalable, because
+    the number of pairs grows quadratically with increase of models. Single answer grading may not be able to
+    decern between subtle differences between specific answers, and the results may become unstable.
+\end{itemize}
+
+\subsection{Code Execution Metrics}
+
+When we are reliant on code execution to retrieve information (such as SQL queries, and Python code), textual
+and semantic similarity metric are ineffective. Generated query can be syntactically different to the
+reference one, but produce the same result, or it can be very similar but fail to execute.
+
+\subsubsection{Exact Set Match}
+
+Exact Set Match (ESM), was introduced in Spider benchmark, it tries to evaluate queries without executing
+them. The idea is to parse both reference and proposed queries into abstract syntax trees, normalize them to
+remove syntactic variations, and at the end perform set based comparison of the SQL subclasses. This allows
+us to compare queries without executing them on a database. This method fails to account for structurally
+different syntax, such as using nested subqueries instead of a join.
+
+\subsubsection{Execution Accuracy}
+
+Execution Accuracy (EX), evaluates both queries directly on the same database and tries to compare the
+results. This is a binary evaluation metric and it evaluates the score of $100$ if and only if the results
+are completely the same, otherwise it awards score of $0$.
+
+\subsubsection{Valid Efficiency Score}
+% cite BIRD
+When working with enterprise databases, correctness is only one piece of the equation. Query execution
+efficiency directly influences latency and cost. This is the reason for introduction Valid Efficiency Score
+(VES) in \cite{}, and it aims to score both correctness and efficiency. By evaluation both of these it
+ensures that models are penalized for inefficient queries, such as joins using unindexed columns, which are
+unsuitable for production workflows.
+
+% TODO: Check if we need to add an equation here
