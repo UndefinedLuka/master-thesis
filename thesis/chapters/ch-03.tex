@@ -3,3 +3,77 @@
 %----------------------------------------------------------------
 \chapter{Methodology and Experimental Design}
 \label{ch:methodolgy}
+
+In this chapter we are going to be presenting the experimental setup, which will be used to evaluate two
+distinct information retrieval workflows, Direct Context Inference and Text2SQL. The primary goal these
+experiments is to collect empirical data which will be used as base for our final decision framework.
+
+\section{Conceptual framework}
+
+Framework is going to be divided into two pipelines:
+
+\begin{itemize}
+  \item \textbf{Direct Context Inference:} In this pipeline the entire context of the database is going to be
+    serialized in a specific data format and be provided in context to LLM. The model then proceeds to
+    directly produce the answer based on this data
+  \item \textbf{Text2SQL:} In this pipeline we are going to provide SQL schema of the database to LLM and ask
+    it to produce a query which will answer the provided question. The generated query is then executed
+    against real database to retrieve the final answer.
+\end{itemize}
+
+In order to collect reliable metrics we are going to subject both pipelines to similar metrics collection. We
+are going to track performance metrics for both pipelines, which will provide us with a clear picture of
+their operational efficiency. For Text2SQL we will need to track some additional metrics, in form of query
+performance, we will track execution accuracy, execution efficiency and finally the accuracy. The accuracy
+for both pipelines will be calculated in the same manner, it will be validated against the ground truths
+which are present in the datasets. And finally we are going to collect and visualize all the data from the
+experiments so we can propose our decision framework.
+
+\section{Dataset Justification}
+
+We are going to be using two of the most prominent Text2SQL datasets in our experiments, Spider and BIRD.
+This section will outline our reasoning for choosing these two datasets.
+
+Utilization of both these datasets we plan to achieve a wide variety of domains with real-world data complexities.
+
+\subsubsection{Spider}
+Spider data set was selected because it contains a diverse range of databases which span multiple domains.
+This ensures that the models are actually extracting information from the provided data, and not relying on
+the memorized data from the training data. We plan to use all the databases in their entirety without any
+sub-sampling. For direct context inference every question will be accompanied by all tables present in the
+database, while the Text2SQL will be provided with SQL database schema. Both pipelines are going to be
+provided with natural language question at the end.
+
+Spider dataset has one notable limitation, and that is that data is artificially clean, all data types are
+correct, and columns names are descriptive. This is not something we can expect to encounter in real world.
+
+\subsubsection{BIRD}
+
+To counteract the clean nature of the Spider dataset we are going to utilize BIRD. It provides unsanitized
+real world data, which requires external knowledge ad deeper logical deduction for information retrieval.
+Because BIRD databases are too large to fit into context window of LLM, we are going to sub-sample them. For
+each table $n$ random rows are going to be extracted, to maintain level playing field the same data is going
+to be used for both pipelines. For providing the information to LLMs we are going to utilize the same
+strategy as with Spider dataset.
+
+\subsection{Structural Integrity}
+While deeply nested relational data would provide closer simulation of complex real world data, constructing
+such data would introduce significant technical trade offs. Generating such data through table joins often
+leads to dropped rows, compromising datasets integrity. We are going to prioritize data integrity to its
+complexity, thus when serializing databases into a specific format, each format is going to be transformed
+and appended sequentially into list structure. One more thing to note is that some serialization formats
+don't support deeply nested data and this would provide additional concerns for integrity of our experiments.
+
+\subsection{Excluded Datasets}
+
+\begin{itemize}
+  \item \textbf{Struct-Text-Eval:} The main reason for excluding this dataset is that it is entirely
+    synthetic, and it does not accurately present the real world challenges. Furthermore converting its
+    synthetic data into databases compatible with SQL engines, would present a significant technical
+    challenge. Also a significant factor, is that the it generates inconsistent data across different formats
+    which would prevent a level playing field between different formats.
+  \item \textbf{Spider 2.0:} While it is an important benchmark, it focuses on massive enterprise scale
+    workflows, that push the state of the art commercial models to their limits. Because the goal of this
+    thesis is to assess how local LLMs extract information from data, the extreme scale of data present in
+    this dataset falls outside the scope of this thesis.
+\end{itemize}
