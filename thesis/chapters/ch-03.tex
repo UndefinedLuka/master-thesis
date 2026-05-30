@@ -77,3 +77,175 @@ don't support deeply nested data and this would provide additional concerns for 
     thesis is to assess how local LLMs extract information from data, the extreme scale of data present in
     this dataset falls outside the scope of this thesis.
 \end{itemize}
+
+\section{Data Serialization Formats}
+
+This section presents data serialization formats selected for the experiment. Choosing an optimal format
+requires balancing model's familiarity with the structure against token efficiency and character overhead.
+For the experiments we have chosen six different serialization formats.
+
+\subsection{Structural Formats}
+
+\begin{itemize}
+  \item \textbf{JSON (JavaScript Object Notation):} As the primary exchange format on the internet, JSON is
+    abundant in LLM training data, giving it the edge over the other formats. JSON utilizes explicit key
+    value pairs, and it supports deeply nested structures. On the other hand, it is highly verbose, repeating
+    key names for every single entry, thus inflating the character count.
+
+  \item \textbf{XML (Extensible Markup Language):} It is still used across legacy and enterprise systems,
+    same as JSON it supports deeply nested data. It is even more verbose than JSON, because it requires
+    explicit opening and closing tags for every data entry.
+
+  \item \textbf{YAML (YAML Ain't Markup Language):} It is commonly used for configuration files, it is
+    intended to be human readable subset of JSON. Instead of relying on braces and brackets, YAML uses
+    indentation to define the hierarchy. This significantly reduces the character count compared to other two formats.
+\end{itemize}
+
+\subsection{Positional Formats}
+
+\begin{itemize}
+  \item \textbf{CSV (Comma Separated Values):} It is very simple and easy to parse format, with minimal
+    overhead. Unlike JSON, column headers are only written once at the top of the file. Format relies on the
+    positional convention, assuming the reader know to map the $n$-th value in a row to the $n$-th header
+    column. But it has one significant limitations, it cannot support deeply nested data.
+  \item \textbf{Markdown:} Markdown is included due to its widespread presence and the preference that the
+    LLMs show during the text generation. While the Markdown standard does not explicitly define tables, many
+    variations of it have introduced table layouts, which have become the norm.
+\end{itemize}
+
+\subsection{Token Optimized Formats}
+
+\begin{itemize}
+  \item \textbf{TOON (Token-Oriented Object Notation):} TOON presents a direct response to the need for token
+    efficient data serialization format in LLM context. It minimizes character overhead by separating the schema
+    from the records, thus compressing redundant keys.
+    \begin{itemize}
+      \item \emph{ONTO:} While it has been released recently, ONTO (Object Notation for Token Optimization), TOON
+        was selected over it because of the ease of implementation with already available tools.
+      \item \emph{Consideration:} Because token optimized formats are a new invention, they are yet to enter the
+        standard training corpus for LLMs. This may impair LLMs ability for inference because of the lack of
+        representation.
+    \end{itemize}
+\end{itemize}
+
+\section{Information Extraction}
+
+Here we are going to present two different approaches for retrieving information from structured data with
+LLMs, Direct Context Inference and Text2SQL. While both approaches aim to answer natural language question
+using databases, they operate on fundamentally different mechanisms.
+
+\subsubsection{Direct Context Inference}
+
+Direct Context Inference requires the presence of the serialized data in its entirety in the context window
+of the model. Prompt is structured in such a way where we are first explaining the task at had, provided all
+the required serialized data, and at the end we also ask the question in natural language.
+
+\begin{itemize}
+  \item \textbf{Context Length Constraint:} The primary challenge of this approach is context over saturation.
+    When the input becomes too large, models frequently suffer from the lost in the middle phenomenon
+    \cite{}, where the models struggle to retrieve the information present in the central part of the
+    provided paragraphs.
+  \item \textbf{Output formatting constraints:} LLMs typically experience degraded performance when when
+    being forced to conform output to highly rigid data schemas. To mitigate this drop in performance, we
+    will not be enforcing strict data formatting on the output, instead we will be utilizing flexible
+    verification metrics during the evaluation part of the experiment.
+\end{itemize}
+
+\subsubsection{Text2SQL Inference}
+
+Text2SQL decouples data storage from the models. Instead of reading raw data, the LLM is provided with
+relational schema of the database to generate a valid SQL query for information retrieval.
+\begin{itemize}
+  \item \textbf{Scalability advantage:} Because a database schema is inherently much smaller than the
+    dataset, this approach theoretically enables models to answer questions over databases that are many
+    times over larger than the context window of the model.
+  \item \textbf{Semantic Limitations:} Because the model does not have access to real data examples, it must
+    infer the content of the tables entirely from its schema architecture, column names and their types.
+    Consequentially, if table or column names are poorly named, or non descriptive, we can expect the models
+    ability to produce correct query to degrade.
+\end{itemize}
+
+Because these two paradigms yield fundamentally different outputs (Direct Context Inference generates a
+natural language answer, whereas Text2SQL outputs an SQL query), we need a way to compare the results between the two.
+Both workflows are evaluated against a reference answer. For Direct Context Inference, the model's raw
+natural language output is compared directly against the answer. For the Text2SQL pipeline, the
+model-generated query is executed against the database engine first, and its returned rows are evaluated
+against the reference answer.
+
+\section{Evaluation Metrics}
+
+When evaluating the two ways of retrieving information, we are going to be measuring their operational
+efficiency (resource utilization and time required), and retrieval accuracy (accuracy when compared against
+the reference answer). This will allow us to consider both economic viability and information correctness
+when designing our decision framework.
+
+\subsubsection{Operational efficiency}
+Resource consumption directly translates to financial cost and user experience. We will be monitoring both
+computational latency and token utilization.
+
+\textbf{Token Consumption:} Token tracking is strictly split into input and output tokens. This separation is
+critical because commercial LLM APIs price output tokes and significantly higher rates compared to input
+tokes. Also local models experience differnt throttles during prompt ingestion compared to token generation.
+
+\textbf{System Latency:} Time based metrics measure the end to end duration required to deliver a final
+answer. We are going to record two intervals: \emph{Time to First Token (TTFT)}, it represents the elapsed
+time from query submission to the models first output token; \emph{Total Generation Time}, time required for
+model to complete its entire response
+
+It should be noted that Text2SQL answer is not considered completed until the information is successfully
+retrieved from the database. Therefor the query execution time is also going to be recorded and will be added
+to the Total Generation Time for Text2SQL paradigm. This captures the total latency and penalizes the models
+that generate unoptimized, and computationally expensive queries.
+
+\subsubsection{Retrieval Accuracy}
+In order to calculate the accuracy we need to compare the generated result against the established reference
+ground truth. Because the two pipelines produce different outputs we need to adapt our metrics.
+
+For the Direct Context Inference workflow, the model's raw text response is compared against the reference
+answer using established natural language processing metrics: \emph{ROUGE-L}, measures the longest common
+subsequence of words to determine structural and text-matching overlap; \emph{BERTScore}, leverages
+contextual embeddings to calculate semantic similarity, ensuring models are not penalized for using synonyms
+or alternative phrasing that remains factually correct.
+
+For Text2SQL pipeline answers, received after running the query, we are going to be calculating the same
+metrics as for the Direct Context Inference. Besides these we are going to be capturing some additional
+measurements. Such as Execution Accuracy, this will tell us whether the query runs successfully against the
+database. We are also going to implementing an error correction loop, which will entail the following steps.
+f a generated SQL query fails to execute due to a database syntax or runtime error, the error log is fed back
+to the model, granting it up to three compilation retries to self-correct the query. The system logs the
+exact number of retries required to achieve successful execution. If the model fails to produce a valid,
+correct query after three attempts, it is marked as a definitive failure.
+
+The decision to enforce a strict three-retry cap reflects a user-centric evaluation philosophy. Since
+non-technical end users typically lack the SQL knowledge required to fix broken queries manually, a model
+that cannot self-correct within three automated iterations provides zero operational value to the target
+audience.
+
+\section{Large Language Model Selection}
+
+When choosing the models for our experiment we are going to take three key aspects into consideration,
+reproducibility, quantization, and parameter scale.
+
+\emph{Open weight models} will allow us to have reproducible experiment results, as compared to proprietary
+cloud based models. This mitigates the risk of unannounced upstream model updates.
+
+\emph{Quantization Level}, model quantization is highly effective for reducing memory usage, but it can
+introduce variation in reasoning performance. To prevent quantization from acting as a variable between our
+models we plan to run all our experiments on models with the same level of quantization. This isolates
+architecture and size of the model as the primary performance variables.
+
+\emph{Parameter scale}, we plan to include wide variety of models at different parameter scales. This should
+allow us to defined a point where local models go from being unusable to highly effective for information
+extraction from structured data.
+
+\section{Summary}
+
+This chapter establishes the experimental design to evaluate and compare direct context inference
+and Text2SQL workflows using local, open weight LLMs. By benchmarking these models across six distinct
+serialization formats using the Spider and BIRD datasets, the study isolates how data presentation and
+parameter scale influence extraction performance.
+
+Ultimately, the collected latency, token efficiency, and retrieval accuracy metrics, including an automated
+SQL error correction loop, will be utilized to create a decision framework. This framework will map
+the practical trade offs between local hardware constraints, serialization overhead, and data extraction
+correctness to guide real-world implementation.
