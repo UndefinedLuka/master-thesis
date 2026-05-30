@@ -7,18 +7,19 @@
 \section{Motivation}
 
 In the current age of information technology the amount of generated and stored information is increasing
-with exponential speed. A lot of this data is in the structured form, which allows for easier processing, searching
+exponentially. A lot of this data comes in the structured form, which allows for easier processing, searching
 and exchange of information between different systems. Alongside the speed of data creation we are witnesses
 of the rise of LLMs (Large Language Models). These models show a promising ability in understanding natural
-language, generating texts, analyzing code and making conclusions.
+language, generating texts, analyzing code and coming to conclusions.
 
-Integration of LLMs in the process of extraction and processing of information form structured data is one of
-the currently present problems. When trying to integrate these models in such cases, engineers and
+Integration of LLMs in the process of extraction and processing of information from structured data is one of
+the problems we are currently facing. When trying to utilize these models for such use cases, engineers and
 researchers have to carefully balance the three key aspects: accuracy, latency and cost.
 
-In order for LLMs to process this data, we first need to provided it to its context, this requires choosing
+In order for LLMs to process this data, we first need to provided it to the model in the form it can
+understand. Since it cannot read the data directly, we need to chose
 the right serialization format. Currently the most wide spread formats in the industry are JSON, XML, and
-YAML, but many others are present as well. Since these formats can easily be converted between each other,
+CSV, but many others are present as well. Since these formats can easily be converted between each other,
 the question arises: which format is the optimal when working with LLMs? By choosing the right format
 we can directly influence cost and latency, with minimal changes to the performance and accuracy of the models.
 
@@ -34,27 +35,24 @@ Besides the format itself, there is a problem of choosing the right method for i
 paths that can be explored:
 
 \begin{itemize}
-  \item In-Context Learning: Directly passing the raw serialized data to the prompt (context) of the LLM, so
-    it can infer the information directly
+  \item In-Context Inference: Directly passing the raw serialized data to the prompt (context) of the LLM, so
+    it can extract the information directly
   \item Program aided extraction: By using the LLM for generating code or an SQL prompt, based on the limited
     number of examples, which is executed on the given data in order to extract information
 \end{itemize}
 
 The main problem we are going to be addressing is the lack of a decision framework which would help us in
-deciding which combination of methods (In-Context Learning vs Program aided extraction) and serialization
+deciding which combination of methods (In-Context Inference vs Program aided extraction) and serialization
 format offers the best results in form of cost and speed, based on the size of the input data.
 
 \section{Contributions}
 
-We plan to provide technical knowledge which will be helpful when integrating LLMs int he software products.
-
-The main contribution of this master thesis is suggestion of a decision framework, This framework will
-precisely define which combination of format serialization and method of extraction produces the lowest cost
-and latency, for the data sets of different sized. This framework will cover small dataset, which reach the
-size of around $1.000$ tokens, all the way up to the datasets which are larger than $100.000$ tokens.
-
-All the results and recommendations from this work are validated through experiments, and these experiments
-will be set up in such a way that they are reproducible.
+The main contribution of this thesis is the development of a decision framework that will map operational
+trade offs between In-Context Inference and Text-to-SQL information extraction. While existing works often
+evaluate these methods in isolation, we plan to provide a holistic comparison using local open weight LLMs.
+Furthermore we plan to inspect influence of different data serialization methods on the overall operational
+efficiency and retrieval accuracy during the In-Context Inference. In order to collect all the necessary data
+we plan to run our tests on datasets of varying sizes and of different data quality.
 
 \section{Structure}
 
