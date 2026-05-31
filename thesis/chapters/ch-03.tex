@@ -5,7 +5,7 @@
 \label{ch:methodolgy}
 
 In this chapter we are going to be presenting the experimental setup, which will be used to evaluate two
-distinct information retrieval workflows, Direct Context Inference and Text2SQL. The primary goal these
+distinct information retrieval workflows, Direct Context Inference and Text-to-SQL. The primary goal these
 experiments is to collect empirical data which will be used as base for our final decision framework.
 
 \section{Conceptual framework}
@@ -16,14 +16,14 @@ Framework is going to be divided into two pipelines:
   \item \textbf{Direct Context Inference:} In this pipeline the entire context of the database is going to be
     serialized in a specific data format and be provided in context to LLM. The model then proceeds to
     directly produce the answer based on this data
-  \item \textbf{Text2SQL:} In this pipeline we are going to provide SQL schema of the database to LLM and ask
+  \item \textbf{Text-to-SQL:} In this pipeline we are going to provide SQL schema of the database to LLM and ask
     it to produce a query which will answer the provided question. The generated query is then executed
     against real database to retrieve the final answer.
 \end{itemize}
 
 In order to collect reliable metrics we are going to subject both pipelines to similar metrics collection. We
 are going to track performance metrics for both pipelines, which will provide us with a clear picture of
-their operational efficiency. For Text2SQL we will need to track some additional metrics, in form of query
+their operational efficiency. For Text-to-SQL we will need to track some additional metrics, in form of query
 performance, we will track execution accuracy, execution efficiency and finally the accuracy. The accuracy
 for both pipelines will be calculated in the same manner, it will be validated against the ground truths
 which are present in the datasets. And finally we are going to collect and visualize all the data from the
@@ -31,7 +31,7 @@ experiments so we can propose our decision framework.
 
 \section{Dataset Justification}
 
-We are going to be using two of the most prominent Text2SQL datasets in our experiments, Spider and BIRD.
+We are going to be using two of the most prominent Text-to-SQL datasets in our experiments, Spider and BIRD.
 This section will outline our reasoning for choosing these two datasets.
 
 Utilization of both these datasets we plan to achieve a wide variety of domains with real-world data complexities.
@@ -41,7 +41,7 @@ Spider data set was selected because it contains a diverse range of databases wh
 This ensures that the models are actually extracting information from the provided data, and not relying on
 the memorized data from the training data. We plan to use all the databases in their entirety without any
 sub-sampling. For direct context inference every question will be accompanied by all tables present in the
-database, while the Text2SQL will be provided with SQL database schema. Both pipelines are going to be
+database, while the Text-to-SQL will be provided with SQL database schema. Both pipelines are going to be
 provided with natural language question at the end.
 
 Spider dataset has one notable limitation, and that is that data is artificially clean, all data types are
@@ -131,7 +131,7 @@ For the experiments we have chosen six different serialization formats.
 \section{Information Extraction}
 
 Here we are going to present two different approaches for retrieving information from structured data with
-LLMs, Direct Context Inference and Text2SQL. While both approaches aim to answer natural language question
+LLMs, Direct Context Inference and Text-to-SQL. While both approaches aim to answer natural language question
 using databases, they operate on fundamentally different mechanisms.
 
 \subsubsection{Direct Context Inference}
@@ -151,9 +151,9 @@ the required serialized data, and at the end we also ask the question in natural
     verification metrics during the evaluation part of the experiment.
 \end{itemize}
 
-\subsubsection{Text2SQL Inference}
+\subsubsection{Text-to-SQL Inference}
 
-Text2SQL decouples data storage from the models. Instead of reading raw data, the LLM is provided with
+Text-to-SQL decouples data storage from the models. Instead of reading raw data, the LLM is provided with
 relational schema of the database to generate a valid SQL query for information retrieval.
 \begin{itemize}
   \item \textbf{Scalability advantage:} Because a database schema is inherently much smaller than the
@@ -166,9 +166,10 @@ relational schema of the database to generate a valid SQL query for information 
 \end{itemize}
 
 Because these two paradigms yield fundamentally different outputs (Direct Context Inference generates a
-natural language answer, whereas Text2SQL outputs an SQL query), we need a way to compare the results between the two.
+natural language answer, whereas Text-to-SQL outputs an SQL query), we need a way to compare the results
+between the two.
 Both workflows are evaluated against a reference answer. For Direct Context Inference, the model's raw
-natural language output is compared directly against the answer. For the Text2SQL pipeline, the
+natural language output is compared directly against the answer. For the Text-to-SQL pipeline, the
 model-generated query is executed against the database engine first, and its returned rows are evaluated
 against the reference answer.
 
@@ -192,9 +193,9 @@ answer. We are going to record two intervals: \emph{Time to First Token (TTFT)},
 time from query submission to the models first output token; \emph{Total Generation Time}, time required for
 model to complete its entire response
 
-It should be noted that Text2SQL answer is not considered completed until the information is successfully
+It should be noted that Text-to-SQL answer is not considered completed until the information is successfully
 retrieved from the database. Therefor the query execution time is also going to be recorded and will be added
-to the Total Generation Time for Text2SQL paradigm. This captures the total latency and penalizes the models
+to the Total Generation Time for Text-to-SQL paradigm. This captures the total latency and penalizes the models
 that generate unoptimized, and computationally expensive queries.
 
 \subsubsection{Retrieval Accuracy}
@@ -207,7 +208,7 @@ subsequence of words to determine structural and text-matching overlap; \emph{BE
 contextual embeddings to calculate semantic similarity, ensuring models are not penalized for using synonyms
 or alternative phrasing that remains factually correct.
 
-For Text2SQL pipeline answers, received after running the query, we are going to be calculating the same
+For Text-to-SQL pipeline answers, received after running the query, we are going to be calculating the same
 metrics as for the Direct Context Inference. Besides these we are going to be capturing some additional
 measurements. Such as Execution Accuracy, this will tell us whether the query runs successfully against the
 database. We are also going to implementing an error correction loop, which will entail the following steps.
@@ -241,7 +242,7 @@ extraction from structured data.
 \section{Summary}
 
 This chapter establishes the experimental design to evaluate and compare direct context inference
-and Text2SQL workflows using local, open weight LLMs. By benchmarking these models across six distinct
+and Text-to-SQL workflows using local, open weight LLMs. By benchmarking these models across six distinct
 serialization formats using the Spider and BIRD datasets, the study isolates how data presentation and
 parameter scale influence extraction performance.
 
