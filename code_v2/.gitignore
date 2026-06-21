@@ -1,0 +1,18 @@
+# Benchmark artifacts (downloaded datasets, serialized data, results)
+data/
+results/
+logs/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.ruff_cache/
+.pytest_cache/
+.mypy_cache/
+
+# uv
+# (uv.lock is committed for reproducibility)
+
+# OS
+.DS_Store

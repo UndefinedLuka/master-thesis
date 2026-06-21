@@ -1,0 +1,65 @@
+# Central configuration for the benchmark.
+# This is the file you edit. CLI flags (--bird-sample-n, --model, --base-url, ...)
+# override the values here at runtime.
+
+# Serialization formats used by the Direct Context Inference pipeline.
+# The Text-to-SQL pipeline ignores this list (it only ever uses the SQL schema).
+formats = ["json", "xml", "yaml", "csv", "markdown", "toon"]
+
+# Number of random rows sub-sampled per table for BIRD (whose databases are too
+# large to fit in context). The SAME sampled data is used for both pipelines.
+# Spider is never sub-sampled (subsample_rows is null below).
+bird_sample_n = 100
+
+# Maximum number of self-correction retries for the Text-to-SQL pipeline.
+# Total attempts = 1 initial + sql_retry_cap retries. Thesis mandates 3.
+sql_retry_cap = 3
+
+# Seed for deterministic BIRD row sub-sampling (frozen to disk in `prepare`).
+seed = 42
+
+# ---------------------------------------------------------------------------
+# LLM endpoint (vLLM OpenAI-compatible server). On FRIDA the SLURM script sets
+# this to http://localhost:8000/v1. api_key is ignored by vLLM but the OpenAI
+# client requires a non-empty value.
+# ---------------------------------------------------------------------------
+base_url = "http://localhost:8000/v1"
+api_key = "EMPTY"
+request_timeout_s = 600.0
+max_output_tokens = 2048
+temperature = 0.0
+
+# ---------------------------------------------------------------------------
+# Datasets. Paths are relative to BENCH_ROOT (the code_v2 directory, or the
+# value of the BENCH_ROOT env var). They are populated by `benchmark.cli.download`.
+# ---------------------------------------------------------------------------
+[datasets.spider]
+questions_file = "data/spider/dev.json"
+tables_file = "data/spider/tables.json"
+db_root = "data/spider/database"
+subsample_rows = 0          # 0 / unset => no sub-sampling (use full tables)
+has_evidence = false
+
+[datasets.bird]
+questions_file = "data/bird/dev/dev.json"
+tables_file = "data/bird/dev/dev_tables.json"
+db_root = "data/bird/dev/dev_databases"
+subsample_rows = 100        # falls back to top-level bird_sample_n if 0
+has_evidence = true
+
+# ---------------------------------------------------------------------------
+# Models. MINIMAL PLACEHOLDER LIST — replace/extend with your real lineup.
+# `model_id` is passed verbatim to vLLM (--model) and used as the OpenAI
+# `model` string, so full-precision vs. quantized never changes the test code.
+# `name` is a filesystem-safe label used in result filenames.
+# `quantization` is informational here; the real value is the vLLM launch arg.
+# ---------------------------------------------------------------------------
+[[models]]
+name = "qwen2.5-3b-instruct"
+model_id = "Qwen/Qwen2.5-3B-Instruct"
+quantization = ""
+
+[[models]]
+name = "qwen2.5-7b-instruct"
+model_id = "Qwen/Qwen2.5-7B-Instruct"
+quantization = ""

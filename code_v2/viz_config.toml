@@ -1,0 +1,98 @@
+# =============================================================================
+# Visualization configuration — EDIT THIS FILE to restyle every figure.
+# Used by `python -m benchmark.cli.visualize`. Nothing else needs to change.
+# =============================================================================
+
+[theme]
+# seaborn style: darkgrid | whitegrid | dark | white | ticks
+style = "whitegrid"
+# seaborn context (scales fonts/lines): paper | notebook | talk | poster
+context = "talk"
+font_family = "DejaVu Sans"
+# Output formats written for every figure. PDF = crisp vector for LaTeX.
+formats = ["pdf", "png"]
+dpi = 200
+transparent = false
+# Width in inches for a standard single figure; height derived per-figure.
+fig_width = 11.0
+fig_height = 6.0
+# Despine (remove top/right axes lines) for a cleaner look.
+despine = true
+# Annotate bars with their numeric value.
+annotate_bars = true
+value_format = "{:.2f}"
+
+# -----------------------------------------------------------------------------
+# Color palette. Vibrant and high-contrast by default. Swap `sequence` for any
+# named seaborn/matplotlib palette name (e.g. "Set2", "viridis", "flare") via
+# `palette_name`, OR list explicit hex colors in `sequence` (palette_name = "").
+# -----------------------------------------------------------------------------
+[palette]
+# If non-empty, this named palette overrides `sequence` for categorical hues.
+palette_name = ""
+# Vibrant, color-blind-friendly categorical sequence (used round-robin).
+sequence = [
+  "#4C72B0",  # blue
+  "#DD8452",  # orange
+  "#55A868",  # green
+  "#C44E52",  # red
+  "#8172B3",  # purple
+  "#937860",  # brown
+  "#DA8BC3",  # pink
+  "#8C8C8C",  # grey
+]
+
+# Fixed color per serialization format — keeps formats recognizable across all
+# figures regardless of plot order. Keys must match the `formats` in config.toml
+# plus "sql" for the Text-to-SQL pipeline.
+[palette.by_format]
+json     = "#4C72B0"
+xml      = "#DD8452"
+yaml     = "#55A868"
+csv      = "#C44E52"
+markdown = "#8172B3"
+toon     = "#CCB974"
+sql      = "#64B5CD"
+
+# Pipeline-level colors (used where direct vs sql are compared as two groups).
+[palette.by_pipeline]
+direct = "#4C72B0"
+sql    = "#C44E52"
+
+# Semantic colors for sequential / diverging / good-bad encodings.
+[palette.semantic]
+good       = "#55A868"   # success / match
+bad        = "#C44E52"   # failure
+neutral    = "#8C8C8C"
+input      = "#4C72B0"   # input tokens
+output     = "#DD8452"   # output tokens
+sequential = "rocket"    # named seaborn palette for heatmaps/gradients
+diverging  = "vlag"
+
+# -----------------------------------------------------------------------------
+# Per-figure switches. Set to false to skip generating a figure.
+# -----------------------------------------------------------------------------
+[figures]
+accuracy_overview     = true   # BERTScore + ROUGE-L by approach, per dataset
+token_consumption     = true   # input/output tokens by approach
+latency               = true   # TTFT + total generation time by approach
+sql_diagnostics       = true   # retry distribution, exec-accuracy, result-set match
+parameter_scale       = true   # accuracy vs model parameter count
+tradeoff_scatter      = true   # accuracy vs output tokens (cost/quality frontier)
+format_heatmap        = true   # model x format accuracy heatmap
+
+# Which accuracy metric headlines the scale + tradeoff + heatmap figures.
+primary_metric = "bertscore"   # bertscore | rouge_l
+
+# -----------------------------------------------------------------------------
+# Model parameter sizes (in billions), used by the parameter_scale figure.
+# Keys are model `name`s from config.toml. Models missing here are skipped in
+# that one figure only.
+# -----------------------------------------------------------------------------
+[model_params_b]
+"qwen2.5-3b-instruct" = 3.0
+"qwen2.5-7b-instruct" = 7.0
+
+# Human-friendly display order/labels for approaches on the x-axis.
+[labels]
+approach_order = ["json", "xml", "yaml", "csv", "markdown", "toon", "sql"]
