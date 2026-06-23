@@ -1,0 +1,11 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+*.egg-info/
+
+# Benchmark inputs/outputs (large, regenerated)
+/data/
+/results/
+*.ndjson

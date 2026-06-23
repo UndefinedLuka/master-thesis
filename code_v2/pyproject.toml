@@ -1,0 +1,74 @@
+[project]
+name = "thesis-bench"
+version = "0.1.0"
+description = "Benchmark comparing Direct Context Inference vs Text-to-SQL retrieval with local LLMs"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    # LLM backend (default): Ollama HTTP client. Swappable behind llm.base.LLMClient.
+    "ollama>=0.4.0",
+    # Serialization formats.
+    "pyyaml>=6.0.3",
+    "dict2xml>=1.7.8",
+    "python-toon>=0.1.3",
+    # ROUGE-L: pure-Python, cross-platform, core dependency.
+    "rouge-score>=0.1.2",
+    # Progress bars.
+    "tqdm>=4.67.3",
+]
+
+[project.optional-dependencies]
+# BERTScore pulls torch + transformers (heavy, GPU-centric). Kept optional and
+# isolated to the post-hoc scoring pass so the benchmark loop stays torch-free.
+bertscore = [
+    "bert-score>=0.3.13",
+    "torch>=2.2",
+    "transformers>=4.40",
+]
+
+[project.scripts]
+thesis-bench = "thesis_bench.cli:main"
+
+[dependency-groups]
+dev = [
+    "pyright>=1.1.390",
+    "ruff>=0.15.1",
+    "pytest>=8.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/thesis_bench"]
+
+[tool.pyright]
+include = ["src", "tests"]
+pythonVersion = "3.12"
+typeCheckingMode = "strict"
+# Optional heavy deps (torch/bert_score) are not installed by default.
+reportMissingImports = false
+# Several dependencies (rouge_score, toon, bert_score, ollama's overloaded chat)
+# ship no / incomplete type stubs, leaking `Unknown` into the few call sites that
+# touch them. That is not our code to fix; we contain each untyped call behind an
+# explicit `Any` boundary (eval/metrics.py, eval/bertscore_pass.py,
+# llm/ollama_client.py). The rules below fire ONLY on that dependency leakage —
+# every rule that enforces our own type discipline (reportArgumentType,
+# reportCallIssue, reportReturnType, reportAttributeAccessIssue,
+# reportMissingParameterType, ...) remains at error under strict mode.
+reportMissingTypeStubs = false
+reportUnknownMemberType = false
+reportUnknownVariableType = false
+reportUnknownArgumentType = false
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
