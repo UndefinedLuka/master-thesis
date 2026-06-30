@@ -1,6 +1,3 @@
-%----------------------------------------------------------------
-% Poglavje (Chapter) 3
-%----------------------------------------------------------------
 \chapter{Methodology and Experimental Design}
 \label{ch:methodolgy}
 
@@ -24,9 +21,9 @@ Framework is going to be divided into two pipelines:
 In order to collect reliable metrics we are going to subject both pipelines to similar metrics collection. We
 are going to track performance metrics for both pipelines, which will provide us with a clear picture of
 their operational efficiency. For Text-to-SQL we will need to track some additional metrics, in form of query
-performance, we will track execution accuracy, execution efficiency and finally the accuracy. The accuracy
-for both pipelines will be calculated in the same manner, it will be validated against the ground truths
-which are present in the datasets. And finally we are going to collect and visualize all the data from the
+performance, which will include execution accuracy, execution efficiency and finally the accuracy. The accuracy
+for both pipelines will be calculated in the same manner, it will be validated against the reference answers
+which can be found in the chosen datasets. And finally we are going to collect and visualize all the data from the
 experiments so we can propose our decision framework.
 
 \section{Dataset Justification}
@@ -39,7 +36,7 @@ Utilization of both these datasets we plan to achieve a wide variety of domains 
 \subsubsection{Spider}
 Spider data set was selected because it contains a diverse range of databases which span multiple domains.
 This ensures that the models are actually extracting information from the provided data, and not relying on
-the memorized data from the training data. We plan to use all the databases in their entirety without any
+the memorized knowledge from the training data. We plan to use all the databases in their entirety without any
 sub-sampling. For direct context inference every question will be accompanied by all tables present in the
 database, while the Text-to-SQL will be provided with SQL database schema. Both pipelines are going to be
 provided with natural language question at the end.
@@ -200,7 +197,7 @@ that generate unoptimized, and computationally expensive queries.
 
 \subsubsection{Retrieval Accuracy}
 In order to calculate the accuracy we need to compare the generated result against the established reference
-ground truth. Because the two pipelines produce different outputs we need to adapt our metrics.
+answer. Because the two pipelines produce different outputs we need to adapt our metrics.
 
 For the Direct Context Inference workflow, the model's raw text response is compared against the reference
 answer using established natural language processing metrics: \emph{ROUGE-L}, measures the longest common

@@ -1,6 +1,3 @@
-%----------------------------------------------------------------
-% Poglavje (Chapter) 2
-%----------------------------------------------------------------
 \chapter{Related work}
 \label{ch:related_work}
 
@@ -8,7 +5,7 @@ The research into the relationship between data serialization and performance of
 engineering concern, to the important questions a lot of experts are asking. As LLMs are increasingly
 integrated into enterprise pipelines, the way data is structured, be it JSON, XML, CSV, Markdown, has been
 shown to hold a significant influence over the overall performance of the models (cost, accuracy,
-efficiency). This is not a mere question of our format preference, the benchmarks such as StrucText-Eval
+latency). This is not a mere question of our format preference, the benchmarks such as StrucText-Eval
 \cite{struct-text-eval} has given us insight how such formats influence the overall accuracy of the models.
 Results point to most common formats (CSV and JSON) performing the best over different models. For example
 for Llama-3.1-405B we can see that the most common formats achieve the following accuracies respectively,
@@ -47,18 +44,18 @@ classification system divides these into four main types:
 \section{Token Efficiency and Economic Impact of Data Serialization}
 
 The choice of data format has direct impact on the computational cost of LLMs. Format verbosity determines
-token token usage of the model, and this has a knock on effect for other factors, such as latency, API cost,
-and effective context window.
+token usage of the model, and this has a knock on effect for other factors, such as latency, cost, and accuracy,
+as well as effective context window.
 
 Formats like JSON and XML are inefficient with token usage, as they have been designed for data exchange
 between information systems, where self description and compatibility were more important than their
 verbosity. These formats are designed in such a way that each fields carries its own description, through
 repeated key words, which create overhead when working with LLMs. The experiments performed in
 \cite{onto-serialization-format}, were
-carried out across $1.000$ IoT telemetry records. They have shown that majority of encoding tokens used for
+carried out across $1.000$ IoT telemetry records. They have shown that majority of tokens used for
 encoding data in the JSON format is used up by field names and punctuation ($60.500$ tokens), while the
-actual semantic values take up only $14.274$ tokens, out of $79.774$ tokens. This overhead is problematic in
-the current age, as most pricing is done based on the input and output tokens used, with this higher token
+actual semantic values take up only $14.274$ tokens, out of $79.774$ tokens. This overhead proves to be
+problematic, as most pricing is done based on the input and output tokens used, with this higher token
 usage directly translates to higher operational costs for the users. Also in the same experiment it was shown
 that reduction in tokens used directly correlates to lower latency, when using the custom ONTO format compared to JSON.
 
@@ -93,7 +90,7 @@ When optimizing for Text-to-SQL accuracy there are multiple strategies to achiev
     \cite{hong2024knowledge, zhang2024structure} and parameter-efficient fine-tuning \cite{song2022learning,
     gao2023text}.
   \item \textbf{Task-training:} They train a task specific text-to-SQL model with training strategies similar
-    to LLMs, such as Transformers \cite{li2024codes, fu2023miga} and mixture of experts \cite{}pourreza2024sql.
+    to LLMs, such as Transformers \cite{li2024codes, fu2023miga} and mixture of experts \cite{pourreza2024sql}.
   \item \textbf{LLM Agent:} They collaborate with multiple intelligences, dynamically generate and correct
     SQL queries, handle database matching issues, and improve query accuracy and execution through external
     tools \cite{wang2025mac, wang2024tool}.
@@ -111,7 +108,7 @@ WikiSQL has a problem, it only involves one table per question and only supports
 is not representative of expectations we have of these system when deployed in real world. In order to
 overcome these challenges the Spider \cite{yu2018spider} dataset was introduced, which is one of the most
 complex Text-to-SQL
-datasets. Same as WikiSQL it is multi domain, it covers more than $100$ domains with over 200 databases,
+datasets. Same as WikiSQL it is multi domain, it covers more than $100$ domains with over $200$ databases,
 where each database has $5,1$ tables on average. One more feature is that the tables appearing in the test
 set are distinct from the ones that appear on the train set. Compared to the datasets which were present at
 that time the queries were more complex, including aggregate functions, ordering of the results, and nested
@@ -133,7 +130,7 @@ averaging over 800 columns, intricate nested structures, and distinct dialects l
 that require knowledge of external documentation. The change in size and complexity moves this task from
 simple one shot examples into multi step agentic workflows where queries stretch more than 100 lines. The
 contrast is clear when looking at leader boards, where top model has achieved $91,6\%$ accuracy for the
-Spider dataset, the top model in the Spider 2.0 only manages $21.3\%$
+Spider dataset, the top model in the Spider 2.0 only manages $21,3\%$
 
 \section{Metrics for Automated Output Verification}
 

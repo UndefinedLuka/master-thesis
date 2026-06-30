@@ -1,6 +1,3 @@
-%----------------------------------------------------------------
-% Poglavje (Chapter) 1
-%----------------------------------------------------------------
 \chapter{Introduction}
 \label{ch:introduction}
 
@@ -12,27 +9,28 @@ and exchange of information between different systems. Alongside the speed of da
 of the rise of LLMs (Large Language Models). These models show a promising ability in understanding natural
 language, generating texts, analyzing code and coming to conclusions.
 
-Integration of LLMs in the process of extraction and processing of information from structured data is one of
-the problems we are currently facing. When trying to utilize these models for such use cases, engineers and
+This far LLMs have shown a great promise when utilized for the purposes of extracting and processing information from
+structured and unstructured data. When trying to utilize these models for such use cases, engineers and
 researchers have to carefully balance the three key aspects: accuracy, latency and cost.
 
-In order for LLMs to process this data, we first need to provided it to the model in the form it can
+In order for LLMs to process structured data, we first need to provided it to the model in the form it can
 understand. Since it cannot read the data directly, we need to chose
 the right serialization format. Currently the most wide spread formats in the industry are JSON, XML, and
 CSV, but many others are present as well. Since these formats can easily be converted between each other,
 the question arises: which format is the optimal when working with LLMs? By choosing the right format
-we can directly influence cost and latency, with minimal changes to the performance and accuracy of the models.
+we could directly influence cost, latency, and accuracy, with minimal price being paid by the whole system
+for changing from one format to another.
 
 \section{Problem definition}
 
 Even though the LLMs have a huge potential in the field of information extraction from structured data,
-currently there has only been research into the accuracy of the different models when working with different formats.
-On the other hand the research into how such formats influence latency and cost has not been done. In real
-information systems, where the number of queries is high, and each API is limited, only optimizing for accuracy
-and increasing the latency and cost is not acceptable.
+existing work typically evaluates model accuracy, prompt efficiency, or system latency in isolation. However,
+there is a lack of unified frameworks that jointly consider data serialization format, extraction method, and
+system-level efficiency. In real information systems, where the number of queries is high, and each API is
+limited, only optimizing for accuracy and increasing the latency and cost is not acceptable.
 
-Besides the format itself, there is a problem of choosing the right method for information extraction. There are two
-paths that can be explored:
+Alongside data formats we have to consider other possibilities for information extraction. We are going to
+explore the following to paths:
 
 \begin{itemize}
   \item In-Context Inference: Directly passing the raw serialized data to the prompt (context) of the LLM, so
@@ -43,12 +41,13 @@ paths that can be explored:
 
 The main problem we are going to be addressing is the lack of a decision framework which would help us in
 deciding which combination of methods (In-Context Inference vs Program aided extraction) and serialization
-format offers the best results in form of cost and speed, based on the size of the input data.
+format offers the best compromise between accuracy, latency, and cost, based on the input data.
 
 \section{Contributions}
 
-The main contribution of this thesis is the development of a decision framework that will map operational
-trade offs between In-Context Inference and Text-to-SQL information extraction. While existing works often
+The main contribution of this thesis is the development of a unified decision framework that will map operational
+trade offs between In-Context Inference with different serialization methods and Text-to-SQL information
+extraction. While existing works
 evaluate these methods in isolation, we plan to provide a holistic comparison using local open weight LLMs.
 Furthermore we plan to inspect influence of different data serialization methods on the overall operational
 efficiency and retrieval accuracy during the In-Context Inference. In order to collect all the necessary data
