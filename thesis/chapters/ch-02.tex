@@ -9,7 +9,8 @@ latency). This is not a mere question of our format preference, the benchmarks s
 \cite{struct-text-eval} has given us insight how such formats influence the overall accuracy of the models.
 Results point to most common formats (CSV and JSON) performing the best over different models. For example
 for Llama-3.1-405B we can see that the most common formats achieve the following accuracies respectively,
-$96,6\%$ and $82,0\%$, while all the other formats record a significant drop off in accuracy. These results point
+$96,6\%$ and $82,0\%$, while all the other formats record a significant drop off in accuracy
+\cite{struct-text-eval}. These results point
 that LLM's understanding of the structured data remains tied to patterns present in the training data rather
 than true grasp of the data structure.
 
@@ -20,22 +21,26 @@ representations that we are going to be using. We can identify several main cate
 shown by the StrucText-Eval \cite{struct-text-eval}. These categories show the range of data formats, from
 those that are strictly structured to those that are semi-structured. Structured data is consistent and
 organized. This makes it easy for computers
-to process, but it also creates some overhead when LLMs are tokenizing the data. The most common
+to process, but it also creates some overhead during information tokenization. The most common
 classification system divides these into four main types:
-% TODO: Add citations for all of the data formats !!!
+
 \begin{itemize}
-  \item \textbf{Tree and Tabular Formats:} These includes CVS files and custom hierarchical notation. In these
+  \item \textbf{Tree and Tabular Formats:} These includes CVS \cite{shafranovich2005common} files and custom
+    hierarchical notation. In these
     formats, relationships are defined either by positional alignment (as in CSV) or explicit pointers (as in
     tree structures). However, CSV fundamentally cannot represent nested structures, limiting its
     applicability to flat tabular data.
   \item \textbf{Object Notation:} This category represents the most common data interchange languages in
-    software development, notably JSON (JavaScript Object Notation), YAML (YAML Ain't Markup Language), and
-    TOML. These formats rely on key-value pairs and nesting to represent multi-dimensional data
-  \item \textbf{Markup Languages:} Semi-structured data types like Markdown, LaTeX, and Org represent
+    software development, notably JSON (JavaScript Object Notation) \cite{bray2017javascript}, YAML (YAML
+    Ain't Markup Language) \cite{benkiki2009yaml}, and
+    TOML \cite{preston2021toml}. These formats rely on key-value pairs and nesting to represent multi-dimensional data
+  \item \textbf{Markup Languages:} Semi-structured data types like Markdown \cite{macfarlane2024commonmark},
+    LaTeX \cite{lamport1994latex}, represent
     information in a human-readable form while embedding structural metadata (headings, lists, and semantic
     tags). Markdown has become the de facto standard for general-purpose LLM interactions due to its presence
     in training data.
-  \item \textbf{Code Based Formats:} These include HTML, JSX, SVG, and XML. These formats are special
+  \item \textbf{Code Based Formats:} These include HTML \cite{whatwghtml}, SVG \cite{ferajoli2011svg},
+    and XML \cite{bray1998xml}. These formats are special
     because they are measured not only by how well they follow the rules of language, but also by how well they
     can create a visual or logical output that meets the requirements of the user.
 
@@ -43,13 +48,16 @@ classification system divides these into four main types:
 
 \section{Token Efficiency and Economic Impact of Data Serialization}
 
-The choice of data format has direct impact on the computational cost of LLMs. Format verbosity determines
+Since serialization format has a direct influence on how many characters are used to represent the data it
+has a direct knock on effect on LLMs' performance \cite{liu2024lost}. Format verbosity determines
 token usage of the model, and this has a knock on effect for other factors, such as latency, cost, and accuracy,
 as well as effective context window.
 
-Formats like JSON and XML are inefficient with token usage, as they have been designed for data exchange
+Formats like JSON and XML tend to be more verbose, which leads to a higher token usage, as they have been
+designed for data exchange
 between information systems, where self description and compatibility were more important than their
-verbosity. These formats are designed in such a way that each fields carries its own description, through
+verbosity. These formats are designed in such a way that each fields carries its own description
+\cite{bray1998xml, bray2017javascript}, through
 repeated key words, which create overhead when working with LLMs. The experiments performed in
 \cite{onto-serialization-format}, were
 carried out across $1.000$ IoT telemetry records. They have shown that majority of tokens used for
@@ -57,15 +65,17 @@ encoding data in the JSON format is used up by field names and punctuation ($60.
 actual semantic values take up only $14.274$ tokens, out of $79.774$ tokens. This overhead proves to be
 problematic, as most pricing is done based on the input and output tokens used, with this higher token
 usage directly translates to higher operational costs for the users. Also in the same experiment it was shown
-that reduction in tokens used directly correlates to lower latency, when using the custom ONTO format compared to JSON.
+that reduction in tokens used directly correlates to lower latency, when using the custom ONTO format
+compared to JSON.
 
 In order to address these inefficiencies, there have been multiple efforts aimed at them, in form of ONTO
-(Object Notation for Token Optimization) and TOON (Token Optimized Object Notation). Both formats are
+(Object Notation for Token Optimization)\cite{onto-serialization-format} and TOON (Token Optimized Object
+Notation)\cite{toon-format-2025}. Both formats are
 oriented at fixing the problem of repeated schema for each record, they fix this by declaring all the fields
 only once at the top of the record, and values are arrange in pipe delimited rows with indentation based
 hierarchy. Both of these models claim to use significantly less tokens (TOON $39,9\%$ fewer tokens compared
 to JSON \cite{toon-format-2025}, and ONTO $46-51\%$ compared to JSON\cite{onto-serialization-format}) while
-minimal impacts on accuracy.
+stating they have minimal impact on the accuracy.
 
 \section{Large Language Models for Text-to-SQL}
 
@@ -137,13 +147,15 @@ Spider dataset, the top model in the Spider 2.0 only manages $21,3\%$
 In order to evaluate the performance of each model and check its alignment with the ground truth data, we
 need a well defined metrics which are going to tell us how correct the provided answer is. These evaluation
 metrics can be categorized along these $3$ ideas, which range from checking for literal match to deep
-validation. The first section is \emph{Lexical-Level and String Overlap Metrics}, which check for literal
-text similarity, after it we have \emph{Semantic and Embedding-Based Alignment Metrics} which tries to
-capture contextual meaning beyond the exact word matches. Finally, for the Text-to-SQL purposes we are also
-going to take a look at \emph{Code-Execution-Based Semantic Equivalence Metrics}, these metrics are going to
+validation. The first section is \emph{World Overlap Metrics}, which check for literal
+text similarity, after it we have \emph{Semantic Similarity} which tries to
+capture contextual meaning beyond the exact word matches \cite{novikova2017we}. Finally, for the Text-to-SQL
+purposes we are also
+going to take a look at \emph{Code Execution Metrics} \cite{yu2018spider}, these
+metrics are going to
 check programmatic correctness of outputs by executing them against an isolated environment.
 
-\subsection{Lexical-Level and String Overlap Metrics}
+\subsection{World Overlap Metrics}
 
 These metrics represent historical foundation of natural language generation evaluation, they relay on direct
 token comparisons between candidate outputs and ground truths. While they are computationally inexpensive and
@@ -153,21 +165,21 @@ different in structure.
 \subsubsection{Exact Match and Token-Level F1 Score}
 
 The simplest metric is the Exact Match (EM) and token level F1 score. They were popularized by early benchmarks like
-Stanford Question Answering Dataset (SQuAD). EM is  a strict binary indicator, giving a score of $100$ only
+Stanford Question Answering Dataset (SQuAD) \cite{rajpurkar2016squad}. EM is a strict binary indicator,
+giving a score of $100$ only
 if the normalized candidate is completely the same as ground truth. Otherwise it gives the score of $0$. This
 is effective for short answers and answers that are part of a strict set (single digits, dates, or specific
-keys). They have problem with longer answers because a single missplaced can cause the whole answer to be
+keys). They have problem with longer answers because a single misplaced can cause the whole answer to be
 penalized and considered as wrong.
 
 To provide a more granular evaluation, we first calculate token level precision and recall between proposed
 answer and ground truth, with these two we can then compute F1 score. This formula rewards partial
 correctness and is not a strict binary indicator.
 
-% Citations are missing from this point on.
-
 \subsubsection{Bilingual Evaluation Understudy}
 
-Originally it was designed for scoring machine translations, the BLEU metric measures precision of $n$-grams
+Originally it was designed for scoring machine translations, the BLEU \cite{papineni2002bleu} metric measures
+precision of $n$-grams
 in a candidate answer compared to the reference text. Brevity penalty was added to prevent models from
 outputting excessively short sequences.
 
@@ -181,21 +193,21 @@ outputting excessively short sequences.
   \end{cases}
 \end{equation}
 
-% From Re-evaluating the Role of BLEU in Machine Translation Research
-
-Still the metric has shortcomings, it cannot distinguish between synonyms, all the words are equally weighted
+As stated in \cite{callison2006re}, still the metric has shortcomings, it cannot distinguish between
+synonyms, all the words are equally weighted
 and missing content-bearing words brings no additional penalty. The brevity penalty is an attempt to
 compensate for a shortcoming that it cannot compute recall.
 
 \subsubsection{Recall-Oriented Understudy for Gisting Evaluation}
 
-Recall-Oriented Understudy for Gisting Evaluation (ROUGE), calculates overlap of n-grams, and structural
+Recall-Oriented Understudy for Gisting Evaluation (ROUGE) \cite{lin2004rouge}, calculates overlap of n-grams,
+and structural
 similarities between generated candidate and reference. This metric prioritizes recall to ensure that model
 successfully captures the core information present in the reference. Special version ROUGE-L, relies on
 Longest common subsequence algorithm, which identifies the longest sequence of words that appear in both the
 generated and reference texts in the same relative order.
 
-\subsection{Semantic and Embedding based Metrics}
+\subsection{Semantic Similarity}
 
 To overcome the limitations of the Lexical-level metrics, sematic and embedding metrics leverage vector
 representations of the answers. These answers are represented in continues embedding space, and compared
@@ -203,8 +215,9 @@ between each other.
 
 \subsubsection{BERTScore}
 
-BERTScore utilizes contextual token embeddings of the pre trained language models. These token embeddings are
-used to calculate cosine similarity between reference  answer and the candidate answer. In order to calculate
+BERTScore \cite{zhang2019bertscore} utilizes contextual token embeddings of the pre trained language models.
+These token embeddings are
+used to calculate cosine similarity between reference answer and the candidate answer. In order to calculate
 the score, we compare pairwise cosine similarity between these embeddings, and we add a greedy matching step
 which pairs together the most similar tokens.
 
@@ -219,14 +232,14 @@ is that the model will be able to capture subtle differences between answers. Tw
 ideas of how to apply this idea in practice.
 
 \begin{itemize}
-  \item \textbf{G-Eval:} it utilizes LLMs (specifically GPT-4), as evaluators, by combining an automatic
+  \item \textbf{G-Eval \cite{liu2023g}:} it utilizes LLMs (specifically GPT-4), as evaluators, by combining an automatic
     Chain-of-thought approach with form filling paradigm. When provided with a specific evaluation criteria,
     the model first generates its own instructions for evaluation. The model then scores the proposed answer
     against the reference by following the the steps it has created beforehand.
     This method demonstrates strong alignment with human references, outperforming the metric which were used
     up until that point. But still some limitations are still present, it shows bias towards machine
     generated text compared to superior human written content.
-  \item \textbf{MT-Bench:} it proposes 3 LLM as a judge variations.
+  \item \textbf{MT-Bench \cite{zheng2023judging}:} it proposes 3 LLM as a judge variations.
     \begin{itemize}
       \item \emph{Pairwise comparison} An LLM judge is presented with two answers and it needs to determine
         which one is better. (It utilizes place swapping between two answers in order to account for position bias)
@@ -247,7 +260,8 @@ reference one, but produce the same result, or it can be very similar but fail t
 
 \subsubsection{Exact Set Match}
 
-Exact Set Match (ESM), was introduced in Spider benchmark, it tries to evaluate queries without executing
+Exact Set Match (ESM), was introduced in Spider benchmark \cite{yu2018spider}, it tries to evaluate queries
+without executing
 them. The idea is to parse both reference and proposed queries into abstract syntax trees, normalize them to
 remove syntactic variations, and at the end perform set based comparison of the SQL subclasses. This allows
 us to compare queries without executing them on a database. This method fails to account for structurally
@@ -255,16 +269,14 @@ different syntax, such as using nested subqueries instead of a join.
 
 \subsubsection{Execution Accuracy}
 
-Execution Accuracy (EX), evaluates both queries directly on the same database and tries to compare the
+Execution Accuracy (EX) \cite{yu2018spider}, evaluates both queries directly on the same database and tries
+to compare the
 results. This is a binary evaluation metric and it evaluates the score of $100$ if and only if the results
 are completely the same, otherwise it awards score of $0$.
 
 \subsubsection{Valid Efficiency Score}
-% cite BIRD
 When working with enterprise databases, correctness is only one piece of the equation. Query execution
 efficiency directly influences latency and cost. This is the reason for introduction Valid Efficiency Score
-(VES) in \cite{}, and it aims to score both correctness and efficiency. By evaluation both of these it
+(VES) in \cite{li2023can}, and it aims to score both correctness and efficiency. By evaluation both of these it
 ensures that models are penalized for inefficient queries, such as joins using unindexed columns, which are
 unsuitable for production workflows.
-
-% TODO: Check if we need to add an equation here

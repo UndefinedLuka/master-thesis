@@ -183,12 +183,17 @@ computational latency and token utilization.
 
 \textbf{Token Consumption:} Token tracking is strictly split into input and output tokens. This separation is
 critical because commercial LLM APIs price output tokes and significantly higher rates compared to input
-tokes. Also local models experience differnt throttles during prompt ingestion compared to token generation.
+tokes. Also local models experience different throttles during prompt ingestion compared to token generation.
 
 \textbf{System Latency:} Time based metrics measure the end to end duration required to deliver a final
-answer. We are going to record two intervals: \emph{Time to First Token (TTFT)}, it represents the elapsed
-time from query submission to the models first output token; \emph{Total Generation Time}, time required for
-model to complete its entire response
+answer. In order to capture a clear picture of the system, we are going to decompose latency into distinct
+phases to identify bottlenecks: context processing stage and token generation phase. Where context generation
+phase can be split into two distinct phases, reasoning and generation. To this end we are going to be
+capturing multiple timestamps which are going to allow us to get a clear insight into our system, \emph{Time
+to First Token (TTFT)}, it represents the elapsed
+time from query submission to the models first output token; \emph{Reasoning Time} time spent by the model
+thinking over the problem, and finally the \emph{Generation Time} time spent by the model producing the
+usable human usable response.
 
 It should be noted that Text-to-SQL answer is not considered completed until the information is successfully
 retrieved from the database. Therefor the query execution time is also going to be recorded and will be added

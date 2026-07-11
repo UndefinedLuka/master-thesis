@@ -24,9 +24,11 @@ for changing from one format to another.
 \section{Problem definition}
 
 Even though the LLMs have a huge potential in the field of information extraction from structured data,
-existing work typically evaluates model accuracy, prompt efficiency, or system latency in isolation. However,
-there is a lack of unified frameworks that jointly consider data serialization format, extraction method, and
-system-level efficiency. In real information systems, where the number of queries is high, and each API is
+existing work typically evaluates model accuracy, efficiency, or system latency in isolation. However,
+there is a lack of a unified frameworks that jointly consider data serialization format, extraction method, and
+system-level efficiency. Choice of data serialization format directly dictates the number of tokens, which increases
+computational complexity, finally translating leading to higher latency and operational costs. In real
+information systems, where the number of queries is high, and each API is
 limited, only optimizing for accuracy and increasing the latency and cost is not acceptable.
 
 Alongside data formats we have to consider other possibilities for information extraction. We are going to
