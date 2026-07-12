@@ -28,7 +28,8 @@ experiments so we can propose our decision framework.
 
 \section{Dataset Justification}
 
-We are going to be using two of the most prominent Text-to-SQL datasets in our experiments, Spider and BIRD.
+We are going to be using two of the most prominent Text-to-SQL datasets in our experiments, Spider
+\cite{spide} and BIRD \cite{li2023can}.
 This section will outline our reasoning for choosing these two datasets.
 
 Utilization of both these datasets we plan to achieve a wide variety of domains with real-world data complexities.
@@ -47,11 +48,12 @@ correct, and columns names are descriptive. This is not something we can expect 
 \subsubsection{BIRD}
 
 To counteract the clean nature of the Spider dataset we are going to utilize BIRD. It provides unsanitized
-real world data, which requires external knowledge ad deeper logical deduction for information retrieval.
-Because BIRD databases are too large to fit into context window of LLM, we are going to sub-sample them. For
+real world data, which requires external knowledge and deeper logical deduction for information retrieval.
+Because BIRD databases are too large to fit into context window of LLM in their entirety, we are going to
+sub-sample them. For
 each table $n$ random rows are going to be extracted, to maintain level playing field the same data is going
-to be used for both pipelines. For providing the information to LLMs we are going to utilize the same
-strategy as with Spider dataset.
+to be used for both pipelines. In order to provide the information, necessary for LLMs to answer the
+questions, we are going to utilize the same strategy as for the SPIDER dataset.
 
 \subsection{Structural Integrity}
 While deeply nested relational data would provide closer simulation of complex real world data, constructing
@@ -134,16 +136,17 @@ using databases, they operate on fundamentally different mechanisms.
 \subsubsection{Direct Context Inference}
 
 Direct Context Inference requires the presence of the serialized data in its entirety in the context window
-of the model. Prompt is structured in such a way where we are first explaining the task at had, provided all
+of the model. Prompt is structured in such a way where we are first explaining the task at hand, providing all
 the required serialized data, and at the end we also ask the question in natural language.
 
 \begin{itemize}
   \item \textbf{Context Length Constraint:} The primary challenge of this approach is context over saturation.
     When the input becomes too large, models frequently suffer from the lost in the middle phenomenon
-    \cite{}, where the models struggle to retrieve the information present in the central part of the
+    \cite{liu2024lost}, where the models struggle to retrieve the information present in the central part of the
     provided paragraphs.
   \item \textbf{Output formatting constraints:} LLMs typically experience degraded performance when when
-    being forced to conform output to highly rigid data schemas. To mitigate this drop in performance, we
+    being forced to conform output to highly rigid data schemas \cite{tam2024let}. To mitigate this drop in
+    performance, we
     will not be enforcing strict data formatting on the output, instead we will be utilizing flexible
     verification metrics during the evaluation part of the experiment.
 \end{itemize}
@@ -155,7 +158,7 @@ relational schema of the database to generate a valid SQL query for information 
 \begin{itemize}
   \item \textbf{Scalability advantage:} Because a database schema is inherently much smaller than the
     dataset, this approach theoretically enables models to answer questions over databases that are many
-    times over larger than the context window of the model.
+    times larger than the context window of the model.
   \item \textbf{Semantic Limitations:} Because the model does not have access to real data examples, it must
     infer the content of the tables entirely from its schema architecture, column names and their types.
     Consequentially, if table or column names are poorly named, or non descriptive, we can expect the models
@@ -181,11 +184,11 @@ when designing our decision framework.
 Resource consumption directly translates to financial cost and user experience. We will be monitoring both
 computational latency and token utilization.
 
-\textbf{Token Consumption:} Token tracking is strictly split into input and output tokens. This separation is
-critical because commercial LLM APIs price output tokes and significantly higher rates compared to input
-tokes. Also local models experience different throttles during prompt ingestion compared to token generation.
+\textbf{Token Consumption:} Token tracking is strictly split into input, output, and thinking tokens. This separation is
+critical because commercial LLM APIs price output tokens significantly higher than other kinds. Also local
+models experience different throttles during prompt ingestion compared to token generation.
 
-\textbf{System Latency:} Time based metrics measure the end to end duration required to deliver a final
+\textbf{System Latency:} Time based metrics measure end to end duration required to deliver a final
 answer. In order to capture a clear picture of the system, we are going to decompose latency into distinct
 phases to identify bottlenecks: context processing stage and token generation phase. Where context generation
 phase can be split into two distinct phases, reasoning and generation. To this end we are going to be
@@ -195,7 +198,7 @@ time from query submission to the models first output token; \emph{Reasoning Tim
 thinking over the problem, and finally the \emph{Generation Time} time spent by the model producing the
 usable human usable response.
 
-It should be noted that Text-to-SQL answer is not considered completed until the information is successfully
+It should be noted that Text-to-SQL answer is not considered complete until the information is successfully
 retrieved from the database. Therefor the query execution time is also going to be recorded and will be added
 to the Total Generation Time for Text-to-SQL paradigm. This captures the total latency and penalizes the models
 that generate unoptimized, and computationally expensive queries.
@@ -214,7 +217,7 @@ For Text-to-SQL pipeline answers, received after running the query, we are going
 metrics as for the Direct Context Inference. Besides these we are going to be capturing some additional
 measurements. Such as Execution Accuracy, this will tell us whether the query runs successfully against the
 database. We are also going to implementing an error correction loop, which will entail the following steps.
-f a generated SQL query fails to execute due to a database syntax or runtime error, the error log is fed back
+If a generated SQL query fails to execute due to a database syntax or runtime error, the error log is fed back
 to the model, granting it up to three compilation retries to self-correct the query. The system logs the
 exact number of retries required to achieve successful execution. If the model fails to produce a valid,
 correct query after three attempts, it is marked as a definitive failure.
