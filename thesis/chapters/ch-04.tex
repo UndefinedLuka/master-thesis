@@ -1,2 +1,182 @@
 \chapter{Implementation}
 \label{ch:implementation}
+
+This chapter describes how the experimental design introduced in Chapter~\ref{ch:methodolgy} is implemented
+end to end. We will cover the infrastructure, model selection (selection criteria), result evaluation, and
+test reproducibility.
+
+\section{Computational Infrastructure}
+
+All experiments are executed on the FRIDA \cite{ulfri_rdc} high-performance computing cluster operated by the
+Research Data
+Centre at the Faculty of Computer and Information Science (RDC@FRI), University of Ljubljana. FRIDA is
+managed by the Slurm workload scheduler, which provides GPU allocation and walltime-based job
+preemption. The primary compute target is a single NVIDIA H100 GPU with 80~GB of high-bandwidth memory, which
+provides sufficient capacity to hold even the largest quantized model (27~billion parameters) entirely in GPU
+memory while maintaining a 128K-token key-value cache. For scheduling flexibility, A100 80~GB nodes serve as
+a fallback partition.
+
+\subsection{Container Environment}
+
+FRIDA does not expose a traditional module system. Instead, all software environments are packaged as Enroot
+containers managed through the Pyxis Slurm plugin. Our container image is based on NVIDIA's NGC
+\texttt{pytorch:25.06-py3}, which provides CUDA, cuDNN, and Python~3.12 out of the box. On top of this base
+image, we add \texttt{llama.cpp}. The scoring dependencies (PyTorch,
+Transformers, rouge-score, bert-score) are co-installed as optional package extras. The
+fully built container is exported as a squashfs image (\texttt{.sqsh}).
+
+\section{Model Selection and Quantization}
+
+We evaluate three families of open-weight instruction-tuned language models, chosen to span a wide parameter
+range while remaining recent enough to reflect current architectural advances:
+
+\begin{itemize}
+  \item \textbf{Ministral~3} \cite{liu2026ministral} - available at 3B, 8B, and 14B parameters.
+    This family uses a sliding-window attention mechanism and is optimized for low-latency deployment.
+  \item \textbf{Qwen~3.5} \cite{yang2025qwen3} - available at 0.8B, 2B, 4B, 9B, and 27B
+    parameters. Qwen~3.5 models feature hybrid thinking capabilities with explicit reasoning traces enclosed
+    in \texttt{<think>} blocks.
+  \item \textbf{Gemma~4} \cite{gemmateam2026gemma4technicalreport} - a recently released family of lightweight open
+    models designed for efficient on-device and server-side deployment.
+\end{itemize}
+
+Together, these three families give us thirteen distinct model sizes ranging from sub-1B to 27B parameters,
+enabling fine-grained analysis of the relationship between model scale and information extraction accuracy.
+
+\subsection{Quantization Strategy}
+
+All models are served in the GGUF format \cite{llamacpp} using the \textbf{Q4\_K\_M} quantization
+scheme. Q4\_K\_M belongs to the k-quant family introduced in the \texttt{llama.cpp} \cite{llamacpp}
+ecosystem, which applies mixed-precision quantization: most weight tensors are stored at 4-bit precision,
+while attention key/value projection matrices and the output head retain higher precision (6-bit).
+
+We choose Q4\_K\_M for three reasons. First, it offers the best empirically documented trade-off between
+perplexity degradation and memory savings, typically within 0.5 perplexity points of the full-precision
+baseline. Second, it enables us to fit models up to 27B parameters on a single 80~GB GPU with room for a full
+128K-token KV cache. Third, applying the same quantization scheme uniformly across all models ensures that
+architecture and parameter count remain the only variables under test.
+
+\subsection{Inference Configuration}
+
+The following parameters are held constant across all models and experiments:
+
+\begin{itemize}
+  \item \textbf{Context window:} 131.072 tokens (128K).
+  \item \textbf{GPU offload:} all model layers reside on the GPU (no CPU fallback is used).
+  \item \textbf{Temperature:} 0.0 (greedy decoding), ensuring deterministic and reproducible outputs across runs.
+  \item \textbf{Maximum output tokens:} 4.096.
+  \item \textbf{KV-cache reset:} the key-value cache is fully cleared between consecutive questions,
+    preventing any information leakage or prefix-caching effects that could distort timing measurements.
+\end{itemize}
+
+\section{Software Architecture}
+
+The benchmark system is implemented as a Python package, structured using a standard \texttt{src} layout.
+
+\subsection{CLI Pipeline}
+
+The evaluation workflow is divided into six sequential stages, each exposed as an independent command-line entry point:
+
+\begin{enumerate}
+  \item \textbf{Download} - fetches the Spider and BIRD dataset archives from their official distribution channels.
+  \item \textbf{Sample} - materializes sub-sampled BIRD databases to disk as standalone SQLite files,
+    ensuring all downstream consumers read identical data.
+  \item \textbf{References} - executes each example's gold SQL query against the appropriate database,
+    producing reference answer rows persisted as NDJSON.
+  \item \textbf{Convert} - optionally serializes all databases into all six formats and writes them to disk
+    for inspection and debugging.
+  \item \textbf{Benchmark} - runs one slice of the experiment (a specific model, dataset, pipeline, and set
+    of formats), recording raw model outputs and timing metrics.
+  \item \textbf{Score} - computes retrieval accuracy metrics (ROUGE-L, BERTScore, execution accuracy) in a
+    deferred pass over the benchmark outputs.
+\end{enumerate}
+
+\subsection{LLM Interface}
+
+As LLM interface we have decided to use Llama Cpp, which allows us to load GGUF models directly into process memory via
+the exposed bindings. This interface allows us fine grained control over all the model parameters, so we can ensure
+the same conditions during all the experiment runs.
+
+\subsection{Streaming and Timing Measurement}
+
+Backend always streams its responses (token by token). Streaming is essential because time-to-first-token
+(TTFT),can only be measured by observing when the first token arrives after the request is dispatched.
+
+We monitor the token stream for reasoning phase markers. Models in the Qwen~3.5 family emit explicit
+\texttt{<think>...</think>} blocks containing their thinking part of the answer. We timestamp the closing
+\texttt{</think>} tag, which allows us to separate reasoning time from generation time. We also strip the
+thinking block from the final output so that accuracy scoring evaluates only the model's visible answer, not
+its internal processes.
+
+\subsection{Serialization}
+
+The six serialization formats defined in Chapter~\ref{ch:methodolgy} are implemented as encoder
+functions, each accepting a database contents and returning a formatted string. Tables are serialized
+independently and concatenated for the final output, which is used in the later stages.
+
+\section{Dataset Preparation}
+
+\subsection{Spider}
+
+The Spider dataset is obtained from its official distribution
+page\footnote{\url{https://yale-lily.github.io/spider}} maintained by the Yale LILY lab. We use the complete
+dataset without modification: all database tables retain their full row sets, since most of the Spider's databases are
+small enough to fit within the 128K context window when serialized in any of the six formats.
+
+\subsection{BIRD}
+
+The BIRD dataset is downloaded from its official benchmark
+site\footnote{\url{https://bird-bench.github.io/}}. Unlike Spider, BIRD's databases contain real-world data
+with tables spanning tens of thousands of rows, far exceeding the context capacity of models present. We therefore
+subsample each table to a maximum of $1.000$ rows using a deterministic sampling strategy (setting a seed in
+order to make it reproducible)
+
+The sampled databases are materialized as standalone SQLite files written to disk. It guarantees that three
+consumers (the serialization encoders, the reference answer generator, and the Text-to-SQL query executor),
+all operate on exactly the same data.
+
+\section{Benchmark Execution}
+
+\subsection{Direct Context Inference}
+
+For the direct pipeline, the runner iterates over formats and questions. Before dispatching each question, the
+runner tokenizes the complete prompt (system message plus serialized data plus user question) and checks
+whether the token count exceeds the available context window  Examples that do not
+fit are recorded with an explicit context exceeded marker and skipped, keeping tack of which examples were attempted.
+
+\subsection{Text-to-SQL}
+
+For the Text-to-SQL pipeline, the model receives the database schema as DDL statements and must produce a
+valid SQLite query. When the generated SQL fails to execute (due to syntax errors, missing columns, or
+runtime exceptions), the error message is appended to the conversation as a user message and the model is
+given another attempt. This error-correction loop runs up to three retry attempts beyond the initial
+generation. All attempts are recorded with their individual timing and token metrics, the final reported
+metrics sum token counts and generation times across all attempts, reflecting the true resource cost of
+arriving at a working query. If the model fails to produce a valid query after exhausting all retries, the
+example is marked as a definitive failure.
+
+\subsection{Prompt Design}
+
+Both pipelines use deliberately minimal prompt templates. The direct inference prompt assigns the model the
+role of a 'precise information retrieval assistant' with constraints to use only the provided data, output
+'N/A' for missing information, and avoid conversational filler. The Text-to-SQL prompt assigns the role of
+a 'precise Text-to-SQL translator' constrained to output SQLite compatible SQL.
+Both templates inject the serialized data (or schema DDL) at a designated placeholder. The prompts are
+intentionally non-leading: we avoid few-shot examples or format-specific hints so that the model's inherent
+capability remains the variable under test.
+
+\section{Scoring Pass}
+
+Accuracy metrics are computed in a separate pass. We read the raw benchmark NDJSON, and join each record with
+its pre-computed reference answer, and write
+a scored output file. Three metrics are computed as described in Chapter~\ref{ch:methodolgy}:
+
+\begin{itemize}
+  \item \textbf{ROUGE-L:} measures the longest common subsequence overlap between the model's output and the
+    reference answer, using Porter stemming for normalization.
+  \item \textbf{BERTScore:} computes contextual embedding similarity using the Roberta large model
+    with baseline rescaling.
+  \item \textbf{Execution accuracy:} (Text-to-SQL only) compares the predicted query's result set against the
+    gold query's result set. Comparison is order-sensitive only when the gold SQL contains a top-level
+    \texttt{ORDER BY} clause; otherwise, row sets are compared as unordered collections with numeric canonicalization.
+\end{itemize}

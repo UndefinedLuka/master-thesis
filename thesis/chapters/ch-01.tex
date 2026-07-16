@@ -24,7 +24,9 @@ for changing from one format to another.
 \section{Problem definition}
 
 Even though the LLMs have a huge potential in the field of information extraction from structured data,
-existing work typically evaluates model accuracy, efficiency, or system latency in isolation. However,
+existing work typically evaluates model accuracy\cite{struct-text-eval}, efficiency\cite{toon-format-2025},
+or system latency\cite{fernandez2025energy} in
+isolation. However,
 there is a lack of a unified frameworks that jointly consider data serialization format, extraction method, and
 system-level efficiency. Choice of data serialization format directly dictates the number of tokens, which increases
 computational complexity, finally translating leading to higher latency and operational costs. In real
@@ -57,4 +59,4 @@ we plan to run our tests on datasets of varying sizes and of different data qual
 
 \section{Structure}
 
-\lipsum[1][1-10]
+% Add this at the end
