@@ -1,23 +1,78 @@
 [project]
-name = "code"
+name = "thesis-eval"
 version = "0.1.0"
-description = "Add your description here"
+description = "Evaluation pipelines for local LLMs on structured-data information retrieval (Spider + BIRD, Direct Context Inference + Text-to-SQL)"
 readme = "README.md"
-requires-python = ">=3.14"
+# 3.12+ so frida container Pythons (NGC images) work; local dev uses 3.14 (.python-version).
+requires-python = ">=3.12"
 dependencies = [
-    "dict2xml>=1.7.8",
-    "dicttoxml>=1.7.16",
-    "llama-cpp-python>=0.3.20",
-    "polars>=1.38.1",
-    "pyarrow>=23.0.1",
-    "python-toon>=0.1.3",
+    # serialization formats
     "pyyaml>=6.0.3",
-    "ruff>=0.15.1",
-    "tomlkit>=0.14.0",
+    "dict2xml>=1.7.8",
+    "python-toon>=0.1.3",
+    # downloads: BIRD (http) + Spider (google drive)
+    "httpx>=0.28.1",
+    "gdown>=5.2.0",
+    # progress
     "tqdm>=4.67.3",
+    # default in-process LLM backend (GGUF). Reinstall with the OS build flag,
+    # see README. The openai_compat backend needs only httpx (already above).
+    "llama-cpp-python>=0.3.20",
 ]
+
+[project.optional-dependencies]
+# Heavy scoring stack (torch/transformers). Installed only for the separate
+# `score_results` pass so the generation environment stays lean.
+#   uv sync --extra metrics
+metrics = [
+    "rouge-score>=0.1.2",
+    "bert-score>=0.3.13",
+    "torch>=2.5.0",
+    "transformers>=4.46.0",
+]
+
+[project.scripts]
+thesis-download = "cli.download_datasets:main"
+thesis-sample-dbs = "cli.build_sampled_dbs:main"
+thesis-references = "cli.build_references:main"
+thesis-convert = "cli.convert_data:main"
+thesis-benchmark = "cli.run_benchmark:main"
+thesis-run-all = "cli.run_all:main"
+thesis-score = "cli.score_results:main"
 
 [dependency-groups]
 dev = [
     "ruff>=0.15.1",
+    "pytest>=8.3.0",
 ]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = [
+    "src/cli",
+    "src/config",
+    "src/datasets",
+    "src/llm",
+    "src/metrics",
+    "src/pipelines",
+    "src/prompts",
+    "src/reference",
+    "src/results",
+    "src/serialization",
+    "src/sqlite",
+]
+
+[tool.ruff]
+line-length = 100
+src = ["src"]
+
+[tool.ruff.lint]
+# pyflakes, pycodestyle, isort, pyupgrade, flake8-bugbear
+select = ["F", "E", "W", "I", "UP", "B"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]

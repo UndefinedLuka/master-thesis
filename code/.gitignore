@@ -1,0 +1,16 @@
+# large artifacts never committed
+models/
+models_unused/
+*.gguf
+data/
+
+# benchmark outputs (NDJSON result files) — anchored to the repo-relative root so the
+# src/results/ code package stays tracked
+/results/
+
+# environments / caches
+.venv/
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+.DS_Store
