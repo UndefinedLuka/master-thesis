@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --job-name=thesis-build-container
 #SBATCH --partition=frida
-#SBATCH --gres=gpu:1
+#SBATCH --gres=gpu:A100_80GB:1
 #SBATCH --cpus-per-task=16
 #SBATCH --mem=64G
 #SBATCH --time=2:00:00
@@ -30,7 +30,12 @@ srun --container-image "$BASE_IMAGE" \
      bash -exc '
        # llama-cpp-python must be COMPILED with CUDA first (the PyPI wheel is CPU-only on
        # Linux); installing it up front stops the project install from grabbing that wheel.
-       CMAKE_ARGS="-DGGML_CUDA=on" FORCE_CMAKE=1 \
+       # Explicit arch list — cmake defaults to "native" (only the build-time GPU), which
+       # produces a binary that aborts with "no kernel image is available" on any other
+       # arch. FRIDA schedules across L4 (89), A100/A100_80GB (80), H100 (90), B200/B300
+       # (100 / 120); include everything we might land on.
+       CMAKE_ARGS="-DGGML_CUDA=on -DCMAKE_CUDA_ARCHITECTURES=80;89;90;100;120" \
+           FORCE_CMAKE=1 \
            pip install --no-cache-dir --no-binary llama-cpp-python "llama-cpp-python>=0.3.20"
 
        # Project + metrics extra from pyproject. torch/transformers already ship with the
