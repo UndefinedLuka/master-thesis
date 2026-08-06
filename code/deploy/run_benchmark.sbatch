@@ -14,7 +14,9 @@
 #   sbatch deploy/run_benchmark.sbatch bird text_to_sql Qwen3.5-9B-Q4_K_M.gguf --limit 10
 #
 # Resumable: requeue the same command after a timeout/preemption and it continues.
-# No H100 free? Change --gres to gpu:A100_80GB:1.
+#
+# Keep --gres on H100 even if the queue is busy: TTFT and tokens/s are only comparable across
+# models measured on the same GPU type. Waiting is cheaper than re-running the campaign.
 
 set -euo pipefail
 

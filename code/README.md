@@ -108,6 +108,7 @@ uv run python -m cli.run_benchmark --dataset bird  --pipeline text_to_sql --mode
 # ... or everything at once (all models in models/ x both datasets x both pipelines)
 uv run python -m cli.run_all
 uv run python -m cli.run_all --limit 50  # smoke test
+uv run python -m cli.run_all --models Qwen3.5-2B-Q4_K_M.gguf,Qwen3.5-4B-Q4_K_M.gguf  # subset
 
 # 7. Score results (needs: uv sync --extra metrics)
 uv run python -m cli.score_results --results results/

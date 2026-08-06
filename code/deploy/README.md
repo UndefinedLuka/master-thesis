@@ -37,12 +37,12 @@ $WORK/thesis/
   hf-cache/          # HF_HOME (BERTScore downloads roberta-large here once)
 ```
 
-Copy code + models + datasets from your machine (datasets are easier to download locally —
-Spider comes from Google Drive via gdown, which is awkward from a batch node):
+Copy code + datasets from your machine (datasets are easier to download locally — Spider comes
+from Google Drive via gdown, which is awkward from a batch node). Models are better fetched
+directly on FRIDA, see §2:
 
 ```bash
-rsync -avP --exclude .venv --exclude results code/ login-frida.rdc.si:\$WORK/thesis/code/
-rsync -avP code/models/*.gguf login-frida.rdc.si:\$WORK/thesis/code/models/
+rsync -avP --exclude .venv --exclude results --exclude models code/ login-frida.rdc.si:\$WORK/thesis/code/
 rsync -avP code/data/ login-frida.rdc.si:\$WORK/thesis/code/data/
 ```
 
@@ -50,7 +50,41 @@ If `data/` was not synced: run `python -m cli.download_datasets`, then
 `python -m cli.build_sampled_dbs`, then `python -m cli.build_references` inside a container
 job (compute nodes have outbound internet).
 
-## 2. Build the container (one-time per dependency change)
+## 2. Models
+
+Pull the GGUFs straight onto `$WORK` rather than rsyncing tens of GB over the Teleport proxy.
+`deploy/models.txt` holds one HuggingFace download URL per line (blank lines and `#` comments
+ignored — uncomment the models you want); `deploy/download_models.sh` needs only bash + curl,
+so it runs on the login node with no container:
+
+```bash
+# on login-frida, in $WORK/thesis/code
+bash deploy/download_models.sh                 # every uncommented URL in deploy/models.txt
+JOBS=6 bash deploy/download_models.sh          # 6 concurrent downloads (default 3)
+JOBS=1 bash deploy/download_models.sh          # sequential, with a live progress bar
+HF_TOKEN=hf_... bash deploy/download_models.sh # gated repos
+```
+
+Each file lands as `models/<basename>.gguf`, where the basename is the URL's last path segment
+minus `?download=true` — which is exactly the name you later pass to `--model`. A single file
+by hand is just:
+
+```bash
+curl -L --fail --retry 5 --retry-delay 5 -C - \
+  -o models/Qwen3.5-2B-Q4_K_M.gguf \
+  "https://huggingface.co/unsloth/Qwen3.5-2B-GGUF/resolve/main/Qwen3.5-2B-Q4_K_M.gguf?download=true"
+```
+
+`-L` because HF redirects to a CDN, `--fail` so a 404 does not silently write an HTML error
+page as a `.gguf`, `-C -` to resume, and the URL quoted so the shell keeps `?download=true`.
+
+The script is idempotent and crash-safe: present models are skipped, interrupted downloads
+resume from the `.part` file, and the final name appears only after the bytes are complete and
+verified to start with the GGUF magic. So just re-run it after adding a line or losing a
+connection. If login-node egress is ever blocked, `sbatch deploy/download_models.sbatch` does
+the same thing from a compute node (no `--gres`, so it schedules almost immediately).
+
+## 3. Build the container (one-time per dependency change)
 
 ```bash
 sbatch deploy/build_container.sbatch
@@ -64,7 +98,7 @@ squashfs instead of recompiling.
 
 Home is NOT auto-mounted in containers; every job template mounts `$WORK` explicitly.
 
-## 3. Smoke test on the dev partition (interactive)
+## 4. Smoke test on the dev partition (interactive)
 
 ```bash
 srun -p dev --gres=gpu:A100_80GB:1 -c 16 --mem=64G --time=2:00:00 \
@@ -86,14 +120,53 @@ Two things to verify on the first smoke run:
    the second TTFT is NOT near zero; a collapsed TTFT means prefix caching leaked back and
    the llama-cpp-python version needs pinning/adapting.
 
-## 4. Production runs (frida partition)
+The `dev` partition only offers L4/A100, so timings from a smoke run are **not** comparable with
+production results — it is here to check that things work, not to measure. Delete any smoke
+`results/` before the real run (`--limit` output is otherwise indistinguishable from a full slice
+on resume).
+
+## 5. Production runs (frida partition)
+
+**Several models at once — the fast path.** `deploy/run_models.sbatch` is a job array with one
+task per model, each on its own dedicated H100. Each task loads its model once and runs all four
+of its slices (spider|bird × direct|text_to_sql), so wall-clock drops roughly linearly in the
+number of models:
+
+```bash
+sbatch --array=0-2 deploy/run_models.sbatch \
+    Qwen3.5-0.8B-Q4_K_M.gguf \
+    Qwen3.5-2B-Q4_K_M.gguf \
+    Qwen3.5-4B-Q4_K_M.gguf
+```
+
+`--array` indices are 0-based and index into the positional model list, so `--array=0-2` runs
+all three concurrently. Variations:
+
+```bash
+# smoke test first — extra cli.run_all flags go through RUN_ARGS, since the positional
+# arguments are the model list
+sbatch --export=ALL,RUN_ARGS="--limit 10" --array=0-2 deploy/run_models.sbatch <models...>
+
+sbatch --array=0-2%2 deploy/run_models.sbatch <models...>   # at most 2 running at a time
+sbatch --array=1-1   deploy/run_models.sbatch <models...>   # re-run just the 2B (index 1)
+```
+
+Keep `--gres` as the template sets it. Overriding it per task would measure different models on
+different hardware — see "Which GPU to ask for" below.
+
+This is safe to parallelize because each task only ever writes
+`results/<dataset>/<pipeline>/<format>/<model>.ndjson` and the filename is derived from the
+model name — no two tasks touch the same file. Logs are `%A_%a` (array id + task id), one per
+task. Under the hood it is `python -m cli.run_all --models <one model>`.
+
+**Single slices, or everything sequentially:**
 
 ```bash
 # one slice: <dataset> <pipeline> <model.gguf from models/>
 sbatch deploy/run_benchmark.sbatch spider direct Qwen3.5-0.8B-Q4_K_M.gguf
 sbatch deploy/run_benchmark.sbatch bird text_to_sql Ministral-3-3B-Instruct-2512-Q4_K_M.gguf
 
-# or everything: all models in models/ x both datasets x both pipelines
+# all models in models/ x both datasets x both pipelines, one after another on one GPU
 sbatch deploy/run_all.sbatch
 ```
 
@@ -103,13 +176,48 @@ re-runs at most one fsync interval of examples — see `FSYNC_INTERVAL` in
 `src/results/store.py`). Walltime on `frida` maxes out at 7 days; size `--time` per slice
 and requeue as needed.
 
+### Which GPU to ask for
+
+**All models run on H100 (`--gres=gpu:H100:1`), each on a card of its own.** This is not only
+the fastest option, it is required for the results to mean anything: the benchmark records TTFT
+and tokens/s, so a model measured on an A100 is not comparable to one measured on an H100. Two
+models sharing a single card would be just as bad — they would contend for HBM bandwidth and
+distort both models' timings. Keep the GPU type uniform across the whole campaign; if H100s are
+backed up, move the *entire* array to another type rather than mixing, and re-run anything
+already measured on the old one.
+
+Why H100 specifically: the workload is single-sequence greedy decoding (`TEMPERATURE = 0.0`),
+so it is **memory-bandwidth bound, not compute bound** — HBM bandwidth sets tokens/s and the
+compute class barely matters. H100 ≈ 3.35 TB/s vs A100-80GB ≈ 2.0 TB/s (so ~1.7× faster
+decoding) vs L4 ≈ 0.3 TB/s. VRAM is dominated by the **KV cache**, not the weights: a 4B model
+at Q4_K_M is only ~2.5 GB of weights, but `N_CTX = 131072` makes the cache the big allocation
+and it barely shrinks with model size — so 80 GB is the right target regardless of model size,
+and L4 (24 GB) is both an OOM risk and ~10× slower.
+
+H100 on FRIDA is a single DGX node with 8×80GB, so up to 8 tasks can run at once; it is also
+the most contended partition resource. To keep the queue wait down:
+
+1. **Check what's free before submitting:**
+   ```bash
+   sinfo -p frida -O "nodehost,gres:40,gresused:40,statelong"
+   squeue -p frida -t R -O "gres,timeleft"
+   ```
+2. **Ask for little besides the GPU.** With `N_GPU_LAYERS = -1` the CPU does almost nothing, so
+   `run_models.sbatch` requests 8 CPUs / 48 GB (vs 16 / 96 GB in the older templates) — much
+   easier to backfill. Keep `N_THREADS` at 8 to match.
+3. **Ask for a shorter `--time`.** 1 day per model rather than the 7 days `run_all.sbatch` needs
+   for all of them sequentially. Short jobs backfill into gaps, and runs are resumable, so
+   requeue instead of over-requesting.
+4. **Submit the array in one go** so all models queue together and start as GPUs free up. Add
+   `%N` (e.g. `--array=0-2%2`) only if you hit a per-user GPU cap.
+
 Config knobs (edit `src/config/config.py` before syncing, or in `$WORK` directly):
 - `N_THREADS` — set to the job's `--cpus-per-task` (templates use 16).
 - `N_GPU_LAYERS = -1` (all layers on GPU) and `N_CTX = 131072` stay as-is; one H100/A100-80GB
   fits any model in `models/` plus the 128K KV cache comfortably for a single sequence, but
   if model load OOMs, lower `N_CTX` first.
 
-## 5. Scoring
+## 6. Scoring
 
 ```bash
 sbatch deploy/score_results.sbatch
