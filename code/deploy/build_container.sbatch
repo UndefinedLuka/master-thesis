@@ -10,23 +10,27 @@
 # One-time container build: NGC PyTorch base + this project + CUDA llama-cpp-python,
 # saved as a squashfs so benchmark jobs never recompile.
 #
-#   sbatch deploy/build_container.sbatch
+#   sbatch code/deploy/build_container.sbatch
 #
 # A GPU is requested so the CUDA toolchain in the image matches a real device during the
 # build (and lets you smoke-test inside the same job).
 
 set -euo pipefail
 
-PROJECT="$WORK/thesis"
-IMAGE_OUT="$PROJECT/containers/thesis-eval.sqsh"
+_SUBMIT="${SLURM_SUBMIT_DIR:-$PWD}"
+_ENV="$_SUBMIT/deploy/job_env.sh"; [[ -f "$_ENV" ]] || _ENV="$_SUBMIT/code/deploy/job_env.sh"
+[[ -f "$_ENV" ]] || { echo "ERROR: no deploy/job_env.sh under $_SUBMIT or $_SUBMIT/code -- sbatch from the thesis/ or thesis/code/ directory." >&2; exit 1; }
+REQUIRE_IMAGE=0 source "$_ENV"   # this job *creates* the image
+
+IMAGE_OUT="$IMAGE"
 BASE_IMAGE="nvcr.io#nvidia/pytorch:25.06-py3"   # CUDA + torch preinstalled, Python >= 3.12
 
-mkdir -p "$PROJECT/containers"
+mkdir -p "$(dirname "$IMAGE_OUT")"
 
 srun --container-image "$BASE_IMAGE" \
      --container-save "$IMAGE_OUT" \
      --container-mounts "$PROJECT:/work" \
-     --container-workdir /work/code \
+     --container-workdir "/work/$CODE_NAME" \
      bash -exc '
        # llama-cpp-python must be COMPILED with CUDA first (the PyPI wheel is CPU-only on
        # Linux); installing it up front stops the project install from grabbing that wheel.

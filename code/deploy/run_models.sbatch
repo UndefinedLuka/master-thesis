@@ -12,18 +12,20 @@
 # x direct|text_to_sql), so wall-clock drops roughly linearly in the number of models versus
 # the sequential deploy/run_all.sbatch.
 #
-#   sbatch --array=0-2 deploy/run_models.sbatch \
+# Submit from the project dir (the one holding code/ and containers/):
+#
+#   sbatch --array=0-2 code/deploy/run_models.sbatch \
 #       Qwen3.5-0.8B-Q4_K_M.gguf Qwen3.5-2B-Q4_K_M.gguf Qwen3.5-4B-Q4_K_M.gguf
 #
 #   # smoke test first (extra cli.run_all flags go through RUN_ARGS, not positionally,
 #   # because the positional args are the model list):
-#   sbatch --export=ALL,RUN_ARGS="--limit 10" --array=0-2 deploy/run_models.sbatch <models...>
+#   sbatch --export=ALL,RUN_ARGS="--limit 10" --array=0-2 code/deploy/run_models.sbatch <models...>
 #
 #   # throttle to 2 concurrent tasks if you hit a per-user GPU limit:
-#   sbatch --array=0-2%2 deploy/run_models.sbatch <models...>
+#   sbatch --array=0-2%2 code/deploy/run_models.sbatch <models...>
 #
 #   # re-run just one model (index 1 of the same list):
-#   sbatch --array=1-1 deploy/run_models.sbatch <models...>
+#   sbatch --array=1-1 code/deploy/run_models.sbatch <models...>
 #
 # ALL models run on the SAME GPU type, each on a card of its own. The benchmark records TTFT
 # and tokens/s, so a model measured on an A100 is not comparable to one measured on an H100,
@@ -42,7 +44,7 @@ set -euo pipefail
 
 MODELS=("$@")
 if [[ ${#MODELS[@]} -eq 0 ]]; then
-  echo "usage: sbatch --array=0-N deploy/run_models.sbatch <model1.gguf> [model2.gguf ...]" >&2
+  echo "usage: sbatch --array=0-N code/deploy/run_models.sbatch <model1.gguf> [model2.gguf ...]" >&2
   exit 1
 fi
 
@@ -54,11 +56,14 @@ if [[ $INDEX -ge ${#MODELS[@]} ]]; then
 fi
 MODEL="${MODELS[$INDEX]}"
 
-PROJECT="$WORK/thesis"
+_SUBMIT="${SLURM_SUBMIT_DIR:-$PWD}"
+_ENV="$_SUBMIT/deploy/job_env.sh"; [[ -f "$_ENV" ]] || _ENV="$_SUBMIT/code/deploy/job_env.sh"
+[[ -f "$_ENV" ]] || { echo "ERROR: no deploy/job_env.sh under $_SUBMIT or $_SUBMIT/code -- sbatch from the thesis/ or thesis/code/ directory." >&2; exit 1; }
+source "$_ENV"
 
 echo "array task $INDEX/$((${#MODELS[@]} - 1)) -> model=$MODEL on $(hostname)"
 
-srun --container-image "$PROJECT/containers/thesis-eval.sqsh" \
+srun --container-image "$IMAGE" \
      --container-mounts "$PROJECT:/work" \
-     --container-workdir /work/code \
+     --container-workdir "/work/$CODE_NAME" \
      python -m cli.run_all --models "$MODEL" ${RUN_ARGS:-}
