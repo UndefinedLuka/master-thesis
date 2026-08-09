@@ -6,28 +6,37 @@ sbatch templates and the runbook to get from zero to full benchmark runs.
 
 ## TL;DR — the whole sequence
 
-Everything below runs from the project dir on the login node, with code + `data/` already synced:
+Everything below runs from the project dir on the login node, with `code/` already synced:
 
 ```bash
 cd /shared/workspace/linf/<user>/thesis     # dir holding code/ containers/ hf-cache/
 
-# 1. models (login node, no job — a few minutes)
-bash code/deploy/download_models.sh
+# 1. models (login node, no job — all 13 from Chapter 4, ~97 GB)
+JOBS=4 bash code/deploy/download_models.sh
 
 # 2. container (one-time, ~20-40 min)
 sbatch code/deploy/build_container.sbatch
 #    wait for it to finish, then confirm the image exists:
 ls -lh containers/thesis-eval.sqsh
 
-# 3. run the models in parallel — one H100 each, all 4 slices per task
-sbatch --array=0-2 code/deploy/run_models.sbatch \
-    Qwen3.5-0.8B-Q4_K_M.gguf \
-    Qwen3.5-2B-Q4_K_M.gguf \
-    Qwen3.5-4B-Q4_K_M.gguf
+# 3. datasets — needs the container from step 2. Add --overwrite to REGENERATE the BIRD
+#    sample after changing BIRD_SAMPLE_ROWS / SAMPLE_SEED (see §2).
+sbatch code/deploy/build_data.sbatch
+
+# 4. run the models in parallel — one H100 each, all 4 slices per task, 6 at a time
+#    (largest first, so the long tail starts earliest; see §6 for the full 13-model list)
+sbatch --array=0-12%6 code/deploy/run_models.sbatch \
+    Qwen3.5-27B-Q4_K_M.gguf gemma-4-31B-it-Q4_K_M.gguf \
+    gemma-4-26B-A4B-it-UD-Q4_K_M.gguf Ministral-3-14B-Instruct-2512-Q4_K_M.gguf \
+    gemma-4-12b-it-Q4_K_M.gguf Qwen3.5-9B-Q4_K_M.gguf \
+    Ministral-3-8B-Instruct-2512-Q4_K_M.gguf gemma-4-E4B-it-Q4_K_M.gguf \
+    Qwen3.5-4B-Q4_K_M.gguf gemma-4-E2B-it-Q4_K_M.gguf \
+    Ministral-3-3B-Instruct-2512-Q4_K_M.gguf Qwen3.5-2B-Q4_K_M.gguf \
+    Qwen3.5-0.8B-Q4_K_M.gguf
 
 squeue -u "$USER"                           # watch; logs are thesis-run-model-<A>_<a>.out
 
-# 4. score once the array is done
+# 5. score once the array is done
 sbatch code/deploy/score_results.sbatch
 ```
 
@@ -80,26 +89,69 @@ For reference, the cluster's own storage: `$HOME` = `/shared/home/$USER` (dotfil
 `/shared/workspace/<account>` (the project lives here; **no backups**), and a per-job `$SCRATCH`
 on local RAID0 that is purged when the job ends.
 
-Copy code + datasets from your machine (datasets are easier to download locally — Spider comes
-from Google Drive via gdown, which is awkward from a batch node). Models are better fetched
-directly on FRIDA, see §2:
+Copy the code up from your machine. Datasets and models are generated/fetched on FRIDA itself
+(§2 and §3) rather than pushed over the Teleport proxy:
 
 ```bash
 REMOTE=login-frida.rdc.si:/shared/workspace/linf/<user>/thesis
-rsync -avP --exclude .venv --exclude results --exclude models code/ "$REMOTE/code/"
-rsync -avP code/data/ "$REMOTE/code/data/"
+rsync -avP --exclude .venv --exclude results --exclude models --exclude data \
+  code/ "$REMOTE/code/"
 ```
 
-If `data/` was not synced: run `python -m cli.download_datasets`, then
-`python -m cli.build_sampled_dbs`, then `python -m cli.build_references` inside a container
-job (compute nodes have outbound internet).
+If you already have a good `data/` locally you can push it instead of rebuilding
+(`rsync -avP code/data/ "$REMOTE/code/data/"`) — but Spider's ~1.7 GB of databases over the
+proxy is usually slower than just running the §2 job.
 
-## 2. Models
+## 2. Datasets: generating / regenerating `data/`
+
+```bash
+sbatch code/deploy/build_data.sbatch                 # download + sample + references
+sbatch code/deploy/build_data.sbatch --overwrite     # REGENERATE the BIRD sample + references
+sbatch code/deploy/build_data.sbatch --skip-download # data/ already downloaded
+```
+
+No `--gres` — it is sqlite and zip work, so it schedules almost immediately. Compute nodes have
+outbound internet, so the downloads work from the job. Three steps, in this order:
+
+| Step | Writes | Notes |
+| --- | --- | --- |
+| `cli.download_datasets` | `data/spider/`, `data/bird/` | Idempotent — skips if the marker file exists. |
+| `cli.build_sampled_dbs` | `data/bird_sampled/<db>/<db>.sqlite` | `BIRD_SAMPLE_ROWS` rows/table at `SAMPLE_SEED`. **Everything downstream reads these, not the raw BIRD DBs.** |
+| `cli.build_references` | `data/{spider,bird}_references.ndjson` | Runs gold SQL against the sampled DBs. Must come after the step above. |
+
+**`--overwrite` is the flag that actually regenerates BIRD.** Without it `build_sampled_dbs`
+skips every database that already exists and prints `Done: 0 built, 41 already present` — you
+keep the *old* sample while believing you rebuilt it. Pass it whenever you change
+`BIRD_SAMPLE_ROWS` or `SAMPLE_SEED` in `src/config/config.py`. References are rewritten
+unconditionally, so they always match whatever is on disk at the time.
+
+Verified locally: with a 2000-row table at `SAMPLE_SEED = 0` the sample starts `[1, 3, 4, 5, 7]`;
+changing the seed to 7 and re-running *without* `--overwrite` leaves that sample untouched, and
+*with* `--overwrite` produces `[1, 4, 9, 25, 30]` and a correspondingly different reference row.
+
+Two consequences worth knowing before you regenerate:
+
+- **`build_references` has no dataset filter** — it rebuilds Spider's references too, and fails
+  if `data/spider/` is missing. Regenerating BIRD therefore requires Spider present as well.
+- **Existing BIRD results become invalid.** They were generated against the old rows, and resume
+  matches on `example_id`, so it will happily keep them. Delete `results/bird/` (including
+  `.scored.ndjson` files) before re-running the benchmark:
+  ```bash
+  rm -rf code/results/bird
+  ```
+  Spider results are unaffected — Spider is not sub-sampled.
+
+`cli.convert_data` is optional: it pre-materializes the six serialization formats under
+`data/<dataset>_processed/` for eyeballing. The benchmark serializes on the fly, so skip it
+unless you want to inspect the formats.
+
+## 3. Models
 
 Pull the GGUFs straight onto the cluster rather than rsyncing tens of GB over the Teleport proxy.
 `deploy/models.txt` holds one HuggingFace download URL per line (blank lines and `#` comments
-ignored — uncomment the models you want); `deploy/download_models.sh` needs only bash + curl,
-so it runs on the login node with no container:
+ignored — uncomment the models you want), and lists all **13 models from Chapter 4, ~97 GB
+total**; `deploy/download_models.sh` needs only bash + curl, so it runs on the login node with
+no container:
 
 ```bash
 # on login-frida, in thesis/
@@ -131,7 +183,47 @@ verified to start with the GGUF magic. So just re-run it after adding a line or 
 connection. If login-node egress is ever blocked, `sbatch code/deploy/download_models.sbatch` does
 the same thing from a compute node (no `--gres`, so it schedules almost immediately).
 
-## 3. Build the container (one-time per dependency change)
+### The 13 models, and what each needs at `N_CTX = 131072`
+
+`KV` is computed from each GGUF's own metadata (per-layer `head_count_kv`, `key_length`,
+`sliding_window_pattern`), f16 K/V. Gemma 4 interleaves sliding-window and full-attention layers
+5:1, so its cache depends on whether llama.cpp allocates SWA layers at the window size or at full
+context — hence two columns. `total` = weights + KV, i.e. what must fit in 80 GB.
+
+| Model (`--model` name) | GGUF | KV (SWA-aware) | KV (worst case) | total (worst) |
+| --- | --- | --- | --- | --- |
+| `Qwen3.5-0.8B-Q4_K_M.gguf` | 0.6 GB | 6.4 GB | 6.4 GB | 7.0 GB |
+| `Qwen3.5-2B-Q4_K_M.gguf` | 1.4 GB | 6.4 GB | 6.4 GB | 7.8 GB |
+| `Qwen3.5-4B-Q4_K_M.gguf` | 2.6 GB | 17.2 GB | 17.2 GB | 19.8 GB |
+| `Qwen3.5-9B-Q4_K_M.gguf` | 5.7 GB | 17.2 GB | 17.2 GB | 22.9 GB |
+| `Qwen3.5-27B-Q4_K_M.gguf` | 16.7 GB | 34.4 GB | 34.4 GB | 51.1 GB |
+| `Ministral-3-3B-Instruct-2512-Q4_K_M.gguf` | 2.2 GB | 14.0 GB | 14.0 GB | 16.2 GB |
+| `Ministral-3-8B-Instruct-2512-Q4_K_M.gguf` | 5.2 GB | 18.3 GB | 18.3 GB | 23.5 GB |
+| `Ministral-3-14B-Instruct-2512-Q4_K_M.gguf` | 8.2 GB | 21.5 GB | 21.5 GB | 29.7 GB |
+| `gemma-4-E2B-it-Q4_K_M.gguf` | 3.1 GB | 1.9 GB | 5.6 GB | 8.7 GB |
+| `gemma-4-E4B-it-Q4_K_M.gguf` | 5.0 GB | 3.8 GB | 13.2 GB | 18.2 GB |
+| `gemma-4-12b-it-Q4_K_M.gguf` | 7.1 GB | 2.5 GB | 45.1 GB | 52.2 GB |
+| `gemma-4-26B-A4B-it-UD-Q4_K_M.gguf` | 17.0 GB | 2.9 GB | 29.5 GB | 46.5 GB |
+| `gemma-4-31B-it-Q4_K_M.gguf` | 18.3 GB | 11.6 GB | 118.1 GB | **136.4 GB** |
+
+Everything fits an 80 GB H100 **except `gemma-4-31B` in the worst case** — 60 layers × 16 KV heads
+× 512-wide keys is an enormous full-context cache. If it OOMs on load, that one model needs
+`N_CTX` lowered (65536 halves the cache) or `--gres=gpu:B200:1`. Lowering `N_CTX` for one model
+only is a deviation worth recording, since `N_CTX` is meant to be fixed across the comparison.
+
+Two naming notes for Chapter 4:
+
+- **Gemma 4 has no 4b GGUF.** The family ships as E2B / E4B (MatFormer "effective" sizes) /
+  12b / 26B-A4B (MoE) / 31B. With Qwen's five and Ministral's three that is exactly the thirteen
+  sizes the chapter claims, but the prose should name the Gemma sizes that actually exist.
+- **`gemma-4-26B-A4B` has no plain `Q4_K_M`** — unsloth publishes only `UD-` (dynamic) quants for
+  it, so the list uses `UD-Q4_K_M`. Worth a footnote next to the "same quantization scheme
+  uniformly across all models" claim.
+
+Ministral uses the **Instruct** variants, not **Reasoning** — the latter's `<think>` traces would
+confound both extraction accuracy and tokens/s.
+
+## 4. Build the container (one-time per dependency change)
 
 ```bash
 sbatch code/deploy/build_container.sbatch
@@ -145,7 +237,7 @@ squashfs instead of recompiling.
 
 Home is NOT auto-mounted in containers; every job template mounts the project dir explicitly.
 
-## 4. Smoke test on the dev partition (interactive)
+## 5. Smoke test on the dev partition (interactive)
 
 `srun` is not an sbatch template, so it does not pick up `job_env.sh` — spell the paths out:
 
@@ -176,7 +268,7 @@ production results — it is here to check that things work, not to measure. Del
 `results/` before the real run (`--limit` output is otherwise indistinguishable from a full slice
 on resume).
 
-## 5. Production runs (frida partition)
+## 6. Production runs (frida partition)
 
 **Several models at once — the fast path.** `deploy/run_models.sbatch` is a job array with one
 task per model, each on its own dedicated H100. Each task loads its model once and runs all four
@@ -201,6 +293,37 @@ sbatch --export=ALL,RUN_ARGS="--limit 10" --array=0-2 code/deploy/run_models.sba
 sbatch --array=0-2%2 code/deploy/run_models.sbatch <models...>  # at most 2 running at a time
 sbatch --array=1-1   code/deploy/run_models.sbatch <models...>  # re-run just the 2B (index 1)
 ```
+
+**All 13 models.** The H100 node has 8 GPUs, so throttle with `%6` — leaving 2 cards free keeps
+the array from monopolising the node (and from queueing behind itself). Order the list
+**largest-first** so the long tail starts earliest; the array otherwise finishes no sooner than
+its slowest task:
+
+```bash
+sbatch --array=0-12%6 code/deploy/run_models.sbatch \
+    Qwen3.5-27B-Q4_K_M.gguf \
+    gemma-4-31B-it-Q4_K_M.gguf \
+    gemma-4-26B-A4B-it-UD-Q4_K_M.gguf \
+    Ministral-3-14B-Instruct-2512-Q4_K_M.gguf \
+    gemma-4-12b-it-Q4_K_M.gguf \
+    Qwen3.5-9B-Q4_K_M.gguf \
+    Ministral-3-8B-Instruct-2512-Q4_K_M.gguf \
+    gemma-4-E4B-it-Q4_K_M.gguf \
+    Qwen3.5-4B-Q4_K_M.gguf \
+    gemma-4-E2B-it-Q4_K_M.gguf \
+    Ministral-3-3B-Instruct-2512-Q4_K_M.gguf \
+    Qwen3.5-2B-Q4_K_M.gguf \
+    Qwen3.5-0.8B-Q4_K_M.gguf
+```
+
+Keep the list and its order **identical** across resubmissions — `--array=<i>` selects by
+position, so re-running one model means passing the same 13 arguments with the index you want.
+The 3 Qwen models from an earlier run are skipped automatically on resume, so it is safe to
+include them.
+
+`--time=1-00:00:00` per task is sized for the small models. The 27B/31B decode roughly 5-10×
+slower per token, so expect them to need a requeue or two — harmless, since resume continues
+where the timeout stopped. Bump it for just those with `sbatch --time=3-00:00:00 --array=0-1 ...`.
 
 Keep `--gres` as the template sets it. Overriding it per task would measure different models on
 different hardware — see "Which GPU to ask for" below.
@@ -259,16 +382,18 @@ the most contended partition resource. To keep the queue wait down:
 3. **Ask for a shorter `--time`.** 1 day per model rather than the 7 days `run_all.sbatch` needs
    for all of them sequentially. Short jobs backfill into gaps, and runs are resumable, so
    requeue instead of over-requesting.
-4. **Submit the array in one go** so all models queue together and start as GPUs free up. Add
-   `%N` (e.g. `--array=0-2%2`) only if you hit a per-user GPU cap.
+4. **Submit the array in one go** so all models queue together and start as GPUs free up, and
+   throttle with `%6` on the full 13 rather than taking all 8 cards.
 
 Config knobs (edit `src/config/config.py` before syncing, or on the cluster directly):
 - `N_THREADS` — set to the job's `--cpus-per-task` (8 in `run_models.sbatch`, 16 in the others).
-- `N_GPU_LAYERS = -1` (all layers on GPU) and `N_CTX = 131072` stay as-is; one H100/A100-80GB
-  fits any model in `models/` plus the 128K KV cache comfortably for a single sequence, but
-  if model load OOMs, lower `N_CTX` first.
+- `N_GPU_LAYERS = -1` (all layers on GPU) stays as-is.
+- `N_CTX = 131072` should also stay as-is — it is the variable the comparison holds fixed. Only
+  `gemma-4-31B` is at real risk of not fitting 80 GB (see the table in §3); if it OOMs on load,
+  lower `N_CTX` **for that model's job only** and record the deviation, rather than reducing it
+  for the whole campaign.
 
-## 6. Scoring
+## 7. Scoring
 
 ```bash
 sbatch code/deploy/score_results.sbatch
