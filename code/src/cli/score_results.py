@@ -144,12 +144,12 @@ def _scored_path(in_path: Path) -> Path:
 def _print_summary(
     in_path: Path, out_path: Path, scored: list[PipelineResult], stats: ScoringStats
 ) -> None:
-    exact_vals = [
-        r["scores"]["normalized_exact_match"] for r in scored if r["scores"] is not None
-    ]
+    exact_vals = [r["scores"]["normalized_exact_match"] for r in scored if r["scores"] is not None]
     rouge_vals = [r["scores"]["rouge_l_f"] for r in scored if r["scores"] is not None]
     exec_vals = [r["execution"]["execution_accuracy"] for r in scored if r["execution"] is not None]
     parts = [f"scored {stats['scored']}/{stats['total']}"]
+    if stats["failed_output_zeroed"]:
+        parts.append(f"{stats['failed_output_zeroed']} failed-output zeroed")
     if stats["skipped_no_reference"]:
         parts.append(f"{stats['skipped_no_reference']} no-ref")
     if exact_vals:

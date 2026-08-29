@@ -110,6 +110,66 @@ def test_score_records_text_to_sql_execution() -> None:
     assert scored[0]["scores"] is not None  # text-scored too
 
 
+def test_score_records_zeroes_failed_output_instead_of_matching_empty_reference() -> None:
+    r = base_result(_ex(0), pipeline="direct", fmt="json", model_id="m")
+    r["error"] = "context_exceeded"
+    refs = references_from_rows([_ref([])])
+
+    def metric_must_not_run(pred: str, ref: str) -> float:
+        raise AssertionError(f"failed output was scored: {pred!r} vs {ref!r}")
+
+    def bert_must_not_run(preds: list[str], refs: list[str]) -> list[ScoreTriple]:
+        raise AssertionError(f"failed output was BERT-scored: {preds!r} vs {refs!r}")
+
+    scored, stats = score_records(
+        [r],
+        refs,
+        exact_match_fn=metric_must_not_run,
+        rouge_fn=metric_must_not_run,
+        bert_batch_fn=bert_must_not_run,
+    )
+
+    assert scored[0]["scores"] == {
+        "normalized_exact_match": 0.0,
+        "rouge_l_f": 0.0,
+        "bertscore_p": 0.0,
+        "bertscore_r": 0.0,
+        "bertscore_f": 0.0,
+    }
+    assert stats["scored"] == 1
+    assert stats["failed_output_zeroed"] == 1
+    assert stats["skipped_no_reference"] == 0
+
+
+def test_score_records_zeroes_definitive_text_to_sql_failure() -> None:
+    r = base_result(_ex(0), pipeline="text_to_sql", fmt=None, model_id="m")
+    r["execution_success"] = False
+    r["definitive_failure"] = True
+    refs = references_from_rows([_ref([])])
+
+    scored, stats = score_records([r], refs, with_bertscore=False)
+
+    assert scored[0]["scores"]["normalized_exact_match"] == 0.0
+    assert scored[0]["scores"]["rouge_l_f"] == 0.0
+    assert scored[0]["execution"]["execution_accuracy"] == 0.0
+    assert stats["failed_output_zeroed"] == 1
+
+
+def test_score_records_failed_output_keeps_bertscore_null_when_disabled() -> None:
+    r = base_result(_ex(0), pipeline="direct", fmt="json", model_id="m")
+    r["error"] = "generation failed"
+    refs = references_from_rows([_ref([])])
+
+    scored, stats = score_records([r], refs, with_bertscore=False)
+
+    assert scored[0]["scores"]["normalized_exact_match"] == 0.0
+    assert scored[0]["scores"]["rouge_l_f"] == 0.0
+    assert scored[0]["scores"]["bertscore_p"] is None
+    assert scored[0]["scores"]["bertscore_r"] is None
+    assert scored[0]["scores"]["bertscore_f"] is None
+    assert stats["failed_output_zeroed"] == 1
+
+
 def test_score_records_skips_missing_reference() -> None:
     r = base_result(_ex(99), pipeline="direct", fmt="json", model_id="m")
     r["raw_output"] = "x"

@@ -95,7 +95,8 @@ class ScoringStats(TypedDict):
     """Summary counters returned by :func:`score_records` alongside the scored copies."""
 
     total: int
-    scored: int  # got text-similarity scores
+    scored: int  # got computed scores or explicit zeroes for a failed output
+    failed_output_zeroed: int  # valid reference, but pipeline/backend reported an error
     skipped_no_reference: int  # no matching reference, or gold SQL errored
     execution_scored: int  # text_to_sql records given an execution verdict
     bertscore_enabled: bool
@@ -116,10 +117,13 @@ def score_records(
     """Return scored copies of ``records`` plus summary stats.
 
     A record is text-scored only when a reference with non-null gold rows exists for its
-    ``example_id``. Text-to-SQL records additionally receive binary Execution Accuracy based
-    only on whether the query ran. Their separate result-match diagnostic is order-sensitive
-    iff the gold SQL has ``ORDER BY``, unless ``force_order_sensitive`` overrides it. Heavy
-    BERTScore runs once over the whole eligible batch.
+    ``example_id``. If such a record has a pipeline/backend ``error``, all enabled accuracy
+    metrics are set to zero without comparing its placeholder output to the reference. This
+    prevents failed empty outputs from matching empty gold result sets. Text-to-SQL records
+    additionally receive binary Execution Accuracy based only on whether the query ran. Their
+    separate result-match diagnostic is order-sensitive iff the gold SQL has ``ORDER BY``,
+    unless ``force_order_sensitive`` overrides it. Heavy BERTScore runs once over the eligible,
+    non-failed batch.
 
     ``exact_match_fn`` / ``rouge_fn`` / ``bert_batch_fn`` are injectable for testing; all
     default to the real implementations.
@@ -131,6 +135,7 @@ def score_records(
     predictions: list[str] = []
     refs: list[str] = []
 
+    stats_failed = 0
     stats_skipped = 0
     stats_exec = 0
 
@@ -151,9 +156,14 @@ def score_records(
             )
             stats_exec += 1
 
-        # Text-similarity scoring requires a usable gold reference.
+        # Accuracy scoring requires a usable gold reference. A failed output with a valid
+        # reference receives explicit zeroes instead of comparing placeholder/empty content.
         if entry is None or entry["rows"] is None:
             stats_skipped += 1
+            continue
+        if _output_failed(record):
+            record["scores"] = _failed_output_scores(with_bertscore=with_bertscore)
+            stats_failed += 1
             continue
         eligible_idx.append(idx)
         predictions.append(prediction_text(record))
@@ -184,12 +194,32 @@ def score_records(
 
     stats: ScoringStats = {
         "total": len(records),
-        "scored": len(eligible_idx),
+        "scored": len(eligible_idx) + stats_failed,
+        "failed_output_zeroed": stats_failed,
         "skipped_no_reference": stats_skipped,
         "execution_scored": stats_exec,
         "bertscore_enabled": with_bertscore,
     }
     return scored, stats
+
+
+def _output_failed(record: PipelineResult) -> bool:
+    """Whether a record has no valid answer that should enter text-similarity metrics."""
+    if record["error"] is not None:
+        return True
+    return record["pipeline"] == "text_to_sql" and record["execution_success"] is False
+
+
+def _failed_output_scores(*, with_bertscore: bool) -> AccuracyScores:
+    """Zero accuracy for a failed output without running text similarity metrics."""
+    bertscore_value = 0.0 if with_bertscore else None
+    return AccuracyScores(
+        normalized_exact_match=0.0,
+        rouge_l_f=0.0,
+        bertscore_p=bertscore_value,
+        bertscore_r=bertscore_value,
+        bertscore_f=bertscore_value,
+    )
 
 
 def references_from_rows(reference_rows: Sequence[dict[str, Any]]) -> ReferenceLookup:
