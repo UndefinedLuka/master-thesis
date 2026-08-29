@@ -1,7 +1,8 @@
-"""Execution Accuracy scoring for Text-to-SQL (Spider-style EX).
+"""Binary Execution Accuracy scoring and result diagnostics for Text-to-SQL.
 
-The Text-to-SQL *pipeline* already records ``execution_success`` and ``predicted_rows``; this
-module adds the comparison-against-gold verdict. Both ``rows_to_canonical`` and
+Execution Accuracy follows the thesis definition: 1 when the generated query executes
+successfully within the retry cap, otherwise 0. Result equality against the gold rows is
+reported separately as ``result_match``. Both ``rows_to_canonical`` and
 ``execution_accuracy`` are pure and dependency-free.
 """
 
@@ -55,27 +56,25 @@ def execution_accuracy(
     *,
     order_sensitive: bool = False,
 ) -> ExecutionScore:
-    """Compare executed rows to the gold result set (Spider-style EX).
+    """Return binary query-execution accuracy plus a separate result-match diagnostic.
 
-    ``predicted_rows`` is ``None`` when the query never executed (definitive failure); that is
-    ``execution_success=False`` and scores 0. The gold side being ``None`` means the reference
-    gold SQL itself errored, so no verdict is possible and the example also scores 0.
+    ``predicted_rows`` is ``None`` when the query never executed successfully within the retry
+    cap. Execution Accuracy is therefore 1 when ``predicted_rows`` is present (including an
+    empty result set) and 0 otherwise; whether those rows are correct does not affect it.
 
-    Default policy is set-equality of stringified rows (column order within a row is preserved,
-    row order is not). Pass ``order_sensitive=True`` only when the gold SQL has ``ORDER BY``.
+    ``result_match`` compares predicted rows with usable gold rows. It is false when either
+    side is unavailable. Row order is ignored by default and preserved when
+    ``order_sensitive=True``.
     """
     execution_success = predicted_rows is not None
-    if predicted_rows is None or gold_rows is None:
-        return ExecutionScore(
-            execution_success=execution_success,
-            result_match=False,
-            execution_accuracy=0.0,
-        )
-    predicted = rows_to_canonical(predicted_rows, order_sensitive=order_sensitive)
-    gold = rows_to_canonical(gold_rows, order_sensitive=order_sensitive)
-    result_match = predicted == gold
+    result_match = False
+    if predicted_rows is not None and gold_rows is not None:
+        predicted = rows_to_canonical(predicted_rows, order_sensitive=order_sensitive)
+        gold = rows_to_canonical(gold_rows, order_sensitive=order_sensitive)
+        result_match = predicted == gold
+
     return ExecutionScore(
         execution_success=execution_success,
         result_match=result_match,
-        execution_accuracy=1.0 if result_match else 0.0,
+        execution_accuracy=1.0 if execution_success else 0.0,
     )

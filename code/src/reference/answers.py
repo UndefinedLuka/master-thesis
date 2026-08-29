@@ -2,7 +2,8 @@
 
 The resulting rows are the ground truth for BOTH pipelines (Chapter 3): Direct Context
 Inference is scored against them as text, and Text-to-SQL's executed rows are compared to
-them for execution accuracy. Failures of the gold query itself are captured (not raised) so
+them for text scoring and the separate result-match diagnostic. Failures of the gold query
+itself are captured (not raised) so
 one bad example never aborts a long build.
 
 For BIRD, ``cfg.db_root`` points at the MATERIALIZED sampled databases (built by

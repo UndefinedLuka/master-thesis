@@ -1,8 +1,8 @@
 """Score benchmark results against reference answers (the retrieval-accuracy pass).
 
 Reads benchmark NDJSON produced by ``run_benchmark`` (a single file, or a directory tree of
-the split layout), computes ROUGE-L + BERTScore for every record with a usable gold reference,
-adds a Spider-style execution-accuracy verdict for Text-to-SQL records, and writes a
+the split layout), computes normalized Exact Match, ROUGE-L, and BERTScore for every record
+with a usable gold reference, adds binary execution accuracy for Text-to-SQL records, and writes a
 ``<name>.scored.ndjson`` next to each input — preserving the per-slice folder layout.
 
     # score one slice file
@@ -14,7 +14,7 @@ adds a Spider-style execution-accuracy verdict for Text-to-SQL records, and writ
     # score against an explicit reference file (instead of data/<dataset>_references.ndjson)
     python -m cli.score_results --results results/ --references data/spider_references.ndjson
 
-    # skip BERTScore (ROUGE-L + execution accuracy only)
+    # skip BERTScore (normalized Exact Match + ROUGE-L + execution accuracy only)
     python -m cli.score_results --results results/ --no-bertscore
 
 Requires the optional metrics dependencies: ``uv sync --extra metrics``.
@@ -62,7 +62,7 @@ def main(argv: list[str] | None = None) -> int:
         "--no-bertscore",
         dest="with_bertscore",
         action="store_false",
-        help="skip BERTScore (ROUGE-L + execution accuracy only)",
+        help="skip BERTScore (normalized Exact Match + ROUGE-L + execution accuracy only)",
     )
     parser.add_argument(
         "--overwrite",
@@ -144,11 +144,16 @@ def _scored_path(in_path: Path) -> Path:
 def _print_summary(
     in_path: Path, out_path: Path, scored: list[PipelineResult], stats: ScoringStats
 ) -> None:
+    exact_vals = [
+        r["scores"]["normalized_exact_match"] for r in scored if r["scores"] is not None
+    ]
     rouge_vals = [r["scores"]["rouge_l_f"] for r in scored if r["scores"] is not None]
     exec_vals = [r["execution"]["execution_accuracy"] for r in scored if r["execution"] is not None]
     parts = [f"scored {stats['scored']}/{stats['total']}"]
     if stats["skipped_no_reference"]:
         parts.append(f"{stats['skipped_no_reference']} no-ref")
+    if exact_vals:
+        parts.append(f"normalized EM {sum(exact_vals) / len(exact_vals):.3f}")
     if rouge_vals:
         parts.append(f"mean ROUGE-L {sum(rouge_vals) / len(rouge_vals):.3f}")
     if exec_vals:

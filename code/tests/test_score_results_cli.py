@@ -1,7 +1,7 @@
 """End-to-end tests for the score_results CLI (file mode and directory mode).
 
-Uses --no-bertscore so the heavy torch model is never loaded; ROUGE-L (rouge-score, light) is
-required, so the module is skipped if the optional metrics extra isn't installed.
+Uses --no-bertscore so the heavy BERTScore model is never loaded. Normalized Exact Match and
+ROUGE-L still require the optional metrics extra, so the module skips without it.
 """
 
 from __future__ import annotations
@@ -12,6 +12,7 @@ from pathlib import Path
 import pytest
 
 pytest.importorskip("rouge_score", reason="requires the [metrics] extra")
+pytest.importorskip("transformers", reason="requires the [metrics] extra")
 
 from cli import score_results  # noqa: E402
 from datasets.types import DatasetExample  # noqa: E402
@@ -60,6 +61,7 @@ def test_cli_single_file(tmp_path: Path) -> None:
     out = in_path.with_suffix("").with_suffix(".scored.ndjson")
     assert out.exists()
     rows = _scored_lines(out)
+    assert rows[0]["scores"]["normalized_exact_match"] == 1.0
     assert rows[0]["scores"]["rouge_l_f"] == pytest.approx(1.0)  # "Alice" vs "Alice"
     assert rows[0]["scores"]["bertscore_f"] is None  # disabled -> null, not a fake 0.0 score
 
@@ -91,10 +93,12 @@ def test_cli_directory_mode_with_execution(tmp_path: Path) -> None:
     assert direct_out.exists() and sql_out.exists()
 
     direct_rows = _scored_lines(direct_out)
+    assert direct_rows[0]["scores"]["normalized_exact_match"] == 1.0
     assert direct_rows[0]["scores"]["rouge_l_f"] == pytest.approx(1.0)
     assert direct_rows[0]["execution"] is None
 
     sql_rows = _scored_lines(sql_out)
+    assert sql_rows[0]["scores"]["normalized_exact_match"] == 1.0
     assert sql_rows[0]["execution"]["execution_accuracy"] == 1.0
 
 

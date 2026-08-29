@@ -29,7 +29,7 @@ src/
   llm/            swappable backend Protocol + factory + backends/{llama_cpp,openai_compat}
   prompts/        direct_answer.md / sql_answer.md + load/render
   pipelines/      direct.py, text_to_sql.py (retry loop), shared result types
-  metrics/        rouge / bertscore / execution primitives + scoring orchestration
+  metrics/        normalized EM / rouge / bertscore / execution + scoring orchestration
   results/        resumable NDJSON store
   cli/            one module per command (below) + runner.py (the shared benchmark loops)
 deploy/           FRIDA cluster runbook + sbatch templates
@@ -112,7 +112,7 @@ uv run python -m cli.run_all --models Qwen3.5-2B-Q4_K_M.gguf,Qwen3.5-4B-Q4_K_M.g
 
 # 7. Score results (needs: uv sync --extra metrics)
 uv run python -m cli.score_results --results results/
-uv run python -m cli.score_results --results results/ --no-bertscore   # ROUGE-L + exec only
+uv run python -m cli.score_results --results results/ --no-bertscore   # normalized EM + ROUGE-L + exec
 uv run python -m cli.score_results --results results/spider/direct/json/model.ndjson \
        --references data/spider_references.ndjson                      # explicit references
 ```
@@ -149,10 +149,13 @@ slice file) to re-run them after raising `N_CTX`.
 joins each record with its reference answer, and writes a `<name>.scored.ndjson` next to
 each input:
 
-- **ROUGE-L** + **BERTScore** on prediction vs reference text — the raw answer for Direct,
-  the executed rows (stringified) for Text-to-SQL.
-- **Execution accuracy** (Spider-style EX) for Text-to-SQL: set-equality of result rows,
-  order-sensitive only when the gold SQL has a top-level `ORDER BY`.
+- **Normalized Exact Match**, **ROUGE-L**, and **BERTScore** on prediction vs reference text —
+  the raw answer for Direct, the executed rows (stringified) for Text-to-SQL. Normalized Exact
+  Match uses the established SQuAD normalization: lowercase, remove punctuation and English
+  articles, and collapse whitespace before binary exact comparison.
+- **Execution accuracy** for Text-to-SQL: binary `1.0` when the generated query executes
+  successfully within the retry cap, otherwise `0.0`. Gold-row equality is retained separately
+  as the `result_match` diagnostic.
 
 References resolve automatically from `data/<dataset>_references.ndjson` per record, or
 pass `--references <file>` explicitly. Already-scored files are skipped unless

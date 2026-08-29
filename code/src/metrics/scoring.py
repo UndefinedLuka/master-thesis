@@ -9,7 +9,8 @@ Text construction (Chapter 3 §Retrieval Accuracy):
   * Text-to-SQL               -> prediction text is the executed result rows, stringified.
   * Reference text (both)     -> the gold result rows, stringified.
 
-Text-to-SQL additionally gets a Spider-style execution-accuracy verdict on the raw rows.
+Text-to-SQL additionally gets binary Execution Accuracy (whether its query ran successfully)
+and a separate result-match diagnostic on the raw rows.
 """
 
 from __future__ import annotations
@@ -24,6 +25,7 @@ from metrics.bertscore import (
     ScoreTriple,
     bert_score_batch,
 )
+from metrics.exact_match import normalized_exact_match
 from metrics.execution import execution_accuracy
 from metrics.rouge import rouge_l
 from metrics.types import AccuracyScores
@@ -32,6 +34,7 @@ from pipelines.types import PipelineResult
 # A reference row set keyed by example_id: gold rows (or None if gold SQL errored) + gold SQL.
 ReferenceLookup = dict[str, "ReferenceEntry"]
 
+ExactMatchFn = Callable[[str, str], float]
 RougeFn = Callable[[str, str], float]
 BertBatchFn = Callable[[list[str], list[str]], list[ScoreTriple]]
 
@@ -104,6 +107,7 @@ def score_records(
     *,
     with_bertscore: bool = True,
     force_order_sensitive: bool | None = None,
+    exact_match_fn: ExactMatchFn = normalized_exact_match,
     rouge_fn: RougeFn = rouge_l,
     bert_batch_fn: BertBatchFn | None = None,
     model_type: str = DEFAULT_MODEL_TYPE,
@@ -112,12 +116,13 @@ def score_records(
     """Return scored copies of ``records`` plus summary stats.
 
     A record is text-scored only when a reference with non-null gold rows exists for its
-    ``example_id``. Text-to-SQL records additionally receive an execution-accuracy verdict
-    (order-sensitive iff the gold SQL has ``ORDER BY``, unless ``force_order_sensitive`` forces
-    it). Heavy BERTScore runs once over the whole eligible batch.
+    ``example_id``. Text-to-SQL records additionally receive binary Execution Accuracy based
+    only on whether the query ran. Their separate result-match diagnostic is order-sensitive
+    iff the gold SQL has ``ORDER BY``, unless ``force_order_sensitive`` overrides it. Heavy
+    BERTScore runs once over the whole eligible batch.
 
-    ``rouge_fn`` / ``bert_batch_fn`` are injectable for testing; both default to the real
-    implementations.
+    ``exact_match_fn`` / ``rouge_fn`` / ``bert_batch_fn`` are injectable for testing; all
+    default to the real implementations.
     """
     scored: list[PipelineResult] = [dict(record) for record in records]  # type: ignore[misc]
 
@@ -132,7 +137,8 @@ def score_records(
     for idx, record in enumerate(scored):
         entry = references.get(record["example_id"])
 
-        # Execution accuracy (text_to_sql only) — independent of text scoring eligibility.
+        # Binary execution success plus result matching (text_to_sql only); both are
+        # independent of text-scoring eligibility.
         if record["pipeline"] == "text_to_sql":
             gold_rows = entry["rows"] if entry else None
             order_sensitive = (
@@ -153,7 +159,9 @@ def score_records(
         predictions.append(prediction_text(record))
         refs.append(reference_text(entry))
 
-    # ROUGE-L per pair; BERTScore in one batch.
+    # Normalized Exact Match and ROUGE-L per pair; BERTScore in one batch.
+    pairs = zip(predictions, refs, strict=True)
+    exact_match_scores = [exact_match_fn(pred, ref) for pred, ref in pairs]
     rouge_scores = [rouge_fn(pred, ref) for pred, ref in zip(predictions, refs, strict=True)]
 
     # None (not 0.0) when BERTScore is disabled, so "not computed" stays distinguishable.
@@ -167,6 +175,7 @@ def score_records(
     for offset, idx in enumerate(eligible_idx):
         p, r, f = bert_scores[offset]
         scored[idx]["scores"] = AccuracyScores(
+            normalized_exact_match=exact_match_scores[offset],
             rouge_l_f=rouge_scores[offset],
             bertscore_p=p,
             bertscore_r=r,

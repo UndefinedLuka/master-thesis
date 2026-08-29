@@ -27,6 +27,10 @@ def _ex(idx: int, db: str = "db") -> DatasetExample:
     )
 
 
+def _fake_exact_match(pred: str, ref: str) -> float:
+    return 1.0 if pred == ref else 0.0
+
+
 def _fake_rouge(pred: str, ref: str) -> float:
     return 1.0 if pred == ref else 0.0
 
@@ -72,8 +76,15 @@ def test_score_records_direct_pipeline() -> None:
     r = base_result(_ex(0), pipeline="direct", fmt="json", model_id="m")
     r["raw_output"] = "Alice"
     refs = references_from_rows([_ref([{"name": "Alice"}])])
-    scored, stats = score_records([r], refs, rouge_fn=_fake_rouge, bert_batch_fn=_fake_bert)
+    scored, stats = score_records(
+        [r],
+        refs,
+        exact_match_fn=_fake_exact_match,
+        rouge_fn=_fake_rouge,
+        bert_batch_fn=_fake_bert,
+    )
     assert stats["scored"] == 1
+    assert scored[0]["scores"]["normalized_exact_match"] == 1.0
     assert scored[0]["scores"]["rouge_l_f"] == 1.0  # "Alice" == "Alice"
     assert scored[0]["scores"]["bertscore_f"] == 0.85
     assert scored[0]["execution"] is None  # not text_to_sql
@@ -81,10 +92,19 @@ def test_score_records_direct_pipeline() -> None:
 
 def test_score_records_text_to_sql_execution() -> None:
     r = base_result(_ex(0), pipeline="text_to_sql", fmt=None, model_id="m")
-    r["predicted_rows"] = [{"name": "Alice"}]
+    r["predicted_rows"] = [{"name": "Bob"}]
     r["execution_success"] = True
     refs = references_from_rows([_ref([{"name": "Alice"}])])
-    scored, stats = score_records([r], refs, rouge_fn=_fake_rouge, bert_batch_fn=_fake_bert)
+    scored, stats = score_records(
+        [r],
+        refs,
+        exact_match_fn=_fake_exact_match,
+        rouge_fn=_fake_rouge,
+        bert_batch_fn=_fake_bert,
+    )
+    assert scored[0]["scores"]["normalized_exact_match"] == 0.0
+    assert scored[0]["execution"]["execution_success"] is True
+    assert scored[0]["execution"]["result_match"] is False
     assert scored[0]["execution"]["execution_accuracy"] == 1.0
     assert stats["execution_scored"] == 1
     assert scored[0]["scores"] is not None  # text-scored too
@@ -119,7 +139,12 @@ def test_score_records_no_bertscore() -> None:
         raise AssertionError("bertscore should be skipped")
 
     scored, stats = score_records(
-        [r], refs, with_bertscore=False, rouge_fn=_fake_rouge, bert_batch_fn=_boom
+        [r],
+        refs,
+        with_bertscore=False,
+        exact_match_fn=_fake_exact_match,
+        rouge_fn=_fake_rouge,
+        bert_batch_fn=_boom,
     )
     assert stats["bertscore_enabled"] is False
     # None (not 0.0) so "not computed" stays distinguishable from "scored zero"
@@ -134,9 +159,15 @@ def test_score_records_force_order_sensitive() -> None:
         [{"example_id": "spider:db:0", "rows": [{"x": 1}, {"x": 2}], "gold_sql": "SELECT x FROM t"}]
     )
     scored, _ = score_records(
-        [r], refs, force_order_sensitive=True, rouge_fn=_fake_rouge, bert_batch_fn=_fake_bert
+        [r],
+        refs,
+        force_order_sensitive=True,
+        exact_match_fn=_fake_exact_match,
+        rouge_fn=_fake_rouge,
+        bert_batch_fn=_fake_bert,
     )
     assert scored[0]["execution"]["result_match"] is False
+    assert scored[0]["execution"]["execution_accuracy"] == 1.0
 
 
 def test_score_records_does_not_mutate_input() -> None:
@@ -145,5 +176,11 @@ def test_score_records_does_not_mutate_input() -> None:
     refs = references_from_rows(
         [{"example_id": "spider:db:0", "rows": [{"name": "Alice"}], "gold_sql": "x"}]
     )
-    score_records([r], refs, rouge_fn=_fake_rouge, bert_batch_fn=_fake_bert)
+    score_records(
+        [r],
+        refs,
+        exact_match_fn=_fake_exact_match,
+        rouge_fn=_fake_rouge,
+        bert_batch_fn=_fake_bert,
+    )
     assert r["scores"] is None  # original untouched (scored copies returned)

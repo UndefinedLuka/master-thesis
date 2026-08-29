@@ -38,17 +38,24 @@ def test_rows_to_canonical_none() -> None:
 
 def test_execution_accuracy_match() -> None:
     score = execution_accuracy([{"c": 5}], [{"count(*)": 5}])
-    # column names differ but the value tuple matches (Spider-style EX compares values)
+    # The separate result-match diagnostic compares values rather than column names.
     assert score["execution_success"] is True
     assert score["result_match"] is True
     assert score["execution_accuracy"] == 1.0
 
 
-def test_execution_accuracy_mismatch() -> None:
+def test_successful_execution_with_mismatched_rows_still_scores_one() -> None:
     score = execution_accuracy([{"c": 4}], [{"c": 5}])
     assert score["execution_success"] is True
     assert score["result_match"] is False
-    assert score["execution_accuracy"] == 0.0
+    assert score["execution_accuracy"] == 1.0
+
+
+def test_successful_execution_with_empty_result_scores_one() -> None:
+    score = execution_accuracy([], [{"x": 1}])
+    assert score["execution_success"] is True
+    assert score["result_match"] is False
+    assert score["execution_accuracy"] == 1.0
 
 
 def test_execution_accuracy_ignores_row_order_by_default() -> None:
@@ -62,13 +69,16 @@ def test_execution_accuracy_order_sensitive() -> None:
 
 
 def test_execution_accuracy_failed_query_scores_zero() -> None:
-    # predicted_rows is None => the query never executed (definitive failure)
+    # predicted_rows is None => the query never executed successfully.
     score = execution_accuracy(None, [{"x": 1}])
     assert score["execution_success"] is False
+    assert score["result_match"] is False
     assert score["execution_accuracy"] == 0.0
 
 
-def test_execution_accuracy_gold_error_scores_zero() -> None:
-    # gold rows None => reference gold SQL itself errored; no verdict possible
+def test_successful_execution_without_gold_rows_still_scores_one() -> None:
+    # Gold rows are required for result matching, but not for execution success.
     score = execution_accuracy([{"x": 1}], None)
-    assert score["execution_accuracy"] == 0.0
+    assert score["execution_success"] is True
+    assert score["result_match"] is False
+    assert score["execution_accuracy"] == 1.0

@@ -12,6 +12,7 @@ class AccuracyScores(TypedDict):
     so downstream analysis can distinguish "not computed" from "scored zero".
     """
 
+    normalized_exact_match: float
     rouge_l_f: float
     bertscore_p: float | None
     bertscore_r: float | None
@@ -19,8 +20,8 @@ class AccuracyScores(TypedDict):
 
 
 class ExecutionScore(TypedDict):
-    """Text-to-SQL execution metric: did the query run, and do its rows match gold?"""
+    """Binary Text-to-SQL execution metric with a separate result-match diagnostic."""
 
     execution_success: bool  # query executed without error (within the retry cap)
     result_match: bool  # predicted rows equal gold rows (per comparison policy)
-    execution_accuracy: float  # 1.0 iff execution_success and result_match else 0.0
+    execution_accuracy: float  # 1.0 iff execution_success, otherwise 0.0

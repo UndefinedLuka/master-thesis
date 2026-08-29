@@ -1,6 +1,6 @@
-"""Tests against the real metric implementations (needs the [metrics] extra for ROUGE).
+"""Tests against the real metric implementations (needs the ``[metrics]`` extra).
 
-BERTScore's torch model is never loaded here — only the pure input-validation paths of
+BERTScore's model is never loaded here — only the pure input-validation paths of
 ``bert_score_batch`` are exercised.
 """
 
@@ -10,9 +10,21 @@ import pytest
 
 from metrics.bertscore import bert_score_batch
 
-rouge_module = pytest.importorskip("rouge_score", reason="requires the [metrics] extra")
+pytest.importorskip("rouge_score", reason="requires the [metrics] extra")
+pytest.importorskip("transformers", reason="requires the [metrics] extra")
 
+from metrics.exact_match import normalized_exact_match  # noqa: E402
 from metrics.rouge import rouge_l  # noqa: E402
+
+
+def test_normalized_exact_match_accepts_formatting_mutations() -> None:
+    assert normalized_exact_match("NEW YORK,\nUSA", "new york usa") == 1.0
+    assert normalized_exact_match("1,000", "1000") == 1.0
+
+
+def test_normalized_exact_match_rejects_different_results() -> None:
+    assert normalized_exact_match("Alice and Bob", "Alice and Carol") == 0.0
+    assert normalized_exact_match("Alice Bob", "Bob Alice") == 0.0
 
 
 def test_rouge_l_identical_texts_score_one() -> None:

@@ -7,7 +7,7 @@
 #SBATCH --time=12:00:00
 #SBATCH --output=%x-%j.out
 
-# Score all benchmark results (ROUGE-L + BERTScore + execution accuracy).
+# Score all benchmark results (normalized Exact Match + ROUGE-L + BERTScore + execution accuracy).
 #
 #   sbatch code/deploy/score_results.sbatch
 #   sbatch code/deploy/score_results.sbatch --no-bertscore   # CPU-cheap rescore

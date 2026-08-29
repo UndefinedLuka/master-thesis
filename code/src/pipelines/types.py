@@ -57,8 +57,8 @@ class PipelineResult(TypedDict):
     definitive_failure: bool | None  # still failing after max_retries
 
     # retrieval accuracy (filled by the scoring pass: score_results)
-    scores: AccuracyScores | None  # ROUGE-L + BERTScore (both pipelines)
-    execution: ExecutionScore | None  # Spider-style EX (text_to_sql only)
+    scores: AccuracyScores | None  # normalized EM + ROUGE-L + BERTScore (both pipelines)
+    execution: ExecutionScore | None  # binary execution success + result match (text_to_sql)
 
     # pipeline-level fatal error (generation failure, etc.)
     error: str | None
