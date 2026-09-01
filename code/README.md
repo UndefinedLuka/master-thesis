@@ -49,8 +49,9 @@ Requires Python >= 3.12 (local dev pins 3.14 via `.python-version`) and
 [`uv`](https://docs.astral.sh/uv/).
 
 ```bash
-uv sync                 # core deps + dev (ruff, pytest)
-uv sync --extra metrics # + torch, transformers, rouge-score, bert-score (scoring only)
+uv sync                        # core deps + dev (ruff, pytest)
+uv sync --extra metrics        # + torch, transformers, rouge-score, bert-score (scoring only)
+uv sync --extra visualizations # + pandas, seaborn, matplotlib (analysis only)
 ```
 
 ## Configuration
@@ -115,10 +116,20 @@ uv run python -m cli.score_results --results results/
 uv run python -m cli.score_results --results results/ --no-bertscore   # normalized EM + ROUGE-L + exec
 uv run python -m cli.score_results --results results/spider/direct/json/model.ndjson \
        --references data/spider_references.ndjson                      # explicit references
+
+# 8. Generate every analysis figure and LaTeX table from one result snapshot
+uv run --extra visualizations thesis-visualize-all
 ```
 
+`thesis-visualize-all` loads the scored result tree once and writes all PNGs to
+`analysis/figures/` plus the mean-accuracy LaTeX table to `analysis/tables/`. Use repeatable
+`--dataset bird|spider` and `--model <exact-model-id>` filters when generating a subset, or
+`--figures-dir` / `--tables-dir` to change output locations. If a generator fails, the command
+stops and reports the failing stage by name.
+
 Console scripts (`thesis-download`, `thesis-sample-dbs`, `thesis-references`,
-`thesis-convert`, `thesis-benchmark`, `thesis-run-all`, `thesis-score`) are equivalent to
+`thesis-convert`, `thesis-benchmark`, `thesis-run-all`, `thesis-score`,
+`thesis-visualize-all`) are equivalent to
 the `python -m` forms.
 
 ### Results

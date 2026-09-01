@@ -30,6 +30,13 @@ metrics = [
     "torch>=2.5.0",
     "transformers>=4.46.0",
 ]
+# Plotting and tabular analysis are isolated from benchmark generation dependencies.
+#   uv sync --extra visualizations
+visualizations = [
+    "matplotlib>=3.9.0",
+    "pandas>=2.2.0",
+    "seaborn>=0.13.2",
+]
 
 [project.scripts]
 thesis-download = "cli.download_datasets:main"
@@ -39,6 +46,18 @@ thesis-convert = "cli.convert_data:main"
 thesis-benchmark = "cli.run_benchmark:main"
 thesis-run-all = "cli.run_all:main"
 thesis-score = "cli.score_results:main"
+thesis-plot-input-tokens = "visualizations.average_input_tokens_by_format:main"
+thesis-plot-result-time = "visualizations.average_time_by_format:main"
+thesis-plot-context-exceeded = "visualizations.context_exceeded_by_format:main"
+thesis-plot-latency-distribution = "visualizations.latency_distribution_by_format:main"
+thesis-plot-ttft-input-tokens = "visualizations.ttft_vs_input_tokens:main"
+thesis-table-accuracy = "visualizations.accuracy_table:main"
+thesis-plot-retry-effectiveness = "visualizations.retry_effectiveness:main"
+thesis-plot-accuracy-heatmaps = "visualizations.accuracy_heatmaps:main"
+thesis-plot-accuracy-efficiency = "visualizations.accuracy_efficiency_pareto:main"
+thesis-plot-accuracy-model-size = "visualizations.accuracy_by_model_size:main"
+thesis-plot-format-win-rates = "visualizations.format_win_rate_matrix:main"
+thesis-visualize-all = "visualizations.generate_all:main"
 
 [dependency-groups]
 dev = [
@@ -63,6 +82,7 @@ packages = [
     "src/results",
     "src/serialization",
     "src/sqlite",
+    "src/visualizations",
 ]
 
 [tool.ruff]
