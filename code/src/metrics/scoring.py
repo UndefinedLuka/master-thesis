@@ -8,6 +8,7 @@ Text construction (Chapter 3 §Retrieval Accuracy):
   * Direct Context Inference  -> prediction text is the model's raw NL answer.
   * Text-to-SQL               -> prediction text is the executed result rows, stringified.
   * Reference text (both)     -> the gold result rows, stringified.
+  * Empty Direct references   -> the prompt's canonical no-answer text, ``N/A``.
 
 Text-to-SQL additionally gets binary Execution Accuracy (whether its query ran successfully)
 and a separate result-match diagnostic on the raw rows.
@@ -37,6 +38,8 @@ ReferenceLookup = dict[str, "ReferenceEntry"]
 ExactMatchFn = Callable[[str, str], float]
 RougeFn = Callable[[str, str], float]
 BertBatchFn = Callable[[list[str], list[str]], list[ScoreTriple]]
+
+DIRECT_NO_ANSWER_TEXT = "N/A"
 
 
 class ReferenceEntry(TypedDict):
@@ -70,6 +73,21 @@ def prediction_text(result: PipelineResult) -> str:
 def reference_text(entry: ReferenceEntry) -> str:
     """The gold text both pipelines are scored against (stringified gold rows)."""
     return rows_to_text(entry["rows"])
+
+
+def scoring_text_pair(result: PipelineResult, entry: ReferenceEntry) -> tuple[str, str]:
+    """Build comparable prediction/reference text for one successful pipeline result.
+
+    Direct inference is explicitly prompted to return ``N/A`` when the provided data contains
+    no answer. Gold SQL represents that same condition as empty rendered text, so use the prompt's
+    sentinel as the Direct reference. Keeping this rule pair-specific preserves the existing empty
+    result representation used by Text-to-SQL.
+    """
+    prediction = prediction_text(result)
+    reference = reference_text(entry)
+    if result["pipeline"] == "direct" and not reference.strip():
+        reference = DIRECT_NO_ANSWER_TEXT
+    return prediction, reference
 
 
 def has_order_by(gold_sql: str) -> bool:
@@ -166,8 +184,9 @@ def score_records(
             stats_failed += 1
             continue
         eligible_idx.append(idx)
-        predictions.append(prediction_text(record))
-        refs.append(reference_text(entry))
+        prediction, reference = scoring_text_pair(record, entry)
+        predictions.append(prediction)
+        refs.append(reference)
 
     # Normalized Exact Match and ROUGE-L per pair; BERTScore in one batch.
     pairs = zip(predictions, refs, strict=True)

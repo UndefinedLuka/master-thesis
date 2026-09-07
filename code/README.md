@@ -100,6 +100,9 @@ uv run python -m cli.build_references
 # 5. (Optional) materialize all six formats on disk, to eyeball them
 uv run python -m cli.convert_data
 
+# 5b. Report serialized database-payload tokens for all tokenizer families
+uv run python -m cli.report_serialization_tokens
+
 # 6. Run a pipeline (resumable; results split per slice)
 uv run python -m cli.run_benchmark --dataset spider --pipeline direct --model Qwen2.5-7B-Q8_0.gguf
 uv run python -m cli.run_benchmark --dataset spider --pipeline direct --model Qwen2.5-7B-Q8_0.gguf --formats json,markdown
@@ -127,10 +130,46 @@ uv run --extra visualizations thesis-visualize-all
 `--figures-dir` / `--tables-dir` to change output locations. If a generator fails, the command
 stops and reports the failing stage by name.
 
+### Serialization input-token overhead report
+
+`cli.report_serialization_tokens` independently loads every unique database referenced by the
+Spider and BIRD dev splits, applies the same six serializers as the direct benchmark, and counts
+each serialized payload with one representative GGUF tokenizer from every experiment
+family: Qwen 3.5, Ministral 3, and Gemma 4. Models of different sizes in one family share that
+family's tokenizer, so they do not need to be loaded separately. Spider databases are serialized
+in full; BIRD uses the same materialized sampled databases as the benchmark. GGUFs are opened
+with `vocab_only=True`; no inference weights or GPU are needed, and prompts, questions, and
+generated output are not counted.
+
+```bash
+# Full report: both datasets x all formats x all three tokenizer families
+uv run python -m cli.report_serialization_tokens
+# equivalent installed console command
+uv run thesis-report-serialization-tokens
+
+# Fast end-to-end check, not suitable for reporting
+uv run python -m cli.report_serialization_tokens --limit 1
+
+# Runs resume from the detailed CSV checkpoint; force a rebuild after changing serializers/data
+uv run python -m cli.report_serialization_tokens --no-resume
+
+# Narrow a run or provide an explicit representative GGUF
+uv run python -m cli.report_serialization_tokens --dataset spider --family qwen-3.5 \
+  --tokenizer-model qwen-3.5=models/Qwen3.5-0.8B-Q4_K_M.gguf
+```
+
+A full unfiltered run writes `results/input_token_overhead/serialization_tokens_by_database.csv`.
+It contains one row per database, format, and tokenizer family, including character and UTF-8 byte
+sizes alongside the exact token count. The CSV is atomically checkpointed after every tokenizer
+count so interrupted runs resume safely.
+
+Limited or filtered runs use a deterministic child of `results/input_token_overhead/subsets/` by
+default, so a smoke test cannot overwrite the complete report. Pass `--output-dir` to choose
+another location.
+
 Console scripts (`thesis-download`, `thesis-sample-dbs`, `thesis-references`,
-`thesis-convert`, `thesis-benchmark`, `thesis-run-all`, `thesis-score`,
-`thesis-visualize-all`) are equivalent to
-the `python -m` forms.
+`thesis-convert`, `thesis-report-serialization-tokens`, `thesis-benchmark`, `thesis-run-all`,
+`thesis-score`, `thesis-visualize-all`) are equivalent to the `python -m` forms.
 
 ### Results
 
@@ -161,9 +200,11 @@ joins each record with its reference answer, and writes a `<name>.scored.ndjson`
 each input:
 
 - **Normalized Exact Match**, **ROUGE-L**, and **BERTScore** on prediction vs reference text —
-  the raw answer for Direct, the executed rows (stringified) for Text-to-SQL. Normalized Exact
-  Match uses the established SQuAD normalization: lowercase, remove punctuation and English
-  articles, and collapse whitespace before binary exact comparison.
+  the raw answer for Direct, the executed rows (stringified) for Text-to-SQL. For Direct results,
+  an empty gold SQL answer is represented as the prompt's canonical no-answer value, `N/A`, so a
+  correctly abstaining model is not compared against an empty string. Normalized Exact Match uses
+  the established SQuAD normalization: lowercase, remove punctuation and English articles, and
+  collapse whitespace before binary exact comparison.
 - **Execution accuracy** for Text-to-SQL: binary `1.0` when the generated query executes
   successfully within the retry cap, otherwise `0.0`. Gold-row equality is retained separately
   as the `result_match` diagnostic.

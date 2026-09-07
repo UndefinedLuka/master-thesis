@@ -11,6 +11,7 @@ from metrics.scoring import (
     references_from_rows,
     rows_to_text,
     score_records,
+    scoring_text_pair,
 )
 from pipelines.shared import base_result
 
@@ -64,6 +65,22 @@ def test_reference_text() -> None:
     assert reference_text(refs["spider:db:0"]) == "Alice"
 
 
+def test_direct_empty_reference_uses_prompt_no_answer_sentinel() -> None:
+    direct = base_result(_ex(0), pipeline="direct", fmt="json", model_id="m")
+    direct["raw_output"] = "N/A"
+    refs = references_from_rows([_ref([])])
+
+    assert scoring_text_pair(direct, refs["spider:db:0"]) == ("N/A", "N/A")
+
+
+def test_text_to_sql_empty_reference_remains_empty() -> None:
+    sql = base_result(_ex(0), pipeline="text_to_sql", fmt=None, model_id="m")
+    sql["predicted_rows"] = []
+    refs = references_from_rows([_ref([])])
+
+    assert scoring_text_pair(sql, refs["spider:db:0"]) == ("", "")
+
+
 def test_has_order_by() -> None:
     assert has_order_by("SELECT x FROM t ORDER BY x")
     assert not has_order_by("SELECT x FROM t")
@@ -88,6 +105,31 @@ def test_score_records_direct_pipeline() -> None:
     assert scored[0]["scores"]["rouge_l_f"] == 1.0  # "Alice" == "Alice"
     assert scored[0]["scores"]["bertscore_f"] == 0.85
     assert scored[0]["execution"] is None  # not text_to_sql
+
+
+def test_score_records_direct_no_answer_matches_empty_gold_result() -> None:
+    r = base_result(_ex(0), pipeline="direct", fmt="json", model_id="m")
+    r["raw_output"] = "N/A"
+    refs = references_from_rows([_ref([])])
+
+    captured: dict[str, list[str]] = {}
+
+    def capture_bert(preds: list[str], reference_texts: list[str]) -> list[ScoreTriple]:
+        captured["predictions"] = preds
+        captured["references"] = reference_texts
+        return _fake_bert(preds, reference_texts)
+
+    scored, _ = score_records(
+        [r],
+        refs,
+        exact_match_fn=_fake_exact_match,
+        rouge_fn=_fake_rouge,
+        bert_batch_fn=capture_bert,
+    )
+
+    assert scored[0]["scores"]["normalized_exact_match"] == 1.0
+    assert scored[0]["scores"]["rouge_l_f"] == 1.0
+    assert captured == {"predictions": ["N/A"], "references": ["N/A"]}
 
 
 def test_score_records_text_to_sql_execution() -> None:
