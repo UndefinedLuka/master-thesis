@@ -1,3 +1,148 @@
-
 \chapter{Discussion}
 \label{ch:discussion}
+
+% This chapter should interpret the findings from Chapter~\ref{ch:results}, rather than repeat
+% the reported values. Organize the discussion around the research problem: selecting an
+% information-extraction approach and, for Direct Context Inference, a serialization format
+% that balances retrieval accuracy, latency, token consumption, and context-window feasibility.
+
+% \section{Interpretation of the Main Findings}
+% Open by briefly restating the central empirical findings and explain how they answer the
+% thesis problem definition. Contrast the two pipelines as alternative design choices, not
+% merely as a ranking of methods. Relate the interpretation to the framework proposed in
+% Chapter~\ref{ch:methodolgy} and the relevant findings in the related-work chapter.
+
+% \subsection{Serialization Format Trade-offs in Direct Context Inference}
+% Discuss why compact positional or token-efficient formats, especially CSV and TOON, provided
+% the strongest practical balance. Distinguish token efficiency, context-window coverage,
+% latency, and retrieval accuracy: a format can affect end-to-end accuracy by enabling an
+% otherwise infeasible database to fit, rather than solely by being easier for a model to read.
+% Explain why XML and other verbose hierarchical formats were disadvantaged, and discuss the
+% limited differences between formats on smaller Spider databases versus the larger BIRD data.
+% Address whether the results support a general preference for CSV or TOON, and identify cases
+% where a more explicit structural format may still be justified (for example, nested data,
+% semantics that cannot be represented safely in tabular form, or human inspection needs).
+
+% \subsection{Direct Context Inference versus Text-to-SQL}
+% Interpret the substantially different accuracy, scalability, and resource profiles of the
+% pipelines. Explain why Text-to-SQL can use a much smaller schema-based prompt and operate over
+% data that cannot fit in an LLM context, while also requiring reliable schema interpretation
+% and correct SQL generation. Discuss why Direct Context Inference may still be attractive for
+% small, self-contained datasets or questions where direct inspection is simpler than query
+% synthesis. Emphasize that successful SQL execution does not guarantee a semantically correct
+% answer, whereas direct-context failures are often caused by hard context-window limits.
+
+% \subsection{Influence of Model Capability and Data Characteristics}
+% Discuss the observed effect of parameter scale and model family on both workflows. Explain
+% that larger models improved performance overall but did not eliminate architecture- and
+% dataset-specific differences. Interpret the stronger difficulty of BIRD in terms of database
+% size, schema complexity, realistic data quality, and question complexity. Discuss the
+% negative association between effective serialized database size and Direct Context Inference
+% performance, carefully noting that it is observational rather than a controlled causal claim.
+
+% \subsection{Operational Cost and Latency Implications}
+% Interpret input-token consumption and time-to-first-token as the main costs of verbose
+% direct-context serialization. Contrast this with Text-to-SQL, where model generation and
+% retries dominate while SQL execution itself contributes little to end-to-end latency. Discuss
+% why a stronger model may be operationally preferable to a smaller one when it produces valid
+% SQL on the first attempt and avoids expensive correction loops. Where appropriate, translate
+% token and latency findings into implications for local deployment and paid API usage, without
+% claiming costs that were not measured directly.
+
+% \section{Decision Framework for Structured Data Information Extraction}
+% Present the thesis's main practical contribution: a decision framework that converts the
+% experimental findings into a transparent method-selection process. Introduce the framework as
+% guidance for selecting an approach under explicit constraints, not as a universal rule.
+
+% \subsection{Decision Inputs}
+% Define the characteristics a practitioner must assess before selecting a pipeline: serialized
+% database size relative to the available context window, relational-schema complexity, need for
+% full-data access, data nesting and integrity requirements, required accuracy, latency budget,
+% token or monetary budget, available model capability, and tolerance for SQL-generation errors.
+% Explain how dataset characteristics such as ambiguous column names or noisy real-world values
+% can increase the difficulty of Text-to-SQL.
+
+% \subsection{Method and Format Selection Rules}
+% Derive concrete, evidence-based recommendations from the results. State when Text-to-SQL should
+% be preferred (for example, databases that exceed context capacity or require scalable querying)
+% and when Direct Context Inference remains appropriate (for small databases and simple retrieval
+% tasks). For direct inference, recommend compact formats as the default, with CSV for flat
+% tables and TOON when a compact representation of object-like structure is needed. Include a
+% clear caveat that suitability depends on preserving the source data's semantics and structural
+% integrity.
+
+% \subsection{Decision Matrix or Flowchart}
+% Add a concise visual decision aid, such as a flowchart or matrix. It should lead readers from
+% input size and data structure through approach selection, then choose a serialization format
+% for Direct Context Inference. Include outcome categories such as: use Text-to-SQL; use Direct
+% Context Inference with CSV; use Direct Context Inference with TOON; or redesign/preprocess the
+% data when neither approach satisfies the context, accuracy, or integrity constraints.
+
+% \subsection{Application Scenarios}
+% Demonstrate the framework with a small number of representative scenarios drawn from the study:
+% a small flat database, a small but structured database, and a large or complex relational
+% database. For each scenario, explain the recommended choice, its expected trade-offs, and the
+% conditions under which the recommendation would change. Do not introduce new experimental
+% results in these examples.
+
+% \section{SQL Error Correction: Benefits and Limitations}
+% Interpret the error-correction results beyond the aggregate recovery count. Explain that
+% database feedback can repair detectable syntactic and runtime errors but cannot detect a query
+% that executes successfully while returning the wrong rows. Discuss the declining benefit and
+% increasing cost of later retries, including the role of longer conversational context in later
+% attempts. Assess whether the three-retry limit is a reasonable engineering compromise for the
+% evaluated setting, while acknowledging that another application may have different latency or
+% reliability requirements.
+
+% \section{Threats to Validity and Study Limitations}
+% State limitations precisely and separate them by type. Explain how each limitation affects the
+% interpretation and generalizability of the findings rather than treating this as a generic
+% disclaimer.
+
+% \subsection{Internal Validity}
+% Discuss the fixed inference configuration, uniform quantization, deterministic decoding,
+% prompt-template choices, and the exclusion of Qwen~3.5 27B because its reasoning traces could
+% not be measured consistently. Address the difference between end-to-end accuracy (which assigns
+% context failures zero) and complete-case operational comparisons, and explain why both views
+% were needed. Note any measurement limitations, including timing on shared HPC infrastructure
+% and the inability to isolate per-retry SQL execution time.
+
+% \subsection{Construct Validity}
+% Discuss the extent to which Normalized Exact Match, ROUGE-L, BERTScore, SQL execution success,
+% and result matching capture useful information-retrieval quality. Emphasize that semantic
+% similarity can diverge from factual correctness and that execution success is not equivalent
+% to correct query semantics. Explain any limitations introduced by converting returned SQL rows
+% to text for comparison.
+
+% \subsection{External Validity}
+% Discuss the limits of generalizing from Spider and deterministically sampled BIRD development
+% splits to production databases. Cover the BIRD row-sampling strategy, the fixed 128K context
+% window, local open-weight models, selected model families, the six tested formats, SQLite, and
+% the single-GPU hardware environment. Note that results may differ with proprietary models,
+% longer contexts, different prompts, retrieval-augmented systems, other database engines, or
+% data that contain deeply nested structures.
+
+% \section{Practical Implications}
+% Summarize actionable guidance for practitioners building structured-data question-answering
+% systems. Cover pre-flight context-size checks, preserving data semantics during serialization,
+% tracking token and latency budgets, measuring end-to-end rather than generation-only cost, and
+% validating executed SQL results where possible. Explain that selecting a compact serialization
+% format is a low-cost optimization for feasible direct-context workloads, while Text-to-SQL is
+% generally the more scalable architecture for relational databases.
+
+% \section{Future Work}
+% Identify extensions motivated directly by the findings. Possible directions include evaluating
+% more datasets and production schemas; testing longer-context and proprietary models; measuring
+% actual energy use and API costs; studying schema linking, examples, constrained decoding, and
+% result validation for Text-to-SQL; comparing selective retrieval or chunking with full-context
+% inference; evaluating nested and non-relational data; and conducting controlled experiments
+% that isolate format comprehension from context-window feasibility. Prioritize the most valuable
+% directions rather than presenting an unstructured list.
+
+% \section{Chapter Summary}
+% Close by synthesizing the implications: serialization is a decisive systems concern for Direct
+% Context Inference, whereas scalable Text-to-SQL depends primarily on model capability and
+% reliable query generation. Reiterate that the decision framework provides conditional guidance
+% based on data size, structure, operational constraints, and required reliability. End with a
+% transition to the conclusion chapter, which should give only the final high-level takeaways and
+% contributions rather than repeat this detailed interpretation.

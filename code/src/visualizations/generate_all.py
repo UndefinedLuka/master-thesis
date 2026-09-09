@@ -1,339 +1,327 @@
-"""Generate every analysis figure and LaTeX table from one result snapshot.
+"""Generate every results-chapter table and figure through one command.
 
-The command loads the scored NDJSON tree once, then runs every visualization against that same
-in-memory snapshot. This is both faster than invoking each script separately and prevents figures
-from observing different record counts while benchmark files are still being appended.
+The orchestrator owns argument parsing, input loading, coverage validation, and progress output.
+Artifact modules remain independently testable and each writes exactly one table or figure.
 
     uv run --extra visualizations thesis-visualize-all
-    uv run --extra visualizations thesis-visualize-all --dataset bird
+
+Use ``--allow-incomplete`` only for smoke tests with partial result snapshots.
 """
 
 from __future__ import annotations
 
 import argparse
-from collections.abc import Callable, Sequence
-from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING
 
 import pandas as pd
 
-if TYPE_CHECKING:
-    from matplotlib.figure import Figure
-
 from config.paths import ProjectPaths
-from visualizations import accuracy_by_model_size as model_size_plot
-from visualizations import accuracy_efficiency_pareto as pareto_plot
-from visualizations import accuracy_heatmaps as heatmap_plot
-from visualizations import accuracy_table
-from visualizations import average_input_tokens_by_format as token_plot
-from visualizations import average_time_by_format as time_plot
-from visualizations import context_exceeded_by_format as context_plot
-from visualizations import format_win_rate_matrix as win_rate_plot
-from visualizations import latency_distribution_by_format as latency_plot
-from visualizations import retry_effectiveness as retry_plot
-from visualizations import ttft_vs_input_tokens as ttft_plot
-from visualizations.data import (
+from visualizations.config import (
+    CONTEXT_WINDOW_TOKENS,
     DATASET_LABELS,
     DATASET_ORDER,
-    HAS_ANSWER_COLUMN,
-    load_scored_results,
-    select_complete_question_cohort,
+    EXPECTED_DATABASE_COUNTS,
 )
-
-ALL_COLUMNS: tuple[str, ...] = (
-    "dataset",
-    "pipeline",
-    "format",
-    "model_id",
-    "example_id",
-    "input_tokens",
-    "time_to_first_token_s",
-    "reasoning_time_s",
-    "generation_time_s",
-    "query_execution_time_s",
-    "total_time_s",
-    "retry_count",
-    "execution_success",
-    "error",
-    HAS_ANSWER_COLUMN,
-    "execution.result_match",
-    time_plot.ATTEMPT_TTFT_COLUMN,
-    time_plot.ATTEMPT_REASONING_COLUMN,
-    ttft_plot.ATTEMPT_INPUT_TOKENS_COLUMN,
-    *accuracy_table.METRIC_SOURCE_COLUMNS.values(),
+from visualizations.data import load_scored_results
+from visualizations.direct_accuracy_by_database_size import (
+    generate_database_size_accuracy_figures,
 )
+from visualizations.direct_accuracy_by_format import (
+    generate_direct_accuracy_by_format_figure,
+)
+from visualizations.direct_accuracy_by_model_size import (
+    generate_direct_accuracy_by_model_size_figure,
+)
+from visualizations.direct_accuracy_data import (
+    DIRECT_ACCURACY_COLUMNS,
+    validate_direct_accuracy_scores,
+)
+from visualizations.direct_efficiency_data import (
+    DIRECT_EFFICIENCY_COLUMNS,
+    DirectEfficiencyAnalysis,
+    calculate_direct_efficiency,
+)
+from visualizations.direct_latency_by_format import generate_direct_latency_figure
+from visualizations.direct_operational_efficiency_table import (
+    generate_direct_operational_table,
+)
+from visualizations.direct_token_usage import generate_direct_token_usage_figure
+from visualizations.experiment_outcomes import (
+    DEFAULT_EXCLUDED_MODEL_MARKERS,
+    FAILURE_OUTCOMES,
+    OUTCOME_COLUMNS,
+    SQL_METHOD,
+    SUCCESS_OUTCOMES,
+    calculate_outcome_summary,
+    generate_experiment_outcomes_table,
+)
+from visualizations.experiment_outcomes import (
+    validate_complete_coverage as validate_experiment_coverage,
+)
+from visualizations.serialization_average_tokens import generate_average_tokens_table
+from visualizations.serialization_data import (
+    load_token_report,
+)
+from visualizations.serialization_data import (
+    validate_complete_coverage as validate_serialization_coverage,
+)
+from visualizations.serialization_database_fit import generate_database_fit_table
+from visualizations.text_to_sql_accuracy_by_model_size import (
+    generate_text_to_sql_accuracy_figure,
+)
+from visualizations.text_to_sql_data import (
+    TEXT_TO_SQL_COLUMNS,
+    TextToSqlAnalysis,
+    calculate_text_to_sql_analysis,
+)
+from visualizations.text_to_sql_error_correction import generate_error_correction_figure
+from visualizations.text_to_sql_error_correction_table import (
+    generate_error_correction_table,
+)
+from visualizations.text_to_sql_latency import generate_text_to_sql_latency_figure
+from visualizations.text_to_sql_operational_efficiency_table import (
+    generate_text_to_sql_operational_table,
+)
+from visualizations.text_to_sql_retrieval_accuracy_table import (
+    generate_text_to_sql_retrieval_table,
+)
+from visualizations.text_to_sql_retry_data import calculate_text_to_sql_retry_analysis
+from visualizations.text_to_sql_token_usage import generate_text_to_sql_token_figure
+from visualizations.tokenizer_family_comparison import generate_tokenizer_comparison_figure
 
 
-@dataclass(frozen=True, slots=True)
-class GenerationContext:
-    """Shared result snapshot and output configuration for all generator stages."""
-
-    records: pd.DataFrame
-    completed_answers: pd.DataFrame
-    datasets: tuple[str, ...]
-    figures_dir: Path
-    tables_dir: Path
-
-
-@dataclass(frozen=True, slots=True)
-class GenerationStage:
-    """One named generator used by the all-visualizations command."""
-
-    name: str
-    run: Callable[[GenerationContext], list[Path]]
-
-
-def generate_all(context: GenerationContext) -> list[Path]:
-    """Run all generators and return every produced artifact path."""
-    outputs: list[Path] = []
-    total = len(GENERATION_STAGES)
-    for index, stage in enumerate(GENERATION_STAGES, start=1):
-        print(f"[{index}/{total}] {stage.name} ...")
-        try:
-            stage_outputs = stage.run(context)
-        except Exception as exc:
-            raise RuntimeError(f"Generation stage failed: {stage.name}") from exc
-        outputs.extend(stage_outputs)
-        for output in stage_outputs:
-            print(f"  -> {output}")
-    return outputs
+def generate_all(
+    experiment_results: pd.DataFrame,
+    serialization_report: pd.DataFrame,
+    *,
+    tables_dir: Path,
+    figures_dir: Path,
+    excluded_model_markers: tuple[str, ...] = DEFAULT_EXCLUDED_MODEL_MARKERS,
+    context_window_tokens: int = CONTEXT_WINDOW_TOKENS,
+    coverage_validated: bool,
+    direct_efficiency: DirectEfficiencyAnalysis | None = None,
+    text_to_sql_analysis: TextToSqlAnalysis | None = None,
+) -> list[Path]:
+    """Generate every registered artifact from already-loaded input snapshots."""
+    efficiency = direct_efficiency or calculate_direct_efficiency(
+        experiment_results,
+        excluded_model_markers=excluded_model_markers,
+    )
+    sql_analysis = text_to_sql_analysis or calculate_text_to_sql_analysis(
+        experiment_results,
+        excluded_model_markers=excluded_model_markers,
+    )
+    retry_analysis = calculate_text_to_sql_retry_analysis(sql_analysis)
+    return [
+        generate_experiment_outcomes_table(
+            experiment_results,
+            tables_dir,
+            excluded_model_markers=excluded_model_markers,
+            coverage_validated=coverage_validated,
+        ),
+        generate_average_tokens_table(
+            serialization_report,
+            tables_dir,
+            coverage_validated=coverage_validated,
+        ),
+        generate_database_fit_table(
+            serialization_report,
+            tables_dir,
+            context_window_tokens=context_window_tokens,
+            coverage_validated=coverage_validated,
+        ),
+        generate_tokenizer_comparison_figure(serialization_report, figures_dir),
+        generate_direct_accuracy_by_format_figure(
+            experiment_results,
+            figures_dir,
+            excluded_model_markers=excluded_model_markers,
+        ),
+        generate_direct_accuracy_by_model_size_figure(
+            experiment_results,
+            figures_dir,
+            excluded_model_markers=excluded_model_markers,
+        ),
+        *generate_database_size_accuracy_figures(
+            experiment_results,
+            serialization_report,
+            figures_dir,
+            excluded_model_markers=excluded_model_markers,
+            expected_database_counts=EXPECTED_DATABASE_COUNTS if coverage_validated else None,
+        ),
+        generate_direct_operational_table(efficiency, tables_dir),
+        generate_direct_token_usage_figure(efficiency, figures_dir),
+        generate_direct_latency_figure(efficiency, figures_dir),
+        generate_text_to_sql_retrieval_table(sql_analysis, tables_dir),
+        generate_text_to_sql_accuracy_figure(sql_analysis, figures_dir),
+        generate_text_to_sql_operational_table(sql_analysis, tables_dir),
+        generate_text_to_sql_token_figure(sql_analysis, figures_dir),
+        generate_text_to_sql_latency_figure(sql_analysis, figures_dir),
+        generate_error_correction_table(retry_analysis, tables_dir),
+        generate_error_correction_figure(retry_analysis, figures_dir),
+    ]
 
 
 def build_parser(paths: ProjectPaths | None = None) -> argparse.ArgumentParser:
-    """Build the command-line parser with project-relative default paths."""
+    """Build the sole visualization command's parser with project-relative defaults."""
     project_paths = paths or ProjectPaths.discover()
     parser = argparse.ArgumentParser(
-        description="Generate every visualization and analysis table from one result snapshot"
+        description="Generate every results-chapter table and figure"
     )
     parser.add_argument(
         "--results",
         type=Path,
         default=project_paths.results_dir,
-        help="scored NDJSON file or result directory (default: results/)",
+        help="scored benchmark NDJSON file or directory (default: results/)",
     )
     parser.add_argument(
-        "--figures-dir",
+        "--serialization-report",
         type=Path,
-        default=project_paths.root / "analysis" / "figures",
-        help="PNG output directory (default: analysis/figures/)",
+        default=(
+            project_paths.results_dir
+            / "input_token_overhead"
+            / "serialization_tokens_by_database.csv"
+        ),
+        help="serialization-token CSV produced by thesis-report-serialization-tokens",
     )
     parser.add_argument(
         "--tables-dir",
         type=Path,
         default=project_paths.root / "analysis" / "tables",
-        help="LaTeX table output directory (default: analysis/tables/)",
+        help="LaTeX output directory (default: analysis/tables/)",
     )
     parser.add_argument(
-        "--dataset",
-        action="append",
-        choices=DATASET_ORDER,
-        default=None,
-        help="dataset to include; repeat to include both (default: bird and spider)",
+        "--figures-dir",
+        type=Path,
+        default=project_paths.root / "analysis" / "figures",
+        help="figure output directory (default: analysis/figures/)",
     )
     parser.add_argument(
-        "--model",
+        "--exclude-model",
         action="append",
         default=None,
-        help="exact model_id to include; repeat to include multiple models (default: all)",
+        help=(
+            "case-insensitive model-id fragment excluded from outcome analysis; repeat for "
+            "multiple models (default: Qwen3.5-27B)"
+        ),
+    )
+    parser.add_argument(
+        "--context-window",
+        type=int,
+        default=CONTEXT_WINDOW_TOKENS,
+        help=f"context-fit threshold in tokens (default: {CONTEXT_WINDOW_TOKENS:,})",
+    )
+    parser.add_argument(
+        "--allow-incomplete",
+        action="store_true",
+        help="skip strict experiment and serialization coverage validation (smoke tests only)",
     )
     return parser
 
 
 def main(argv: list[str] | None = None) -> int:
-    """Load one result snapshot and generate every analysis artifact."""
+    """Load both source snapshots, validate them, and generate every artifact."""
     parser = build_parser()
     args = parser.parse_args(argv)
+    if args.context_window <= 0:
+        parser.error("--context-window must be positive")
 
-    import matplotlib
-
-    matplotlib.use("Agg")
-    selected_datasets = _canonical_selection(DATASET_ORDER, args.dataset)
-    print(
-        "Loading one scored-result snapshot for "
-        + ", ".join(DATASET_LABELS.get(dataset, dataset) for dataset in selected_datasets)
-        + " ..."
+    excluded_markers = tuple(args.exclude_model or DEFAULT_EXCLUDED_MODEL_MARKERS)
+    result_columns = tuple(
+        dict.fromkeys(
+            (
+                *OUTCOME_COLUMNS,
+                *DIRECT_ACCURACY_COLUMNS,
+                *DIRECT_EFFICIENCY_COLUMNS,
+                *TEXT_TO_SQL_COLUMNS,
+            )
+        )
     )
-    records = load_scored_results(
+    experiment_results = load_scored_results(
         args.results,
-        columns=ALL_COLUMNS,
-        datasets=selected_datasets,
-        pipelines=("direct", "text_to_sql"),
-        models=args.model,
+        columns=result_columns,
+        datasets=DATASET_ORDER,
+        pipelines=("direct", SQL_METHOD),
     )
-    if records.empty:
-        parser.error("no scored result records matched the selected filters")
+    if experiment_results.empty:
+        parser.error("no scored benchmark records were found")
+    try:
+        serialization_report = load_token_report(args.serialization_report)
+    except (FileNotFoundError, ValueError) as exc:
+        parser.error(str(exc))
 
-    completed_answers = records[
-        records["error"].isna() & records[HAS_ANSWER_COLUMN].eq(True)
-    ].copy()
-    context = GenerationContext(
-        records=records,
-        completed_answers=completed_answers,
-        datasets=selected_datasets,
-        figures_dir=args.figures_dir,
+    coverage_validated = not args.allow_incomplete
+    if coverage_validated:
+        try:
+            experiment_coverage = validate_experiment_coverage(
+                experiment_results,
+                excluded_model_markers=excluded_markers,
+            )
+            serialization_coverage = validate_serialization_coverage(serialization_report)
+            direct_accuracy_count = validate_direct_accuracy_scores(
+                experiment_results,
+                excluded_model_markers=excluded_markers,
+            )
+            direct_efficiency = calculate_direct_efficiency(
+                experiment_results,
+                excluded_model_markers=excluded_markers,
+            )
+            text_to_sql_analysis = calculate_text_to_sql_analysis(
+                experiment_results,
+                excluded_model_markers=excluded_markers,
+            )
+        except ValueError as exc:
+            parser.error(str(exc))
+        print(
+            f"Validated {experiment_coverage.run_count:,} experiment runs across "
+            + ", ".join(
+                f"{DATASET_LABELS.get(dataset, dataset)} "
+                f"({experiment_coverage.question_counts[dataset]:,} questions)"
+                for dataset in DATASET_ORDER
+            )
+        )
+        print(f"Validated retrieval-accuracy scores for {direct_accuracy_count:,} direct runs")
+        print(
+            f"Validated {serialization_coverage.record_count:,} serialization token counts: "
+            f"{sum(serialization_coverage.database_counts.values())} databases, "
+            f"{serialization_coverage.format_count} formats, "
+            f"{serialization_coverage.tokenizer_family_count} tokenizer families"
+        )
+
+    if not coverage_validated:
+        direct_efficiency = calculate_direct_efficiency(
+            experiment_results,
+            excluded_model_markers=excluded_markers,
+        )
+        text_to_sql_analysis = calculate_text_to_sql_analysis(
+            experiment_results,
+            excluded_model_markers=excluded_markers,
+        )
+
+    outputs = generate_all(
+        experiment_results,
+        serialization_report,
         tables_dir=args.tables_dir,
+        figures_dir=args.figures_dir,
+        excluded_model_markers=excluded_markers,
+        context_window_tokens=args.context_window,
+        coverage_validated=coverage_validated,
+        direct_efficiency=direct_efficiency,
+        text_to_sql_analysis=text_to_sql_analysis,
     )
-    outputs = generate_all(context)
+    outcome_summary = calculate_outcome_summary(
+        experiment_results,
+        excluded_model_markers=excluded_markers,
+    )
+    successful = sum(outcome_summary.outcome_total(value) for value in SUCCESS_OUTCOMES)
+    failed = sum(outcome_summary.outcome_total(value) for value in FAILURE_OUTCOMES)
     print(
-        f"Generated {len(outputs)} artifacts from {len(records):,} result records "
-        f"({len(completed_answers):,} completed answers)."
+        f"Classified {outcome_summary.retained_run_count:,} retained runs: "
+        f"{successful:,} successful, {failed:,} failed; "
+        f"excluded {outcome_summary.excluded_run_count:,} model runs"
     )
+    for output in outputs:
+        print(f"Saved {output}")
     return 0
-
-
-def _generate_average_input_tokens(context: GenerationContext) -> list[Path]:
-    cohort = select_complete_question_cohort(context.records)
-    summary = token_plot.calculate_average_input_tokens(cohort.records)
-    figure, _ = token_plot.plot_average_input_tokens(
-        summary,
-        cohort_question_count=cohort.question_count,
-        cohort_observation_count=cohort.observation_count,
-    )
-    path = context.figures_dir / token_plot.OUTPUT_FILENAME
-    return [_save_and_close(figure, token_plot.save_figure, path)]
-
-
-def _generate_average_time(context: GenerationContext) -> list[Path]:
-    cohort = select_complete_question_cohort(context.records)
-    summary = time_plot.calculate_average_times(cohort.records)
-    figure, _ = time_plot.plot_average_times(
-        summary,
-        cohort_question_count=cohort.question_count,
-        cohort_observation_count=cohort.observation_count,
-    )
-    path = context.figures_dir / time_plot.OUTPUT_FILENAME
-    return [_save_and_close(figure, time_plot.save_figure, path)]
-
-
-def _generate_context_exceeded(context: GenerationContext) -> list[Path]:
-    summary = context_plot.calculate_context_exceeded_counts(
-        context.records,
-        datasets=context.datasets,
-    )
-    figure, _ = context_plot.plot_context_exceeded_counts(summary)
-    path = context.figures_dir / context_plot.OUTPUT_FILENAME
-    return [_save_and_close(figure, context_plot.save_figure, path)]
-
-
-def _generate_latency_distribution(context: GenerationContext) -> list[Path]:
-    data = latency_plot.prepare_latency_data(context.completed_answers)
-    figure, _ = latency_plot.plot_latency_distribution(data)
-    path = context.figures_dir / latency_plot.OUTPUT_FILENAME
-    return [_save_and_close(figure, latency_plot.save_figure, path)]
-
-
-def _generate_ttft_relationship(context: GenerationContext) -> list[Path]:
-    data = ttft_plot.prepare_ttft_data(context.completed_answers)
-    figure, _ = ttft_plot.plot_ttft_vs_input_tokens(data)
-    path = context.figures_dir / ttft_plot.OUTPUT_FILENAME
-    return [_save_and_close(figure, ttft_plot.save_figure, path)]
-
-
-def _generate_retry_effectiveness(context: GenerationContext) -> list[Path]:
-    analysis = retry_plot.calculate_retry_effectiveness(context.records)
-    figure, _ = retry_plot.plot_retry_effectiveness(analysis, datasets=context.datasets)
-    path = context.figures_dir / retry_plot.OUTPUT_FILENAME
-    return [_save_and_close(figure, retry_plot.save_figure, path)]
-
-
-def _generate_accuracy_table(context: GenerationContext) -> list[Path]:
-    tables = accuracy_table.render_dataset_accuracy_tables(
-        context.records,
-        datasets=context.datasets,
-    )
-    base_path = context.tables_dir / accuracy_table.OUTPUT_FILENAME
-    outputs: list[Path] = []
-    for dataset, latex in tables.items():
-        path = accuracy_table.output_path_for_dataset(base_path, dataset)
-        accuracy_table.write_latex_table(path, latex)
-        outputs.append(path)
-    return outputs
-
-
-def _generate_accuracy_heatmaps(context: GenerationContext) -> list[Path]:
-    summary = heatmap_plot.calculate_dataset_accuracy_means(context.records)
-    outputs: list[Path] = []
-    for dataset in context.datasets:
-        if not summary["dataset"].eq(dataset).any():
-            continue
-        figure, _ = heatmap_plot.plot_accuracy_heatmaps(summary, dataset=dataset)
-        path = heatmap_plot.output_path_for_dataset(context.figures_dir, dataset)
-        outputs.append(_save_and_close(figure, heatmap_plot.save_figure, path))
-    return outputs
-
-
-def _generate_accuracy_efficiency(context: GenerationContext) -> list[Path]:
-    points = pareto_plot.calculate_accuracy_efficiency_points(context.records)
-    outputs: list[Path] = []
-    for dataset in context.datasets:
-        if not points["dataset"].eq(dataset).any():
-            continue
-        figure, _ = pareto_plot.plot_accuracy_efficiency_pareto(points, dataset=dataset)
-        path = pareto_plot.output_path_for_dataset(context.figures_dir, dataset)
-        outputs.append(_save_and_close(figure, pareto_plot.save_figure, path))
-    return outputs
-
-
-def _generate_model_size_accuracy(context: GenerationContext) -> list[Path]:
-    summary = model_size_plot.calculate_model_size_accuracy(context.records)
-    outputs: list[Path] = []
-    for dataset in context.datasets:
-        if not summary["dataset"].eq(dataset).any():
-            continue
-        figure, _ = model_size_plot.plot_accuracy_by_model_size(summary, dataset=dataset)
-        path = model_size_plot.output_path_for_dataset(context.figures_dir, dataset)
-        outputs.append(_save_and_close(figure, model_size_plot.save_figure, path))
-    return outputs
-
-
-def _generate_format_win_rates(context: GenerationContext) -> list[Path]:
-    summary = win_rate_plot.calculate_format_win_rates(
-        context.records,
-        datasets=context.datasets,
-    )
-    outputs: list[Path] = []
-    for dataset in context.datasets:
-        if not summary["dataset"].eq(dataset).any():
-            continue
-        figure, _ = win_rate_plot.plot_format_win_rate_matrices(summary, dataset=dataset)
-        path = win_rate_plot.output_path_for_dataset(context.figures_dir, dataset)
-        outputs.append(_save_and_close(figure, win_rate_plot.save_figure, path))
-    return outputs
-
-
-def _save_and_close(
-    figure: Figure,
-    save_figure: Callable[[Figure, Path], None],
-    path: Path,
-) -> Path:
-    save_figure(figure, path)
-    import matplotlib.pyplot as plt
-
-    plt.close(figure)
-    return path
-
-
-def _canonical_selection(order: Sequence[str], selected: Sequence[str] | None) -> tuple[str, ...]:
-    if selected is None:
-        return tuple(order)
-    selected_set = set(selected)
-    return tuple(value for value in order if value in selected_set)
-
-
-GENERATION_STAGES: tuple[GenerationStage, ...] = (
-    GenerationStage("Average input-token usage", _generate_average_input_tokens),
-    GenerationStage("Average time decomposition", _generate_average_time),
-    GenerationStage("Context-exceeded counts", _generate_context_exceeded),
-    GenerationStage("Latency distributions", _generate_latency_distribution),
-    GenerationStage("TTFT versus input tokens", _generate_ttft_relationship),
-    GenerationStage("Text-to-SQL retry effectiveness", _generate_retry_effectiveness),
-    GenerationStage("Mean-accuracy LaTeX table", _generate_accuracy_table),
-    GenerationStage("Accuracy heatmaps", _generate_accuracy_heatmaps),
-    GenerationStage("Accuracy-efficiency Pareto plots", _generate_accuracy_efficiency),
-    GenerationStage("Accuracy by model size", _generate_model_size_accuracy),
-    GenerationStage("Paired format win-rate matrices", _generate_format_win_rates),
-)
 
 
 if __name__ == "__main__":

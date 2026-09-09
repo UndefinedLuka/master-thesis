@@ -1,1 +1,1 @@
-"""Reusable result visualizations for the benchmark analysis."""
+"""Shared data utilities for building benchmark visualizations."""

@@ -18,35 +18,11 @@ from typing import Any
 
 import pandas as pd
 
+from visualizations.config import SQL_EXECUTION_LABEL
+
 SCORED_SUFFIX = ".scored.ndjson"
 SOURCE_FILE_COLUMN = "source_file"
 HAS_ANSWER_COLUMN = "has_answer"
-SQL_EXECUTION_LABEL = "SQL execution"
-DATASET_ORDER: tuple[str, ...] = ("bird", "spider")
-DATASET_LABELS: dict[str, str] = {"bird": "BIRD", "spider": "Spider"}
-METHOD_LABELS: dict[str, str] = {
-    "csv": "CSV",
-    "markdown": "Markdown",
-    "toon": "TOON",
-    "yaml": "YAML",
-    "json": "JSON",
-    "xml": "XML",
-    SQL_EXECUTION_LABEL: "SQL",
-}
-METRIC_TITLES: dict[str, str] = {
-    "normalized_exact_match": "Normalized Exact Match",
-    "rouge_l_f": "ROUGE-L F1",
-    "bertscore_f": "BERTScore F1",
-}
-METHOD_ORDER: tuple[str, ...] = (
-    "csv",
-    "markdown",
-    "toon",
-    "yaml",
-    "json",
-    "xml",
-    SQL_EXECUTION_LABEL,
-)
 
 
 @dataclass(frozen=True, slots=True)

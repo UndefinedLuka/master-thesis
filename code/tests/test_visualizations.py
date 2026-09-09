@@ -1,4 +1,4 @@
-"""Tests for shared visualization data loading and the input-token chart."""
+"""Tests for shared visualization data loading and filtering utilities."""
 
 from __future__ import annotations
 
@@ -8,23 +8,12 @@ from pathlib import Path
 import pytest
 
 pytest.importorskip("pandas")
-pytest.importorskip("matplotlib")
-pytest.importorskip("seaborn")
 
-import matplotlib
 import pandas as pd
 
-matplotlib.use("Agg")
-
-from visualizations.average_input_tokens_by_format import (  # noqa: E402
-    calculate_average_input_tokens,
-    plot_average_input_tokens,
-    save_figure,
-)
-from visualizations.data import (  # noqa: E402
+from visualizations.config import METHOD_LABELS, METRIC_TITLES
+from visualizations.data import (
     HAS_ANSWER_COLUMN,
-    METHOD_LABELS,
-    METRIC_TITLES,
     discover_scored_files,
     load_scored_results,
     select_complete_question_cohort,
@@ -154,55 +143,8 @@ def test_complete_cohort_removes_a_question_from_every_model_and_method() -> Non
                 )
 
     cohort = select_complete_question_cohort(pd.DataFrame(rows))
-    summary = calculate_average_input_tokens(cohort.records).set_index("format")
 
     assert cohort.question_count == 1
     assert cohort.observation_count == 4
     assert set(cohort.records["example_id"]) == {"short"}
-    assert summary.loc["csv", "answer_count"] == 2
-    assert summary.loc["json", "answer_count"] == 2
-    assert summary.loc["csv", "average_input_tokens"] == pytest.approx(100.0)
-    assert summary.loc["json", "average_input_tokens"] == pytest.approx(100.0)
-
-
-def test_calculate_average_input_tokens_groups_formats_and_sql_execution() -> None:
-    results = pd.DataFrame(
-        {
-            "pipeline": ["direct", "direct", "direct", "direct", "direct", "text_to_sql"],
-            "format": ["json", "csv", "json", "csv", "xml", None],
-            "input_tokens": [100, 50, 300, 150, 400, 20],
-        }
-    )
-
-    summary = calculate_average_input_tokens(results)
-    indexed = summary.set_index("format")
-
-    assert indexed.loc["csv", "average_input_tokens"] == pytest.approx(100.0)
-    assert indexed.loc["json", "average_input_tokens"] == pytest.approx(200.0)
-    assert indexed.loc["SQL execution", "average_input_tokens"] == pytest.approx(20.0)
-    assert indexed.loc["csv", "answer_count"] == 2
-    assert indexed.loc["json", "answer_count"] == 2
-    assert summary["format"].tolist() == ["csv", "json", "xml", "SQL execution"]
-
-
-def test_plot_can_be_saved(tmp_path: Path) -> None:
-    summary = pd.DataFrame(
-        {
-            "format": ["csv", "json", "xml", "SQL execution"],
-            "average_input_tokens": [100.0, 200.0, 300.0, 20.0],
-            "answer_count": [2, 2, 2, 2],
-        }
-    )
-
-    figure, axes = plot_average_input_tokens(summary)
-    output = tmp_path / "nested" / "tokens.png"
-    save_figure(figure, output)
-
-    assert axes.get_title() == "Average Input Tokens by Method"
-    assert axes.get_xlabel() == "Method"
-    assert [label.get_text() for label in axes.get_xticklabels()][-2:] == [
-        "XML",
-        "SQL",
-    ]
-    assert output.is_file()
-    assert output.stat().st_size > 0
+    assert set(cohort.records["input_tokens"]) == {100}

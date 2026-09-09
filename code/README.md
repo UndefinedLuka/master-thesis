@@ -120,15 +120,57 @@ uv run python -m cli.score_results --results results/ --no-bertscore   # normali
 uv run python -m cli.score_results --results results/spider/direct/json/model.ndjson \
        --references data/spider_references.ndjson                      # explicit references
 
-# 8. Generate every analysis figure and LaTeX table from one result snapshot
+```
+
+The `visualizations` package exposes one orchestrator command for all results-chapter artifacts:
+
+```bash
 uv run --extra visualizations thesis-visualize-all
 ```
 
-`thesis-visualize-all` loads the scored result tree once and writes all PNGs to
-`analysis/figures/` plus the mean-accuracy LaTeX table to `analysis/tables/`. Use repeatable
-`--dataset bird|spider` and `--model <exact-model-id>` filters when generating a subset, or
-`--figures-dir` / `--tables-dir` to change output locations. If a generator fails, the command
-stops and reports the failing stage by name.
+The command loads the scored benchmark tree and detailed serialization-token CSV once, validates
+both complete experiment matrices, and invokes the independent table/figure generators. It writes
+`analysis/tables/experiment_outcomes.tex`,
+`analysis/tables/serialization_average_tokens.tex`,
+`analysis/tables/serialization_database_fit.tex`,
+`analysis/figures/tokenizer_family_comparison.png`,
+`analysis/figures/direct_accuracy_by_format.png`,
+`analysis/figures/direct_accuracy_by_model_size.png`,
+`analysis/figures/direct_accuracy_by_database_size_nem.png`,
+`analysis/figures/direct_accuracy_by_database_size_bertscore.png`,
+`analysis/figures/direct_accuracy_by_database_size_rouge_l.png`,
+`analysis/tables/direct_operational_efficiency.tex`,
+`analysis/figures/direct_token_usage_by_format.png`,
+`analysis/figures/direct_latency_by_format.png`,
+`analysis/tables/text_to_sql_retrieval_accuracy.tex`,
+`analysis/figures/text_to_sql_accuracy_by_model_size.png`,
+`analysis/tables/text_to_sql_operational_efficiency.tex`,
+`analysis/figures/text_to_sql_token_usage.png`,
+`analysis/figures/text_to_sql_latency.png`,
+`analysis/tables/text_to_sql_error_correction.tex`, and
+`analysis/figures/text_to_sql_error_correction.png`. The direct-context accuracy figures report
+normalized exact match, BERTScore F1, and ROUGE-L F1. The format figure averages over retained
+models and questions, while the model-size figure averages each model over all six formats and
+questions. The three database-size figures separately report NEM, BERTScore, and ROUGE-L.
+Each contains six format panels, and every panel places all Spider and BIRD databases on the same
+logarithmic axis using that format's mean tokenizer-specific token footprint as effective size.
+Explicit zero scores assigned to failed runs remain included in the accuracy figures. The operational
+efficiency artifacts instead use a common complete-case cohort within each dataset, ensuring
+that every format is averaged over the same successfully processed questions and models. The
+latency figure decomposes total response latency into time to first token and generation after
+the first token. Text-to-SQL operational artifacts include all correction attempts: tokens and
+model time are accumulated, and the retry-aware latency figure also includes SQL execution. The
+error-correction artifacts separately report the terminal execution attempt, correct-result
+counts, and exact model-generation time added by attempts after the first.
+
+Qwen 3.5 27B is excluded from the outcome and retrieval-accuracy analyses by default; use
+`--exclude-model` to override this. `--context-window` changes the serialization-fit threshold,
+while `--tables-dir` and `--figures-dir` change artifact locations. Use `--allow-incomplete` only
+for smoke tests with partial inputs.
+
+Internally, each artifact has its own module and produces exactly one table or figure. Shared
+publication labels, orderings, colors, filenames, and experiment constants are defined in
+`visualizations/config.py`; only `visualizations/generate_all.py` owns a command-line interface.
 
 ### Serialization input-token overhead report
 
@@ -169,7 +211,7 @@ another location.
 
 Console scripts (`thesis-download`, `thesis-sample-dbs`, `thesis-references`,
 `thesis-convert`, `thesis-report-serialization-tokens`, `thesis-benchmark`, `thesis-run-all`,
-`thesis-score`, `thesis-visualize-all`) are equivalent to the `python -m` forms.
+`thesis-score`, and `thesis-visualize-all`) are equivalent to the `python -m` forms.
 
 ### Results
 
