@@ -133,22 +133,22 @@ both complete experiment matrices, and invokes the independent table/figure gene
 `analysis/tables/experiment_outcomes.tex`,
 `analysis/tables/serialization_average_tokens.tex`,
 `analysis/tables/serialization_database_fit.tex`,
-`analysis/figures/tokenizer_family_comparison.png`,
-`analysis/figures/direct_accuracy_by_format.png`,
-`analysis/figures/direct_accuracy_by_model_size.png`,
-`analysis/figures/direct_accuracy_by_database_size_nem.png`,
-`analysis/figures/direct_accuracy_by_database_size_bertscore.png`,
-`analysis/figures/direct_accuracy_by_database_size_rouge_l.png`,
+`analysis/figures/tokenizer_family_comparison.pdf`,
+`analysis/figures/direct_accuracy_by_format.pdf`,
+`analysis/figures/direct_accuracy_by_model_size.pdf`,
+`analysis/figures/direct_accuracy_by_database_size_nem.pdf`,
+`analysis/figures/direct_accuracy_by_database_size_bertscore.pdf`,
+`analysis/figures/direct_accuracy_by_database_size_rouge_l.pdf`,
 `analysis/tables/direct_operational_efficiency.tex`,
-`analysis/figures/direct_token_usage_by_format.png`,
-`analysis/figures/direct_latency_by_format.png`,
+`analysis/figures/direct_token_usage_by_format.pdf`,
+`analysis/figures/direct_latency_by_format.pdf`,
 `analysis/tables/text_to_sql_retrieval_accuracy.tex`,
-`analysis/figures/text_to_sql_accuracy_by_model_size.png`,
+`analysis/figures/text_to_sql_accuracy_by_model_size.pdf`,
 `analysis/tables/text_to_sql_operational_efficiency.tex`,
-`analysis/figures/text_to_sql_token_usage.png`,
-`analysis/figures/text_to_sql_latency.png`,
+`analysis/figures/text_to_sql_token_usage.pdf`,
+`analysis/figures/text_to_sql_latency.pdf`,
 `analysis/tables/text_to_sql_error_correction.tex`, and
-`analysis/figures/text_to_sql_error_correction.png`. The direct-context accuracy figures report
+`analysis/figures/text_to_sql_error_correction.pdf`. The direct-context accuracy figures report
 normalized exact match, BERTScore F1, and ROUGE-L F1. The format figure averages over retained
 models and questions, while the model-size figure averages each model over all six formats and
 questions. The three database-size figures separately report NEM, BERTScore, and ROUGE-L.

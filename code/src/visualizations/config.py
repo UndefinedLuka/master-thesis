@@ -97,41 +97,41 @@ SERIALIZATION_AVERAGE_TABLE_FILENAME = "serialization_average_tokens.tex"
 SERIALIZATION_AVERAGE_TABLE_LABEL = "tab:serialization-average-tokens"
 SERIALIZATION_FIT_TABLE_FILENAME = "serialization_database_fit.tex"
 SERIALIZATION_FIT_TABLE_LABEL = "tab:serialization-database-fit"
-TOKENIZER_COMPARISON_FIGURE_FILENAME = "tokenizer_family_comparison.png"
+TOKENIZER_COMPARISON_FIGURE_FILENAME = "tokenizer_family_comparison.pdf"
 TOKENIZER_COMPARISON_FIGURE_LABEL = "fig:tokenizer-family-comparison"
-DIRECT_ACCURACY_FORMAT_FIGURE_FILENAME = "direct_accuracy_by_format.png"
+DIRECT_ACCURACY_FORMAT_FIGURE_FILENAME = "direct_accuracy_by_format.pdf"
 DIRECT_ACCURACY_FORMAT_FIGURE_LABEL = "fig:direct-accuracy-by-format"
-DIRECT_ACCURACY_MODEL_SIZE_FIGURE_FILENAME = "direct_accuracy_by_model_size.png"
+DIRECT_ACCURACY_MODEL_SIZE_FIGURE_FILENAME = "direct_accuracy_by_model_size.pdf"
 DIRECT_ACCURACY_MODEL_SIZE_FIGURE_LABEL = "fig:direct-accuracy-by-model-size"
 DIRECT_OPERATIONAL_TABLE_FILENAME = "direct_operational_efficiency.tex"
 DIRECT_OPERATIONAL_TABLE_LABEL = "tab:direct-operational-efficiency"
-DIRECT_TOKEN_USAGE_FIGURE_FILENAME = "direct_token_usage_by_format.png"
+DIRECT_TOKEN_USAGE_FIGURE_FILENAME = "direct_token_usage_by_format.pdf"
 DIRECT_TOKEN_USAGE_FIGURE_LABEL = "fig:direct-token-usage-by-format"
-DIRECT_LATENCY_FIGURE_FILENAME = "direct_latency_by_format.png"
+DIRECT_LATENCY_FIGURE_FILENAME = "direct_latency_by_format.pdf"
 DIRECT_LATENCY_FIGURE_LABEL = "fig:direct-latency-by-format"
 DIRECT_DATABASE_SIZE_FIGURE_FILENAMES: dict[str, str] = {
-    "normalized_exact_match": "direct_accuracy_by_database_size_nem.png",
-    "bertscore_f": "direct_accuracy_by_database_size_bertscore.png",
-    "rouge_l_f": "direct_accuracy_by_database_size_rouge_l.png",
+    "normalized_exact_match": "direct_accuracy_by_database_size_nem.pdf",
+    "bertscore_f": "direct_accuracy_by_database_size_bertscore.pdf",
+    "rouge_l_f": "direct_accuracy_by_database_size_rouge_l.pdf",
 }
 DIRECT_DATABASE_SIZE_FIGURE_LABELS: dict[str, str] = {
     "normalized_exact_match": "fig:direct-accuracy-by-database-size-nem",
     "bertscore_f": "fig:direct-accuracy-by-database-size-bertscore",
     "rouge_l_f": "fig:direct-accuracy-by-database-size-rouge-l",
 }
-TEXT_TO_SQL_ACCURACY_FIGURE_FILENAME = "text_to_sql_accuracy_by_model_size.png"
+TEXT_TO_SQL_ACCURACY_FIGURE_FILENAME = "text_to_sql_accuracy_by_model_size.pdf"
 TEXT_TO_SQL_ACCURACY_FIGURE_LABEL = "fig:text-to-sql-accuracy-by-model-size"
 TEXT_TO_SQL_RETRIEVAL_TABLE_FILENAME = "text_to_sql_retrieval_accuracy.tex"
 TEXT_TO_SQL_RETRIEVAL_TABLE_LABEL = "tab:text-to-sql-retrieval-accuracy"
 TEXT_TO_SQL_OPERATIONAL_TABLE_FILENAME = "text_to_sql_operational_efficiency.tex"
 TEXT_TO_SQL_OPERATIONAL_TABLE_LABEL = "tab:text-to-sql-operational-efficiency"
-TEXT_TO_SQL_TOKEN_FIGURE_FILENAME = "text_to_sql_token_usage.png"
+TEXT_TO_SQL_TOKEN_FIGURE_FILENAME = "text_to_sql_token_usage.pdf"
 TEXT_TO_SQL_TOKEN_FIGURE_LABEL = "fig:text-to-sql-token-usage"
-TEXT_TO_SQL_LATENCY_FIGURE_FILENAME = "text_to_sql_latency.png"
+TEXT_TO_SQL_LATENCY_FIGURE_FILENAME = "text_to_sql_latency.pdf"
 TEXT_TO_SQL_LATENCY_FIGURE_LABEL = "fig:text-to-sql-latency"
 TEXT_TO_SQL_RETRY_TABLE_FILENAME = "text_to_sql_error_correction.tex"
 TEXT_TO_SQL_RETRY_TABLE_LABEL = "tab:text-to-sql-error-correction"
-TEXT_TO_SQL_RETRY_FIGURE_FILENAME = "text_to_sql_error_correction.png"
+TEXT_TO_SQL_RETRY_FIGURE_FILENAME = "text_to_sql_error_correction.pdf"
 TEXT_TO_SQL_RETRY_FIGURE_LABEL = "fig:text-to-sql-error-correction"
 RETRY_OUTCOME_ORDER: tuple[str, ...] = (
     "attempt_1",

@@ -104,7 +104,7 @@ experiment.
 
 \begin{figure}[htbp]
   \centering
-  \includegraphics[width=\textwidth]{../code/analysis/figures/tokenizer_family_comparison.png}
+  \includegraphics[width=\textwidth]{../code/analysis/figures/tokenizer_family_comparison.pdf}
   \caption{Tokenizer-family overhead for identical serialized database payloads. For each database and
   serialization format, zero percent denotes the tokenizer family producing the fewest tokens. Points show
   the median paired overhead and whiskers show the interquartile range.}
@@ -145,7 +145,7 @@ a format and the format's ability to represent the database within the available
 
 \begin{figure}[p]
   \centering
-  \includegraphics[width=\textwidth]{../code/analysis/figures/direct_accuracy_by_format.png}
+  \includegraphics[width=\textwidth]{../code/analysis/figures/direct_accuracy_by_format.pdf}
   \caption{Mean direct-context retrieval accuracy by serialization format. Each bar includes all questions
   and all ten retained models for the named dataset. Runs that failed before producing an answer retain the
   zero scores assigned during evaluation.}
@@ -172,7 +172,7 @@ token.
 
 \begin{figure}[p]
   \centering
-  \includegraphics[width=\textwidth]{../code/analysis/figures/direct_accuracy_by_model_size.png}
+  \includegraphics[width=\textwidth]{../code/analysis/figures/direct_accuracy_by_model_size.pdf}
   \caption{Mean direct-context retrieval accuracy by model size and family. Each point averages all six
   serialization formats and all questions for one model, including zero-scored failed runs. Lines connect
   models within the same family; Qwen~3.5 27B is excluded from the analysis.}
@@ -215,7 +215,7 @@ direct measure of answer quality.
 
 \begin{figure}[p]
   \centering
-  \includegraphics[width=\textwidth]{../code/analysis/figures/direct_token_usage_by_format.png}
+  \includegraphics[width=\textwidth]{../code/analysis/figures/direct_token_usage_by_format.pdf}
   \caption{Mean input and output token use for Direct Context Inference by serialization format. Means use a
   common complete-case cohort within each dataset: 852 Spider questions and 303 BIRD questions, evaluated with
   all ten retained models and all six formats.}
@@ -240,7 +240,7 @@ larger delay.
 
 \begin{figure}[p]
   \centering
-  \includegraphics[width=\textwidth]{../code/analysis/figures/direct_latency_by_format.png}
+  \includegraphics[width=\textwidth]{../code/analysis/figures/direct_latency_by_format.pdf}
   \caption{Mean Direct Context Inference latency by serialization format. Each bar separates time to first
   token from generation after the first token; the complete stack is the total response latency. Means use the
   same common complete-case cohort as Table~\ref{tab:direct-operational-efficiency}.}
@@ -331,7 +331,7 @@ because models of similar nominal size did not achieve equivalent accuracy.
 
 \begin{figure}[p]
   \centering
-  \includegraphics[width=\textwidth]{../code/analysis/figures/text_to_sql_accuracy_by_model_size.png}
+  \includegraphics[width=\textwidth]{../code/analysis/figures/text_to_sql_accuracy_by_model_size.pdf}
   \caption{Mean Text-to-SQL retrieval accuracy by model size and family. Failed SQL runs retain zero scores,
   and Qwen~3.5 27B is excluded from the analysis. Gemma~4 26B-A4B is positioned by its total nominal parameter
   count.}
@@ -365,7 +365,7 @@ longer responses and triggered substantially more correction attempts.
 
 \begin{figure}[p]
   \centering
-  \includegraphics[width=\textwidth]{../code/analysis/figures/text_to_sql_token_usage.png}
+  \includegraphics[width=\textwidth]{../code/analysis/figures/text_to_sql_token_usage.pdf}
   \caption{Mean accumulated input and output tokens for Text-to-SQL by model and dataset. Counts include the
   initial SQL generation and every correction attempt.}
   \label{fig:text-to-sql-token-usage}
@@ -382,7 +382,7 @@ reliability.
 
 \begin{figure}[p]
   \centering
-  \includegraphics[width=\textwidth]{../code/analysis/figures/text_to_sql_latency.png}
+  \includegraphics[width=\textwidth]{../code/analysis/figures/text_to_sql_latency.pdf}
   \caption{Mean Text-to-SQL response latency and correction retries by model and dataset. Each stack includes
   cumulative first-token waits, generation after the first token, and SQL execution across all attempts. Labels
   report total latency and the mean number of retries beyond the initial attempt.}
@@ -437,7 +437,7 @@ latency.
 
 \begin{figure}[p]
   \centering
-  \includegraphics[width=\textwidth]{../code/analysis/figures/text_to_sql_error_correction.png}
+  \includegraphics[width=\textwidth]{../code/analysis/figures/text_to_sql_error_correction.pdf}
   \caption{Text-to-SQL error-correction outcomes and additional model-generation time. The left panel reports
   the attempt on which SQL first executed successfully, or complete failure after four attempts. The right
   panel reports aggregate model-generation time added by each retry stage; SQL execution time is excluded.}

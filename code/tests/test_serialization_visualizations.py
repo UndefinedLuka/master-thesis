@@ -378,6 +378,21 @@ def test_single_orchestrator_cli_writes_every_artifact(tmp_path: Path) -> None:
     assert (tables_dir / TEXT_TO_SQL_RETRY_TABLE_FILENAME).is_file()
     assert (figures_dir / TEXT_TO_SQL_RETRY_FIGURE_FILENAME).stat().st_size > 0
 
+    figure_filenames = (
+        TOKENIZER_COMPARISON_FIGURE_FILENAME,
+        DIRECT_ACCURACY_FORMAT_FIGURE_FILENAME,
+        DIRECT_ACCURACY_MODEL_SIZE_FIGURE_FILENAME,
+        *DIRECT_DATABASE_SIZE_FIGURE_FILENAMES.values(),
+        DIRECT_TOKEN_USAGE_FIGURE_FILENAME,
+        DIRECT_LATENCY_FIGURE_FILENAME,
+        TEXT_TO_SQL_ACCURACY_FIGURE_FILENAME,
+        TEXT_TO_SQL_TOKEN_FIGURE_FILENAME,
+        TEXT_TO_SQL_LATENCY_FIGURE_FILENAME,
+        TEXT_TO_SQL_RETRY_FIGURE_FILENAME,
+    )
+    for filename in figure_filenames:
+        assert (figures_dir / filename).read_bytes().startswith(b"%PDF-")
+
 
 def test_load_token_report_rejects_non_numeric_tokens(tmp_path: Path) -> None:
     path = tmp_path / "bad.csv"
