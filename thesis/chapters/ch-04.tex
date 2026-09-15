@@ -128,7 +128,7 @@ small enough to fit within the 128K context window when serialized in any of the
 The BIRD dataset is downloaded from its official benchmark
 site\footnote{\url{https://bird-bench.github.io/}}. Unlike Spider, BIRD's databases contain real-world data
 with tables spanning tens of thousands of rows, far exceeding the context capacity of models present. We therefore
-subsample each table to a maximum of $1.000$ rows using a deterministic sampling strategy (setting a seed in
+subsample each table to a maximum of $500$ rows using a deterministic sampling strategy (setting a seed in
 order to make it reproducible)
 
 The sampled databases are materialized as standalone SQLite files written to disk. It guarantees that three

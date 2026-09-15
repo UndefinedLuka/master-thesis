@@ -1,7 +1,8 @@
 \chapter{Results}
 \label{ch:results}
 
-This chapter presents the results of the experiments described in the previous chapters. We first establish
+This chapter presents the results of the experiments described in chapters \ref{ch:methodolgy} and
+\ref{ch:implementation}. We first establish
 experiment coverage and serialization efficiency, and then evaluate Direct Context Inference and Text-to-SQL
 in terms of retrieval accuracy and operational efficiency. We also examine the influence of model and database
 size and evaluate the effectiveness and cost of SQL error correction.
@@ -22,22 +23,6 @@ We evaluated the development splits of Spider and BIRD. As summarized in Table~\
 Spider contains 1.034 questions associated with 20 databases, while BIRD contains 1.534 questions associated
 with 11 databases. This gives a total of 2.568 questions across 31 databases.
 
-\begin{table}[htbp]
-  \centering
-  \caption{Dataset coverage used in the experiments.}
-  \label{tab:dataset-coverage}
-  \begin{tabular}{@{}lrr@{}}
-    \toprule
-    Dataset & Questions & Databases \\
-    \midrule
-    Spider & 1.034 & 20 \\
-    BIRD & 1.534 & 11 \\
-    \midrule
-    \textbf{Total} & \textbf{2.568} & \textbf{31} \\
-    \bottomrule
-  \end{tabular}
-\end{table}
-
 For every model and question, the direct-context pipeline was evaluated with six serialization formats: JSON,
 XML, YAML, CSV, Markdown, and TOON. The same questions were also evaluated with the Text-to-SQL pipeline,
 which received the database schema and generated an SQL query. Each model therefore had seven possible runs
@@ -48,8 +33,7 @@ Table~\ref{tab:experiment-outcomes} is one run---a question evaluated with one m
 than one unique question. A successful run means that the pipeline produced an answer; it does not imply that
 the answer was correct. We distinguish runs that completed without a recorded error from Text-to-SQL runs
 that succeeded after SQL error correction. Failed runs are grouped into context-window overflow, an SQL
-execution error that remained after the retry limit, failure to extract an SQL statement, model or backend
-generation errors, empty or malformed direct outputs, and any other recorded error.
+execution error that remained after the retry limit, failure to extract an SQL statement, and any other recorded error.
 
 Of the 179.760 retained runs, 110.185 (61,3\%) produced an answer and 69.575 (38,7\%) failed. The success
 rate was 87,6\% for Spider and 43,6\% for BIRD. Context-window overflow accounted for 67.536 failures
@@ -58,7 +42,29 @@ failed because no SQL statement could be extracted. The SQL correction loop reco
 that had failed on an earlier attempt; no model-generation, malformed-direct-output, or other terminal errors
 were recorded.
 
-\input{../code/analysis/tables/experiment_outcomes}
+\begin{table}[htbp]
+  \centering
+  \caption{Successful and failed experiment runs by dataset.}
+  \label{tab:experiment-outcomes}
+  \begin{tabular}{@{}lrrr@{}}
+    \toprule
+    Outcome & Spider & BIRD & Total \\
+    \midrule
+    Successful without a recorded error & 63,097 & 45,731 & 108,828 \\
+    Successful after SQL error correction & 282 & 1,075 & 1,357 \\
+    \textbf{All successful runs} & 63,379 & 46,806 & 110,185 \\
+    \midrule
+    Failed: context window exceeded & 8,520 & 59,016 & 67,536 \\
+    Failed: SQL execution error after retry limit & 471 & 1,513 & 1,984 \\
+    Failed: no SQL statement extracted & 10 & 45 & 55 \\
+    Failed: other error & 0 & 0 & 0 \\
+    \textbf{All failed runs} & 9,001 & 60,574 & 69,575 \\
+    \midrule
+    \textbf{Total runs} & 72,380 & 107,380 & 179,760 \\
+    \bottomrule
+  \end{tabular}
+  \vspace{0.4em}
+\end{table}
 
 \section{Serialization efficiency}
 

@@ -41,7 +41,7 @@ of the source data.
 
 CSV and TOON provided the strongest overall balance between token consumption and retrieval accuracy. CSV
 required the fewest tokens in both datasets, while TOON remained close behind. In contrast, JSON and XML
-repeatedly include field names or tags for individual values, causing their overhead to grow as the number of
+include field names for individual values, causing their overhead to grow as the number of
 rows and columns increases. The resulting increase in input tokens primarily extended the time required to
 process the prompt, as reflected in the higher time to first token and total response latency reported in
 Chapter~\ref{ch:results}. Compact formats also allowed more databases to fit within the context window.
@@ -111,9 +111,7 @@ therefore be treated as a potential use case rather than an experimental finding
 Increasing model size generally improved retrieval accuracy in both pipelines, although parameter count alone
 was not a reliable predictor of performance. Models from different families achieved different results at
 similar nominal sizes, and Gemma~4 frequently outperformed comparable or larger Qwen~3.5 and Ministral~3
-models. Model family must therefore be considered alongside parameter count when selecting a model. Since the
-experiments did not isolate architectural differences from other family-specific factors, however, they do
-not establish that model family is categorically more important than model size.
+models. Model family must therefore be considered alongside parameter count when selecting a model.
 
 For Direct Context Inference, accuracy generally increased with model size when averaged across the six
 serialization formats. Text-to-SQL also benefited substantially from model scaling, particularly among the
@@ -134,9 +132,7 @@ schema size, data quality, domain, or question complexity.
 The Direct Context Inference results show a consistently negative relationship between effective database
 size and retrieval accuracy. Across serialization formats, the Pearson correlations ranged from approximately
 \(-0,57\) to \(-0,66\) on Spider and from \(-0,58\) to \(-0,79\) on BIRD. Effective database size is
-therefore an important predictor of Direct Context Inference performance. The relationship becomes causal at
-the context-window boundary: when the complete prompt exceeds the available context, inference cannot be
-performed and the run necessarily fails. Below this boundary, however, the relationship should be interpreted
+therefore an important predictor of Direct Context Inference performance. The relationship should be interpreted
 as an association rather than proof that database size alone causes lower accuracy. Each database also
 differs in its domain, schema, data quality, and questions, while context-window failures introduce
 structural zero scores into the analysis. By contrast, the relationship between input size and
