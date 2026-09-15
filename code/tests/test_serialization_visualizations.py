@@ -21,8 +21,7 @@ from visualizations.config import (
     DIRECT_OPERATIONAL_TABLE_FILENAME,
     DIRECT_TOKEN_USAGE_FIGURE_FILENAME,
     EXPERIMENT_OUTCOMES_TABLE_FILENAME,
-    SERIALIZATION_AVERAGE_TABLE_FILENAME,
-    SERIALIZATION_FIT_TABLE_FILENAME,
+    SERIALIZATION_EFFICIENCY_TABLE_FILENAME,
     TEXT_TO_SQL_ACCURACY_FIGURE_FILENAME,
     TEXT_TO_SQL_LATENCY_FIGURE_FILENAME,
     TEXT_TO_SQL_OPERATIONAL_TABLE_FILENAME,
@@ -33,16 +32,11 @@ from visualizations.config import (
     TOKENIZER_COMPARISON_FIGURE_FILENAME,
 )
 from visualizations.generate_all import main
-from visualizations.serialization_average_tokens import (
-    calculate_average_tokens,
-    generate_average_tokens_table,
-    render_average_tokens_table,
-)
 from visualizations.serialization_data import load_token_report, validate_complete_coverage
-from visualizations.serialization_database_fit import (
-    calculate_database_fit,
-    generate_database_fit_table,
-    render_database_fit_table,
+from visualizations.serialization_efficiency_table import (
+    calculate_serialization_efficiency,
+    generate_serialization_efficiency_table,
+    render_serialization_efficiency_table,
 )
 from visualizations.tokenizer_family_comparison import (
     calculate_tokenizer_overhead,
@@ -164,7 +158,9 @@ def test_average_tokens_and_relative_baseline_are_dataset_specific() -> None:
         ]
     )
 
-    summary = calculate_average_tokens(report).set_index(["dataset", "format"])
+    summary = calculate_serialization_efficiency(report).average_tokens.set_index(
+        ["dataset", "format"]
+    )
 
     assert summary.loc[("spider", "csv"), "mean_tokens"] == 100
     assert summary.loc[("spider", "json"), "relative_to_lowest"] == pytest.approx(2.5)
@@ -187,7 +183,10 @@ def test_database_fit_includes_payload_equal_to_context_limit() -> None:
         ]
     )
 
-    summary = calculate_database_fit(report, context_window_tokens=128).iloc[0]
+    summary = calculate_serialization_efficiency(
+        report,
+        context_window_tokens=128,
+    ).database_fit.iloc[0]
 
     assert summary["fitting_databases"] == 1
     assert summary["total_databases"] == 2
@@ -225,24 +224,24 @@ def test_tokenizer_overhead_is_paired_to_best_family_per_payload() -> None:
     assert summary.loc["ministral-3", "q3_overhead_pct"] == pytest.approx(17.5)
 
 
-def test_rendered_tables_contain_relative_and_fit_values() -> None:
+def test_rendered_table_contains_relative_and_fit_values() -> None:
     report = _complete_small_report()
-    average_latex = render_average_tokens_table(
-        calculate_average_tokens(report),
-        coverage_validated=False,
+    analysis = calculate_serialization_efficiency(
+        report,
+        context_window_tokens=250,
     )
-    fit_latex = render_database_fit_table(
-        calculate_database_fit(report, context_window_tokens=250),
+    latex = render_serialization_efficiency_table(
+        analysis,
         context_window_tokens=250,
         coverage_validated=False,
     )
 
-    assert r"Relative to lowest" in average_latex
-    assert r"1.00$\times$" in average_latex
-    assert r"\label{tab:serialization-average-tokens}" in average_latex
-    assert "fitting within 250 tokens" in fit_latex
-    assert r"\label{tab:serialization-database-fit}" in fit_latex
-    assert "Coverage validation was skipped." in fit_latex
+    assert r"Relative to lowest" in latex
+    assert r"1.00$\times$" in latex
+    assert r"\label{tab:serialization-efficiency}" in latex
+    assert "at or below 250 tokens" in latex
+    assert r"1/2 (50.0\%)" in latex
+    assert "Coverage validation was skipped." in latex
 
 
 def test_artifact_generators_each_write_one_output(tmp_path: Path) -> None:
@@ -252,12 +251,7 @@ def test_artifact_generators_each_write_one_output(tmp_path: Path) -> None:
 
     tables_dir = tmp_path / "tables"
     figures_dir = tmp_path / "figures"
-    average_path = generate_average_tokens_table(
-        report,
-        tables_dir,
-        coverage_validated=False,
-    )
-    fit_path = generate_database_fit_table(
+    table_path = generate_serialization_efficiency_table(
         report,
         tables_dir,
         context_window_tokens=250,
@@ -265,8 +259,7 @@ def test_artifact_generators_each_write_one_output(tmp_path: Path) -> None:
     )
     figure_path = generate_tokenizer_comparison_figure(report, figures_dir)
 
-    assert average_path == tables_dir / SERIALIZATION_AVERAGE_TABLE_FILENAME
-    assert fit_path == tables_dir / SERIALIZATION_FIT_TABLE_FILENAME
+    assert table_path == tables_dir / SERIALIZATION_EFFICIENCY_TABLE_FILENAME
     assert figure_path == figures_dir / TOKENIZER_COMPARISON_FIGURE_FILENAME
     assert figure_path.stat().st_size > 0
 
@@ -358,8 +351,7 @@ def test_single_orchestrator_cli_writes_every_artifact(tmp_path: Path) -> None:
 
     assert return_code == 0
     assert (tables_dir / EXPERIMENT_OUTCOMES_TABLE_FILENAME).is_file()
-    assert (tables_dir / SERIALIZATION_AVERAGE_TABLE_FILENAME).is_file()
-    assert (tables_dir / SERIALIZATION_FIT_TABLE_FILENAME).is_file()
+    assert (tables_dir / SERIALIZATION_EFFICIENCY_TABLE_FILENAME).is_file()
     assert (figures_dir / TOKENIZER_COMPARISON_FIGURE_FILENAME).stat().st_size > 0
     assert (figures_dir / DIRECT_ACCURACY_FORMAT_FIGURE_FILENAME).stat().st_size > 0
     assert (figures_dir / DIRECT_ACCURACY_MODEL_SIZE_FIGURE_FILENAME).stat().st_size > 0

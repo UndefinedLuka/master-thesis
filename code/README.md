@@ -131,8 +131,7 @@ uv run --extra visualizations thesis-visualize-all
 The command loads the scored benchmark tree and detailed serialization-token CSV once, validates
 both complete experiment matrices, and invokes the independent table/figure generators. It writes
 `analysis/tables/experiment_outcomes.tex`,
-`analysis/tables/serialization_average_tokens.tex`,
-`analysis/tables/serialization_database_fit.tex`,
+`analysis/tables/serialization_efficiency.tex`,
 `analysis/figures/tokenizer_family_comparison.pdf`,
 `analysis/figures/direct_accuracy_by_format.pdf`,
 `analysis/figures/direct_accuracy_by_model_size.pdf`,

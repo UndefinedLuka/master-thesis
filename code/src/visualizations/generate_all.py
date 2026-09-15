@@ -58,14 +58,15 @@ from visualizations.experiment_outcomes import (
 from visualizations.experiment_outcomes import (
     validate_complete_coverage as validate_experiment_coverage,
 )
-from visualizations.serialization_average_tokens import generate_average_tokens_table
 from visualizations.serialization_data import (
     load_token_report,
 )
 from visualizations.serialization_data import (
     validate_complete_coverage as validate_serialization_coverage,
 )
-from visualizations.serialization_database_fit import generate_database_fit_table
+from visualizations.serialization_efficiency_table import (
+    generate_serialization_efficiency_table,
+)
 from visualizations.text_to_sql_accuracy_by_model_size import (
     generate_text_to_sql_accuracy_figure,
 )
@@ -119,12 +120,7 @@ def generate_all(
             excluded_model_markers=excluded_model_markers,
             coverage_validated=coverage_validated,
         ),
-        generate_average_tokens_table(
-            serialization_report,
-            tables_dir,
-            coverage_validated=coverage_validated,
-        ),
-        generate_database_fit_table(
+        generate_serialization_efficiency_table(
             serialization_report,
             tables_dir,
             context_window_tokens=context_window_tokens,

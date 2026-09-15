@@ -93,10 +93,8 @@ OUTCOME_LABELS: dict[str, str] = {
 
 EXPERIMENT_OUTCOMES_TABLE_FILENAME = "experiment_outcomes.tex"
 EXPERIMENT_OUTCOMES_TABLE_LABEL = "tab:experiment-outcomes"
-SERIALIZATION_AVERAGE_TABLE_FILENAME = "serialization_average_tokens.tex"
-SERIALIZATION_AVERAGE_TABLE_LABEL = "tab:serialization-average-tokens"
-SERIALIZATION_FIT_TABLE_FILENAME = "serialization_database_fit.tex"
-SERIALIZATION_FIT_TABLE_LABEL = "tab:serialization-database-fit"
+SERIALIZATION_EFFICIENCY_TABLE_FILENAME = "serialization_efficiency.tex"
+SERIALIZATION_EFFICIENCY_TABLE_LABEL = "tab:serialization-efficiency"
 TOKENIZER_COMPARISON_FIGURE_FILENAME = "tokenizer_family_comparison.pdf"
 TOKENIZER_COMPARISON_FIGURE_LABEL = "fig:tokenizer-family-comparison"
 DIRECT_ACCURACY_FORMAT_FIGURE_FILENAME = "direct_accuracy_by_format.pdf"

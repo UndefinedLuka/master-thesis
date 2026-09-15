@@ -74,7 +74,7 @@ introduced by each serialization format. Token counts were measured for every da
 tokenizer from each of the Qwen~3.5, Ministral~3, and Gemma~4 families. The resulting data therefore contain
 558 measurements: 31 databases, six formats, and three tokenizer families.
 
-Table~\ref{tab:serialization-average-tokens} reports the arithmetic mean across all databases and tokenizer
+Table~\ref{tab:serialization-efficiency} reports the arithmetic mean across all databases and tokenizer
 families within each dataset. The relative value is calculated separately for Spider and BIRD, using the format
 with the lowest mean token count as the $1,00\times$ baseline. CSV required the fewest tokens in both datasets.
 TOON was close to this baseline, requiring only $1,04\times$ as many tokens for Spider and $1,03\times$ for
@@ -83,12 +83,10 @@ formats had substantially greater overhead. Compared with CSV, XML required $3,2
 Spider and $2,40\times$ for BIRD; JSON required $2,46\times$ and $1,68\times$, and YAML required
 $1,90\times$ and $1,49\times$.
 
-\input{../code/analysis/tables/serialization_average_tokens}
-
 Mean token counts describe overall serialization overhead, but database sizes vary substantially and a small
 number of very large databases can strongly influence the arithmetic mean. The mean also does not show how
 many individual databases can be processed within the fixed context window.
-Table~\ref{tab:serialization-database-fit} therefore counts
+The same table therefore counts
 database payloads containing no more than 131.072 tokens for each tokenizer family. For Spider, CSV and TOON
 both fit 19 of 20 databases, while the other formats fit 18. The distinction was larger for BIRD: CSV and TOON
 fit 6 of 11 databases for every tokenizer family, whereas XML fit only 2. JSON fit 3 databases with the
@@ -96,7 +94,7 @@ Qwen~3.5 and Gemma~4 tokenizers and 4 with Ministral~3. These counts include onl
 complete prompt close to the limit may still exceed the available context after instructions, the question,
 and output headroom are added.
 
-\input{../code/analysis/tables/serialization_database_fit}
+\input{../code/analysis/tables/serialization_efficiency}
 
 Tokenizer choice also changes the number of tokens assigned to the same text.
 Figure~\ref{fig:tokenizer-family-comparison}
@@ -146,7 +144,7 @@ although the compact CSV and TOON representations remained among the strongest a
 The separation between formats was clearer on BIRD. CSV achieved the highest values for Normalized Exact
 Match, BERTScore~F1, and ROUGE-L~F1 (0,090, 0,057, and 0,109), with TOON close behind (0,087, 0,053, and
 0,106). XML produced the lowest values (0,041, 0,029, and 0,052), approximately half of the corresponding CSV
-scores. This ordering is consistent with the context-fit results in Table~\ref{tab:serialization-database-fit}:
+scores. This ordering is consistent with the context-fit results in Table~\ref{tab:serialization-efficiency}:
 compact formats allowed more BIRD databases to enter the model context, whereas verbose formats produced more
 zero-scored context failures. The observed difference therefore reflects both the model's ability to interpret
 a format and the format's ability to represent the database within the available context.
