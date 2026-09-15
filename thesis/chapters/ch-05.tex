@@ -256,9 +256,17 @@ larger delay.
 
 \subsection{Influence of database size}
 
-% We need to add a graph here
+\begin{figure}[htb]
+  \centering
+  \includegraphics[width=\textwidth]{../code/analysis/figures/direct_accuracy_by_database_size_nem.pdf}
+  \caption{Mean Direct Context Normalized Exact Match by effective database size and serialization format. Each
+    point represents one database, with point area indicating its number of benchmark questions; separate trend
+    lines are fitted for Spider and BIRD. Database size is shown on a logarithmic token scale.}
+  \label{fig:direct-accuracy-by-database-size-nem}
+\end{figure}
 
-The final direct-context analysis examines whether retrieval accuracy changes with database size. Within each
+Figure~\ref{fig:direct-accuracy-by-database-size-nem} presents the Normalized Exact Match view of the final
+direct-context analysis, which examines whether retrieval accuracy changes with database size. Within each
 format panel, database size is defined as the mean number of tokens required to serialize the complete
 materialized database with the three representative tokenizer families. This effective size is more informative
 than row count alone because it also captures the number and width of columns, repeated field names, and the
