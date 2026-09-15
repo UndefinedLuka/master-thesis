@@ -51,7 +51,7 @@ ecosystem, which applies mixed-precision quantization: most weight tensors are s
 while attention key/value projection matrices and the output head retain higher precision (6-bit).
 
 We choose Q4\_K\_M for three reasons. First, it offers the best empirically documented trade-off between
-perplexity degradation and memory savings, typically within 0.5 perplexity points of the full-precision
+perplexity degradation and memory savings, typically within 0,5 perplexity points of the full-precision
 baseline. Second, it enables us to fit models up to 27B parameters on a single 80~GB GPU with room for a full
 128K-token KV cache. Third, applying the same quantization scheme uniformly across all models ensures that
 architecture and parameter count remain the only variables under test.
@@ -63,7 +63,7 @@ The following parameters are held constant across all models and experiments:
 \begin{itemize}
   \item \textbf{Context window:} 131.072 tokens (128K).
   \item \textbf{GPU offload:} all model layers reside on the GPU (no CPU fallback is used).
-  \item \textbf{Temperature:} 0.0 (greedy decoding), ensuring deterministic and reproducible outputs across runs.
+  \item \textbf{Temperature:} 0,0 (greedy decoding), ensuring deterministic and reproducible outputs across runs.
   \item \textbf{Maximum output tokens:} 2.048.
   \item \textbf{KV-cache reset:} the key-value cache is fully cleared between consecutive questions,
     preventing any information leakage or prefix-caching effects that could distort timing measurements.
