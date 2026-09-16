@@ -58,7 +58,7 @@ questions, we are going to utilize the same strategy as for the SPIDER dataset.
 \subsection{Structural Integrity}
 While deeply nested relational data would provide closer simulation of complex real world data, constructing
 such data would introduce significant technical trade offs. Generating such data through table joins often
-leads to dropped rows, compromising datasets integrity. We are going to prioritize data integrity to its
+leads to dropped rows, compromising datasets integrity. We are going to prioritize data integrity over its
 complexity, thus when serializing databases into a specific format, each format is going to be transformed
 and appended sequentially into list structure. One more thing to note is that some serialization formats
 don't support deeply nested data and this would provide additional concerns for integrity of our experiments.
@@ -96,7 +96,7 @@ For the experiments we have chosen six different serialization formats.
     explicit opening and closing tags for every data entry.
 
   \item \textbf{YAML (YAML Ain't Markup Language):} It is commonly used for configuration files, it is
-    intended to be human readable subset of JSON. Instead of relying on braces and brackets, YAML uses
+    intended to be human readable superset of JSON. Instead of relying on braces and brackets, YAML uses
     indentation to define the hierarchy. This significantly reduces the character count compared to other two formats.
 \end{itemize}
 
@@ -105,8 +105,8 @@ For the experiments we have chosen six different serialization formats.
 \begin{itemize}
   \item \textbf{CSV (Comma Separated Values):} It is very simple and easy to parse format, with minimal
     overhead. Unlike JSON, column headers are only written once at the top of the file. Format relies on the
-    positional convention, assuming the reader know to map the $n$-th value in a row to the $n$-th header
-    column. But it has one significant limitations, it cannot support deeply nested data.
+    positional convention, assuming the reader knows to map the $n$-th value in a row to the $n$-th header
+    column. But it has one significant limitation, it cannot support deeply nested data.
   \item \textbf{Markdown:} Markdown is included due to its widespread presence and the preference that the
     LLMs show during the text generation. While the Markdown standard does not explicitly define tables, many
     variations of it have introduced table layouts, which have become the norm.
@@ -144,7 +144,7 @@ the required serialized data, and at the end we also ask the question in natural
     When the input becomes too large, models frequently suffer from the lost in the middle phenomenon
     \cite{liu2024lost}, where the models struggle to retrieve the information present in the central part of the
     provided paragraphs.
-  \item \textbf{Output formatting constraints:} LLMs typically experience degraded performance when when
+  \item \textbf{Output formatting constraints:} LLMs typically experience degraded performance when
     being forced to conform output to highly rigid data schemas \cite{tam2024let}. To mitigate this drop in
     performance, we
     will not be enforcing strict data formatting on the output, instead we will be utilizing flexible
@@ -161,7 +161,7 @@ relational schema of the database to generate a valid SQL query for information 
     times larger than the context window of the model.
   \item \textbf{Semantic Limitations:} Because the model does not have access to real data examples, it must
     infer the content of the tables entirely from its schema architecture, column names and their types.
-    Consequentially, if table or column names are poorly named, or non descriptive, we can expect the models
+    Consequently, if table or column names are poorly named, or non descriptive, we can expect the models
     ability to produce correct query to degrade.
 \end{itemize}
 
@@ -195,7 +195,8 @@ phase can be split into two distinct phases, reasoning and generation. To this e
 capturing multiple timestamps which are going to allow us to get a clear insight into our system, \emph{Time
 to First Token (TTFT)}, it represents the elapsed
 time from query submission to the models first output token; \emph{Reasoning Time} time spent by the model
-thinking over the problem, and finally the \emph{Generation Time} time spent by the model producing the human usable response.
+thinking over the problem, and finally the \emph{Generation Time} time spent by the model producing the human
+usable response.
 
 It should be noted that Text-to-SQL answer is not considered complete until the information is successfully
 retrieved from the database. Therefor the query execution time is also going to be recorded and will be added

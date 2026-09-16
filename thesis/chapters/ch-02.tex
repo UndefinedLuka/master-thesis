@@ -25,7 +25,7 @@ to process, but it also creates some overhead during information tokenization. T
 classification system divides these into four main types:
 
 \begin{itemize}
-  \item \textbf{Tree and Tabular Formats:} These includes CVS \cite{shafranovich2005common} files and custom
+  \item \textbf{Tree and Tabular Formats:} These include CVS \cite{shafranovich2005common} files and custom
     hierarchical notation. In these
     formats, relationships are defined either by positional alignment (as in CSV) or explicit pointers (as in
     tree structures). However, CSV fundamentally cannot represent nested structures, limiting its
@@ -60,11 +60,11 @@ verbosity. These formats are designed in such a way that each fields carries its
 \cite{bray1998xml, bray2017javascript}, through
 repeated key words, which create overhead when working with LLMs. The experiments performed in
 \cite{onto-serialization-format}, were
-carried out across $1.000$ IoT telemetry records. They have shown that majority of tokens used for
+carried out across $1.000$ IoT telemetry records. They have shown that majority of the tokens used for
 encoding data in the JSON format is used up by field names and punctuation ($60.500$ tokens), while the
 actual semantic values take up only $14.274$ tokens, out of $79.774$ tokens. This overhead proves to be
 problematic, as most pricing is done based on the input and output tokens used, with this higher token
-usage directly translates to higher operational costs for the users. Also in the same experiment it was shown
+usage directly translating to higher operational costs for the users. Also in the same experiment it was shown
 that reduction in tokens used directly correlates to lower latency, when using the custom ONTO format
 compared to JSON.
 
@@ -72,7 +72,7 @@ In order to address these inefficiencies, there have been multiple efforts aimed
 (Object Notation for Token Optimization)\cite{onto-serialization-format} and TOON (Token Optimized Object
 Notation)\cite{toon-format-2025}. Both formats are
 oriented at fixing the problem of repeated schema for each record, they fix this by declaring all the fields
-only once at the top of the record, and values are arrange in pipe delimited rows with indentation based
+only once at the top of the record, and values are arranged in pipe delimited rows with indentation based
 hierarchy. Both of these models claim to use significantly less tokens (TOON $39,9\%$ fewer tokens compared
 to JSON \cite{toon-format-2025}, and ONTO $46-51\%$ compared to JSON\cite{onto-serialization-format}) while
 stating they have minimal impact on the accuracy.
@@ -83,7 +83,7 @@ Translating natural language to executable Structured Query Language (SQL) is a 
 attempts at this problem operated primarily on rigid, handcrafted grammar rules and pattern-matching
 frameworks \cite{woods1972lunar, warren1982efficient}
 which worked decently fine on a narrow domain, but each new schema required new set of rules. With the raise
-of neural networks they were started being used for this task, such as LSTM-based \cite{graves2012long} and
+of neural networks they started being used for this task, such as LSTM-based \cite{graves2012long} and
 Transformer-based \cite{vaswani2017attention}
 methods. But these two methods faced similar problems that they could not generalize on unseen schemas.
 Current state of the art, utilizes LLMs for generating queries, this has proven to be a great leap forward in
@@ -109,8 +109,8 @@ When optimizing for Text-to-SQL accuracy there are multiple strategies to achiev
 \section{Overview of Evaluation Datasets}
 
 There has been a lot of effort in the last years to curate datasets which can be utilized for testing
-(and training) models on task of SQL generation.First notable datasets came to the scene in 2017, WikiSQL
-\cite{zhong2017seq2sql}, researchers have annotated data based onWikipedia, it cover $24.241$ database
+(and training) models on task of SQL generation. First notable datasets came to the scene in 2017, WikiSQL
+\cite{zhong2017seq2sql}, researchers have annotated data based on Wikipedia, it cover $24.241$ database
 tables, and has more than
 $80.000$ pairs of natural language questions and corresponding query.
 

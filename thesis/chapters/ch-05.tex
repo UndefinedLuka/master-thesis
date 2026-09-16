@@ -146,7 +146,7 @@ having produced an answer. Each Spider format summarizes 10.340 runs, while each
 Figure~\ref{fig:direct-accuracy-by-format} compares the six serialization formats. The Spider results were
 closely grouped: TOON achieved the highest Normalized Exact Match (0,178), Markdown the highest BERTScore~F1
 (0,211), and CSV the highest ROUGE-L~F1 (0,340). XML had the lowest mean for all three metrics, but the
-absolute difference between the best and worst formats remained limited to 0.014 for Normalized Exact Match,
+absolute difference between the best and worst formats remained limited to 0,014 for Normalized Exact Match,
 0,019 for BERTScore~F1, and 0,032 for ROUGE-L~F1. Consequently, no format was uniformly best on Spider,
 although the compact CSV and TOON representations remained among the strongest across the three metrics.
 
@@ -261,7 +261,7 @@ larger delay.
   \includegraphics[width=\textwidth]{../code/analysis/figures/direct_accuracy_by_database_size_nem.pdf}
   \caption{Mean Direct Context Normalized Exact Match by effective database size and serialization format. Each
     point represents one database, with point area indicating its number of benchmark questions; separate trend
-    lines are fitted for Spider and BIRD. Database size is shown on a logarithmic token scale.}
+  lines are fitted for Spider and BIRD. Database size is shown on a logarithmic token scale.}
   \label{fig:direct-accuracy-by-database-size-nem}
 \end{figure}
 

@@ -13,9 +13,9 @@ This far LLMs have shown a great promise when utilized for the purposes of extra
 structured and unstructured data. When trying to utilize these models for such use cases, engineers and
 researchers have to carefully balance the three key aspects: accuracy, latency and cost.
 
-In order for LLMs to process structured data, we first need to provided it to the model in the form it can
-understand. Since it cannot read the data directly, we need to chose
-the right serialization format. Currently the most wide spread formats in the industry are JSON, XML, and
+In order for LLMs to process structured data, we first need to provide it to the model in the form it can
+understand. Since it cannot read the data directly, we need to choose
+the right serialization format. Currently the most widespread formats in the industry are JSON, XML, and
 CSV, but many others are present as well. Since these formats can easily be converted between each other,
 the question arises: which format is the optimal when working with LLMs? By choosing the right format
 we could directly influence cost, latency, and accuracy, with minimal price being paid by the whole system
@@ -27,14 +27,14 @@ Even though the LLMs have a huge potential in the field of information extractio
 existing work typically evaluates model accuracy\cite{struct-text-eval}, efficiency\cite{toon-format-2025},
 or system latency\cite{fernandez2025energy} in
 isolation. However,
-there is a lack of a unified frameworks that jointly consider data serialization format, extraction method, and
+there is a lack of a unified framework that jointly consider data serialization format, extraction method, and
 system-level efficiency. Choice of data serialization format directly dictates the number of tokens, which increases
-computational complexity, finally translating leading to higher latency and operational costs. In real
+computational complexity, finally leading to higher latency and operational costs. In real
 information systems, where the number of queries is high, and each API is
 limited, only optimizing for accuracy and increasing the latency and cost is not acceptable.
 
 Alongside data formats we have to consider other possibilities for information extraction. We are going to
-explore the following to paths:
+explore the following two paths:
 
 \begin{itemize}
   \item In-Context Inference: Directly passing the raw serialized data to the prompt (context) of the LLM, so

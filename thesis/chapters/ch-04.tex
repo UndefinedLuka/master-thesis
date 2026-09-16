@@ -100,7 +100,7 @@ the same conditions during all the experiment runs.
 \subsection{Streaming and Timing Measurement}
 
 Backend always streams its responses (token by token). Streaming is essential because time-to-first-token
-(TTFT),can only be measured by observing when the first token arrives after the request is dispatched.
+(TTFT), can only be measured by observing when the first token arrives after the request is dispatched.
 
 We monitor the token stream for reasoning phase markers. Models in the Qwen~3.5 family emit explicit
 \texttt{<think>...</think>} blocks containing their thinking part of the answer. We timestamp the closing
@@ -142,7 +142,7 @@ all operate on exactly the same data.
 For the direct pipeline, the runner iterates over formats and questions. Before dispatching each question, the
 runner tokenizes the complete prompt (system message plus serialized data plus user question) and checks
 whether the token count exceeds the available context window  Examples that do not
-fit are recorded with an explicit context exceeded marker and skipped, keeping tack of which examples were attempted.
+fit are recorded with an explicit context exceeded marker and skipped, keeping track of which examples were attempted.
 
 \subsection{Text-to-SQL}
 
