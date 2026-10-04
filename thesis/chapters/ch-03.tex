@@ -204,23 +204,32 @@ to the Total Generation Time for Text-to-SQL paradigm. This captures the total l
 that generate unoptimized, and computationally expensive queries.
 
 \subsubsection{Retrieval Accuracy}
-In order to calculate the accuracy we need to compare the generated result against the established reference
-answer. Because the two pipelines produce different outputs we need to adapt our metrics.
 
-For the Direct Context Inference workflow, the model's raw text response is compared against the reference
-answer using established natural language processing metrics: \emph{ROUGE-L}, measures the longest common
-subsequence of words to determine structural and text-matching overlap; \emph{BERTScore}, leverages
-contextual embeddings to calculate semantic similarity, ensuring models are not penalized for using synonyms
-or alternative phrasing that remains factually correct.
+Retrieval performance is evaluated against reference answers obtained by executing the gold SQL queries on
+the databases used in the experiment (for BIRD, this means executing the gold query on subsampled database,
+rather than taken from the original full databases). For Direct Context Inference, the model's free-text
+response is compared with a textual representation of the reference result. For Text-to-SQL, the generated
+query is executed, and its result rows are converted to text for comparison with the same reference.
 
-For Text-to-SQL pipeline answers, received after running the query, we are going to be calculating the same
-metrics as for the Direct Context Inference. Besides these we are going to be capturing some additional
-measurements. Such as Execution Accuracy, this will tell us whether the query runs successfully against the
-database. We are also going to implementing an error correction loop, which will entail the following steps.
-If a generated SQL query fails to execute due to a database syntax or runtime error, the error log is fed back
-to the model, granting it up to three compilation retries to self-correct the query. The system logs the
-exact number of retries required to achieve successful execution. If the model fails to produce a valid,
-correct query after three attempts, it is marked as a definitive failure.
+We report \emph{Normalized Exact Match}, \emph{ROUGE-L}, and \emph{BERTScore} as complementary measures of
+reference-answer agreement. Normalized Exact Match checks equality after textual normalization,
+ROUGE-L measures lexical sequence overlap, and BERTScore measures contextual embedding
+similarity. These metrics were selected to capture both strict agreement and similarity under
+difference in wording, particularly for free-text answers. However, they do not provide equivalent
+evidence of correctness. ROUGE-L and BERTScore can assign high scores to answers containing
+incorrect numbers, identifiers, or entities when the surrounding content remains similar.
+Conversely, a correct answer expressed in a different form may receive a lower score. Normalized
+Exact Match is stricter, but remains sensitive to how equivalent results are represented.
+The text-based metrics therefore measure agreement with the reference representation, rather
+than directly verifying the correctness of each retrieved value.
+
+For Text-to-SQL besides these we are going to be capturing some additional measurements. Such as Execution
+Accuracy, this will tell us whether the query runs successfully against the database. We are also going to
+implementing an error correction loop, which will entail the following steps. If a generated SQL query fails
+to execute due to a database syntax or runtime error, the error log is fed back to the model, granting it uph
+to three compilation retries to self-correct the query. The system logs the exact number of retries required
+to achieve successful execution. If the model fails to produce a valid, correct query after three attempts,
+it is marked as a definitive failure.
 
 The decision to enforce a strict three-retry cap reflects a user-centric evaluation philosophy. Since
 non-technical end users typically lack the SQL knowledge required to fix broken queries manually, a model

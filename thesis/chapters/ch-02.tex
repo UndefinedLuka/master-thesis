@@ -132,15 +132,13 @@ stated before this introduced new challenges, dealing with dirty database conten
 requiring external knowledge about the data in order to link the natural language question to the present database.
 
 The newest addition to these benchmarks is Spider 2.0 \cite{lei2025spider}, it introduces data directly
-pulled from enterprise
-environments like Google Analytic and Salesforce. It pulls the real world tasks from these environments, and
-moves away from small and unrealistically clean datasets present in the original Spider dataset. Besides
-moving away from tidy data it also introduces another challenge in form of massive cloud schemas which are
-averaging over 800 columns, intricate nested structures, and distinct dialects like BigQuery and Snowflake
-that require knowledge of external documentation. The change in size and complexity moves this task from
-simple one shot examples into multi step agentic workflows where queries stretch more than 100 lines. The
-contrast is clear when looking at leader boards, where top model has achieved $91,6\%$ accuracy for the
-Spider dataset, the top model in the Spider 2.0 only manages $21,3\%$
+pulled from enterprise environments like Google Analytic and Salesforce. It pulls the real world tasks from
+these environments, and moves away from small and unrealistically clean datasets present in the original
+Spider dataset. Besides moving away from tidy data it also introduces another challenge in form of massive
+cloud schemas which are averaging over $800$ columns, intricate nested structures, and distinct dialects like
+BigQuery and Snowflake that require knowledge of external documentation. The change in size and complexity
+moves this task from simple one shot examples into multi step agentic workflows where queries stretch more
+than 100 lines.
 
 \section{Metrics for Automated Output Verification}
 

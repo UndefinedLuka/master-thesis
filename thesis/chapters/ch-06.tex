@@ -365,8 +365,7 @@ semantic similarity that may not always distinguish between a related but factua
 correct one. Reporting all three metrics therefore reduces dependence on the limitations of any individual
 measure. For Text-to-SQL, execution success indicates only that a query is syntactically valid and can run
 against the database; it does not establish that the query selected the correct tables, joins, filters, or
-aggregations. Result-set matching is consequently the strongest available correctness measure for the
-Text-to-SQL pipeline. However, the conversion of SQL result rows into a stable textual representation can still
+aggregations. However, the conversion of SQL result rows into a stable textual representation can still
 affect text-based metrics through choices concerning row ordering, formatting, numeric representation, and
 duplicate values. More generally, benchmark metrics measure agreement with a reference answer, but do not
 directly evaluate whether an answer is clear, useful, or appropriate for the requirements of a particular user.
@@ -400,10 +399,20 @@ ordering, and formatting, rather than the abstract properties of format names al
 because its reasoning traces could not be delimited consistently, meaning that the reported model-scale trends
 do not cover this configuration.
 
+Independent per-table sampling on BIRD dataset did not guarantee referential integrity. Omitting related rows
+can reduce join results, change aggregate values, or alter the outcome of outer joins and absence-based
+conditions. These effects do not necessarily produce an empty answer. The question wording and gold SQL were
+retained, the resulting tasks may differ in answerability and difficulty from those evaluated on the original
+databases. No systematic validation of foreign-key preservation was performed, recomputing reference answers
+on the sampled databases ensures evaluation consistency, but does not establish equivalence to the original
+BIRD benchmark. Furthermore, different SQL queries can produce the same result on a reduced database,
+particularly when both return an empty result. Result matching therefore establishes agreement on the final
+answer, not general query equivalence.
+
 Finally, the findings are limited to the Spider and BIRD development splits, the six evaluated serialization
 formats, local open-weight models, SQLite, and the dedicated H100-based experimental environment. Spider
 contains comparatively clean data and descriptive schemas, while BIRD provides more realistic data but was
-deterministically subsampled to at most 500 rows per table. This sampling supports a fair internal comparison
+deterministically subsampled to at most $500$ rows per table. This sampling supports a fair internal comparison
 because the serializers, reference-answer generator, and SQL executor all use the same materialized databases.
 It nevertheless prevents direct conclusions about the original full-scale BIRD databases, production-scale query
 execution, or workloads with substantially larger tables. Deeply nested and non-relational data were not
@@ -412,34 +421,6 @@ representational capability rather than experimental evidence. Absolute latency 
 another database engine, GPU architecture, model-serving stack, proprietary API, or pricing model. The results
 should therefore be generalized primarily to conditions similar to those evaluated, rather than treated as
 universal recommendations for every structured-data extraction system.
-
-% \section{Threats to Validity and Study Limitations}
-% State limitations precisely and separate them by type. Explain how each limitation affects the
-% interpretation and generalizability of the findings rather than treating this as a generic
-% disclaimer.
-
-% \subsection{Internal Validity}
-% Discuss the fixed inference configuration, uniform quantization, deterministic decoding,
-% prompt-template choices, and the exclusion of Qwen~3.5 27B because its reasoning traces could
-% not be measured consistently. Address the difference between end-to-end accuracy (which assigns
-% context failures zero) and complete-case operational comparisons, and explain why both views
-% were needed. Note any measurement limitations, including timing on shared HPC infrastructure
-% and the inability to isolate per-retry SQL execution time.
-
-% \subsection{Construct Validity}
-% Discuss the extent to which Normalized Exact Match, ROUGE-L, BERTScore, SQL execution success,
-% and result matching capture useful information-retrieval quality. Emphasize that semantic
-% similarity can diverge from factual correctness and that execution success is not equivalent
-% to correct query semantics. Explain any limitations introduced by converting returned SQL rows
-% to text for comparison.
-
-% \subsection{External Validity}
-% Discuss the limits of generalizing from Spider and deterministically sampled BIRD development
-% splits to production databases. Cover the BIRD row-sampling strategy, the fixed 128K context
-% window, local open-weight models, selected model families, the six tested formats, SQLite, and
-% the single-GPU hardware environment. Note that results may differ with proprietary models,
-% longer contexts, different prompts, retrieval-augmented systems, other database engines, or
-% data that contain deeply nested structures.
 
 % \section{Chapter Summary}
 % Close by synthesizing the implications: serialization is a decisive systems concern for Direct

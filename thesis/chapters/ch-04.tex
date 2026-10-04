@@ -129,7 +129,10 @@ The BIRD dataset is downloaded from its official benchmark
 site\footnote{\url{https://bird-bench.github.io/}}. Unlike Spider, BIRD's databases contain real-world data
 with tables spanning tens of thousands of rows, far exceeding the context capacity of models present. We therefore
 subsample each table to a maximum of $500$ rows using a deterministic sampling strategy (setting a seed in
-order to make it reproducible)
+order to make it reproducible). Since these rows were sampled at random we cannot guarantee the foreign key
+relationship between different rows is preserved. But in order to account for this all the unchanged gold SQL queries
+were executed against the sampled database in order to obtain reference answers, rather than using the ones from the
+full databases.
 
 The sampled databases are materialized as standalone SQLite files written to disk. It guarantees that three
 consumers (the serialization encoders, the reference answer generator, and the Text-to-SQL query executor),
@@ -168,15 +171,18 @@ capability remains the variable under test.
 \section{Scoring Pass}
 
 Accuracy metrics are computed in a separate pass. We read the raw benchmark NDJSON, and join each record with
-its pre-computed reference answer, and write
-a scored output file. Three metrics are computed as described in Chapter~\ref{ch:methodolgy}:
+its pre-computed reference answer, and write a scored output file. Three metrics are computed as described in
+Chapter~\ref{ch:methodolgy}:
 
 \begin{itemize}
   \item \textbf{ROUGE-L:} measures the longest common subsequence overlap between the model's output and the
     reference answer, using Porter stemming for normalization.
   \item \textbf{BERTScore:} computes contextual embedding similarity using the Roberta large model
     with baseline rescaling.
-  \item \textbf{Execution accuracy:} (Text-to-SQL only) compares the predicted query's result set against the
+  \item \textbf{Exact match:} (Text-to-SQL only) compares the predicted query's result set against the
     gold query's result set. Comparison is order-sensitive only when the gold SQL contains a top-level
     \texttt{ORDER BY} clause; otherwise, row sets are compared as unordered collections with numeric canonicalization.
 \end{itemize}
+
+It should be noted, because of subsampling some gold queries for BIRD dataset yielded empty sets as result,
+such successfully executed quires were retained in the evaluation.
