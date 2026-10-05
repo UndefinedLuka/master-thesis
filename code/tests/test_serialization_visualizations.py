@@ -356,9 +356,7 @@ def test_single_orchestrator_cli_writes_every_artifact(tmp_path: Path) -> None:
     assert (figures_dir / DIRECT_ACCURACY_FORMAT_FIGURE_FILENAME).stat().st_size > 0
     assert (figures_dir / DIRECT_ACCURACY_MODEL_SIZE_FIGURE_FILENAME).stat().st_size > 0
     for metric in DIRECT_ACCURACY_METRIC_ORDER:
-        assert (
-            figures_dir / DIRECT_DATABASE_SIZE_FIGURE_FILENAMES[metric]
-        ).stat().st_size > 0
+        assert (figures_dir / DIRECT_DATABASE_SIZE_FIGURE_FILENAMES[metric]).stat().st_size > 0
     assert (tables_dir / DIRECT_OPERATIONAL_TABLE_FILENAME).is_file()
     assert (figures_dir / DIRECT_TOKEN_USAGE_FIGURE_FILENAME).stat().st_size > 0
     assert (figures_dir / DIRECT_LATENCY_FIGURE_FILENAME).stat().st_size > 0

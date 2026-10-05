@@ -198,12 +198,12 @@ post-first-token generation interval.
 
 Unlike the retrieval-accuracy analysis, this comparison cannot include context-window failures because those
 runs never reached model inference and consequently have no meaningful timing or token measurements. We
-therefore use a common complete-case cohort to avoid survivorship bias: within each dataset, a question is
-retained only if all ten models produced an answer in all six serialization formats. This leaves 852 Spider
-questions from 18 databases and 303 BIRD questions from 2 databases, corresponding to 69.300
+therefore use a common complete-case cohort to keep the workload identical across formats: within each
+dataset, a question is retained only if all ten models produced an answer in all six serialization formats.
+This leaves 852 Spider questions from 18 databases and 303 BIRD questions from 2 databases, corresponding to 69.300
 model--question--format observations. Every format is consequently evaluated on exactly the same questions and
-models within each dataset, although the BIRD efficiency results apply only to the two databases represented in
-this strict common cohort.
+models within each dataset. The BIRD efficiency results therefore apply only to the two databases represented
+in this strict common cohort.
 
 \begin{figure}[htb]
   \centering
@@ -461,6 +461,50 @@ caused specifically by retries cannot be isolated and is excluded from this calc
 Text-to-SQL measurements show that SQL execution represented less than 2\% of total latency, but the retry-time
 values should nevertheless be interpreted as model-generation overhead rather than complete end-to-end retry
 latency.
+
+\section{Direct comparison on a common question cohort}
+\label{sec:common-cohort-comparison}
+
+To compare operational efficiency without differences in workload, we retain only questions completed by
+all ten models in all six direct-context formats and Text-to-SQL. Completion requires an answer without a
+pipeline error and, for Text-to-SQL, successful query execution (it does not require a correct answer).
+Successful SQL corrections remain included with their accumulated token usage and timing. The shared cohort
+contains 561 Spider questions from 18 databases and 121 BIRD questions from 2 databases
+(\texttt{student\_club} and \texttt{toxicology}), representing 54,3\% and 7,9\% of the development
+splits. Every method uses identical questions, models, and database contents: full Spider databases and the
+same materialized sampled BIRD databases.
+
+\begin{figure}[htb]
+  \centering
+  \includegraphics[width=0.95\textwidth]{../code/analysis/figures/common_cohort_latency.pdf}
+  \caption{Mean latency on the shared cohort, including all SQL correction attempts. Bars separate
+    first-token waits, subsequent generation, and SQL execution. Multipliers compare arithmetic means with
+  Text-to-SQL; panels use different horizontal scales.}
+  \label{fig:common-cohort-latency}
+\end{figure}
+
+Figure~\ref{fig:common-cohort-latency} confirms the mean-latency advantage of Text-to-SQL on the matched
+workload. It required 0,279 seconds on Spider and 0,409 seconds on BIRD, compared with 0,959 and 7,887
+seconds for CSV, the fastest direct format. CSV therefore required $3,44\times$ and $19,30\times$
+the SQL mean latency, while XML required $22,82\times$ and $124,48\times$. Most direct-context
+latency occurred before the first token; SQL execution contributed less than 2\% of Text-to-SQL latency.
+The mean advantage held for every model and format, but not every individual run: Text-to-SQL was faster
+than CSV in 60,7\% of matched Spider pairs and all matched BIRD pairs.
+
+\begin{figure}[htb]
+  \centering
+  \includegraphics[width=0.9\textwidth]{../code/analysis/figures/common_cohort_token_usage.pdf}
+  \caption{Mean token consumption on the shared cohort. Multipliers compare mean input counts with
+  Text-to-SQL.}
+  \label{fig:common-cohort-token-usage}
+\end{figure}
+
+Figure~\ref{fig:common-cohort-token-usage} shows a corresponding token-use advantage. Text-to-SQL used
+555 input tokens on Spider and 755 on BIRD, compared with 4.487 and 31.754 for CSV
+($8,08\times$ and $42,06\times$ as many). XML required $31,72\times$ and $128,73\times$
+the SQL input counts. Mean output consumption also favoured Text-to-SQL: 40,9 versus 63,0--98,1 tokens
+on Spider and 63,2 versus 198,7--261,2 on BIRD. Compact formats reduce direct-context costs, but do not
+remove the overhead of supplying database contents rather than only the schema.
 
 \section{Summary}
 

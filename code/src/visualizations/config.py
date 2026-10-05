@@ -131,6 +131,20 @@ TEXT_TO_SQL_RETRY_TABLE_FILENAME = "text_to_sql_error_correction.tex"
 TEXT_TO_SQL_RETRY_TABLE_LABEL = "tab:text-to-sql-error-correction"
 TEXT_TO_SQL_RETRY_FIGURE_FILENAME = "text_to_sql_error_correction.pdf"
 TEXT_TO_SQL_RETRY_FIGURE_LABEL = "fig:text-to-sql-error-correction"
+COMMON_COHORT_SQL_METHOD = "text_to_sql"
+COMMON_COHORT_METHOD_ORDER: tuple[str, ...] = (
+    COMMON_COHORT_SQL_METHOD,
+    *SERIALIZATION_FORMAT_ORDER,
+)
+COMMON_COHORT_METHOD_LABELS: dict[str, str] = {
+    COMMON_COHORT_SQL_METHOD: "Text-to-SQL",
+    **{value: f"Direct / {label}" for value, label in FORMAT_LABELS.items()},
+}
+COMMON_COHORT_TABLE_FILENAME = "common_cohort_operational_efficiency.tex"
+COMMON_COHORT_TABLE_LABEL = "tab:common-cohort-operational-efficiency"
+COMMON_COHORT_LATENCY_FIGURE_FILENAME = "common_cohort_latency.pdf"
+COMMON_COHORT_TOKENS_FIGURE_FILENAME = "common_cohort_token_usage.pdf"
+COMMON_COHORT_MODEL_FIGURE_FILENAME = "common_cohort_latency_by_model.pdf"
 RETRY_OUTCOME_ORDER: tuple[str, ...] = (
     "attempt_1",
     "attempt_2",

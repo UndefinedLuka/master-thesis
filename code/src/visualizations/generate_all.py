@@ -16,6 +16,11 @@ from pathlib import Path
 import pandas as pd
 
 from config.paths import ProjectPaths
+from visualizations.common_cohort_data import calculate_common_cohort_analysis
+from visualizations.common_cohort_latency import generate_common_cohort_latency_figure
+from visualizations.common_cohort_latency_by_model import generate_common_cohort_model_figure
+from visualizations.common_cohort_operational_table import generate_common_cohort_table
+from visualizations.common_cohort_token_usage import generate_common_cohort_token_figure
 from visualizations.config import (
     CONTEXT_WINDOW_TOKENS,
     DATASET_LABELS,
@@ -113,6 +118,10 @@ def generate_all(
         excluded_model_markers=excluded_model_markers,
     )
     retry_analysis = calculate_text_to_sql_retry_analysis(sql_analysis)
+    common_cohort = calculate_common_cohort_analysis(
+        experiment_results,
+        excluded_model_markers=excluded_model_markers,
+    )
     return [
         generate_experiment_outcomes_table(
             experiment_results,
@@ -154,6 +163,10 @@ def generate_all(
         generate_text_to_sql_latency_figure(sql_analysis, figures_dir),
         generate_error_correction_table(retry_analysis, tables_dir),
         generate_error_correction_figure(retry_analysis, figures_dir),
+        generate_common_cohort_table(common_cohort, tables_dir),
+        generate_common_cohort_latency_figure(common_cohort, figures_dir),
+        generate_common_cohort_token_figure(common_cohort, figures_dir),
+        generate_common_cohort_model_figure(common_cohort, figures_dir),
     ]
 
 

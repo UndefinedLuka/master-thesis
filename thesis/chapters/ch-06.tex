@@ -72,13 +72,21 @@ constraint as Direct Context Inference. However, this does not imply that databa
 retrieval accuracy or query-execution cost, as these effects were not independently controlled in the experiments.
 
 Despite requiring the additional step of executing the generated query, Text-to-SQL also achieved lower
-average latency than every evaluated Direct Context Inference format on both datasets. SQL execution
-contributed only a small proportion of the total response time, while the database engine performed the
-actual information retrieval efficiently. This comparison should nevertheless be interpreted with caution
-because the operational measurements used different cohorts: the Direct Context Inference analysis used a
-strict complete-case subset, whereas the Text-to-SQL analysis included all runs. The results consequently
-demonstrate lower average latency under the evaluated conditions rather than establishing that Text-to-SQL
-was faster for every individual question.
+average latency than every evaluated Direct Context Inference format on both datasets. The separate
+pipeline-level operational analyses use different cohorts, but the matched comparison in
+Section~\ref{sec:common-cohort-comparison} confirms that this advantage persists on identical questions and
+models. On the shared cohort of 561 Spider and 121 BIRD questions, even CSV required $3,44\times$ and
+$19,30\times$ the Text-to-SQL mean latency, respectively. The advantage held for every retained model
+and serialization format, so it cannot be explained solely by unequal workload composition or a few
+model-specific outliers. SQL execution contributed only a small proportion of total response time; avoiding
+the much larger raw-data prompt outweighed the additional query-execution step under these conditions.
+
+This matched result is conditional on all models successfully completing every method, not on every answer
+being correct. It therefore establishes an operational advantage on a shared feasible workload rather than
+across the complete benchmarks. In particular, from BIRD dataset only two databases were used. Lower mean
+latency also does not imply lower latency for every individual run: Text-to-SQL was faster than CSV in
+60,7\% of matched Spider model--question pairs. Pipeline selection should consequently consider the expected
+workload and latency distribution, not only the overall mean.
 
 The principal limitation of Direct Context Inference is that its input grows together with the amount of
 serialized data. Larger inputs require more time to process, increase the risk of exceeding the context
@@ -180,9 +188,15 @@ might also generate more efficient SQL for large databases, although query-plan 
 this potential advantage remains to be confirmed empirically.
 
 For paid API usage, the substantially larger prompts required by Direct Context Inference would generally
-translate into higher input-token charges. Output-token consumption was more comparable between the two
-pipelines, although it varied by model and correction frequency. The actual monetary difference was not
-measured and would depend on provider-specific pricing for input, cached-input, reasoning, and output tokens.
+translate into higher input-token charges. Figure~\ref{fig:common-cohort-token-usage} supports this
+interpretation without confounding token consumption with different question cohorts: CSV used
+$8,08\times$ as many input tokens as Text-to-SQL on Spider and $42,06\times$ on BIRD. Mean output
+consumption also favoured Text-to-SQL on the shared cohort, although the relative difference was smaller
+and varied by model and correction frequency. Input and output tokens should therefore be considered
+separately. Token counts indicate inference workload, not measured GPU memory or energy use. The actual
+monetary difference was not measured and would depend on provider-specific pricing for input, cached-input,
+reasoning, and output tokens.
+
 Local deployments face a different trade-off. Text-to-SQL requires access to a queryable database engine, but
 this may not constitute additional infrastructure when the source data are already stored in a relational
 database. Direct Context Inference avoids query execution but requires the relevant data to be loaded,
