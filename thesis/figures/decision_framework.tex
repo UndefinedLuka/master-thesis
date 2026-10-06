@@ -1,0 +1,54 @@
+\begingroup
+\renewcommand{\baselinestretch}{1}
+\footnotesize
+\begin{tikzpicture}[
+    x=1cm, y=1cm,
+    font=\footnotesize,
+    every node/.style={align=center},
+    box/.style={draw, rounded corners=2pt, inner sep=6pt, text width=4.6cm},
+    gate/.style={box, fill=black!6},
+    outcome/.style={box, line width=0.8pt},
+    arrow/.style={-{Stealth[length=2mm]}, line width=0.6pt},
+    answer/.style={font=\footnotesize, fill=white, inner sep=2pt}
+  ]
+  \node[gate, text width=7cm] (sqlgate) at (0,0) {
+    \textbf{Can SQL be used?}\\[3pt]
+    Execution permissions\\
+    Appropriate workload\\
+    Relational representation
+  };
+  \node[box] (sql) at (-3,-2.5) {
+    \textbf{Text-to-SQL}
+  };
+  \node[box] (direct) at (3,-2.5) {
+    \textbf{Direct Context Inference}
+  };
+  \node[box] (format) at (3,-4.7) {
+    \textbf{Format selection}\\[3pt]
+    Flat data $\rightarrow$ CSV\\
+    Nested data $\rightarrow$ TOON\\[3pt]
+    Keep the original format if required by the application.
+  };
+  \node[gate, text width=8cm] (accept) at (0,-7.5) {
+    \textbf{Are deployment requirements met?}\\[3pt]
+    Test latency, correctness, and resource use\\
+    on a representative dataset.
+  };
+  \node[outcome] (deploy) at (-3,-10.3) {
+    \textbf{Recommend the configuration}\\
+    Method, model, and serialization format where applicable.
+  };
+  \node[outcome] (revise) at (3,-10.3) {
+    \textbf{Reassess the approach}\\
+    Other extraction methods should be considered.
+  };
+
+  \draw[arrow] (sqlgate.south -| sql.north) -- node[answer, midway] {Yes} (sql.north);
+  \draw[arrow] (sqlgate.south -| direct.north) -- node[answer, midway] {No} (direct.north);
+  \draw[arrow] (direct) -- (format);
+  \draw[arrow] (sql.south) -- (accept.north -| sql.south);
+  \draw[arrow] (format.south) -- (accept.north -| format.south);
+  \draw[arrow] (accept.south -| deploy.north) -- node[answer, midway] {Yes} (deploy.north);
+  \draw[arrow] (accept.south -| revise.north) -- node[answer, midway] {No} (revise.north);
+\end{tikzpicture}
+\endgroup

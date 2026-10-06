@@ -211,13 +211,14 @@ throughput and hardware utilization, while API-based deployments should track ac
 selected provider's pricing model.
 
 \section{Decision Framework for Structured Data Information Extraction}
+\label{sec:decision-framework}
 
 The experimental findings provide the basis for a decision framework for selecting an appropriate LLM-based
-approach to information extraction from structured data. The framework first distinguishes between Direct
-Context Inference and Text-to-SQL according to the characteristics of the data and the operational
-requirements of the target system. If Direct Context Inference is selected, the framework additionally
-supports the selection of a serialization format. If Text-to-SQL is selected, it considers whether an SQL
-error-correction mechanism is appropriate for the implementation.
+approach to information extraction from structured data at deployment level. The framework first
+distinguishes between Direct Context Inference and Text-to-SQL according to the characteristics of the data
+and the operational requirements of the target system. If Direct Context Inference is selected, the framework
+additionally supports the selection of a serialization format. SQL error-correction policy is discussed
+separately in Section~\ref{sec:sql-error-correction}.
 
 The framework does not assume that one of the two evaluated pipelines is suitable in every situation. When
 neither approach satisfies the required accuracy, latency, context-window, or data-representation
@@ -234,18 +235,23 @@ Inference may still be unsuitable for a high-volume application because the comp
 
 \subsubsection{Data and Schema Characteristics}
 
-For Direct Context Inference, the size of the database must be estimated after serialization because the
-resulting token count depends on the selected format and tokenizer. The complete prompt, including
-instructions, serialized data, the question, and sufficient output headroom, must fit within the model's
-available context window. The structure of the data must also be considered. Flat tabular data can be
-represented compactly using CSV, whereas nested or more complex structures may require a format capable of
-preserving their relationships and meaning.
+The complete prompt, including instructions, serialized data, the question, and sufficient output headroom,
+must fit within the model's available context window. The reserved output allowance includes reasoning tokens
+where applicable.
 
-Text-to-SQL requires a reliable relational schema rather than the complete database contents. The relevant
-input is therefore the size and complexity of the schema prompt, not the number of stored rows. Table and
-column names should be sufficiently descriptive for the model to associate concepts in the natural-language
-question with the appropriate schema elements. If the schema is unavailable, incomplete, or cannot represent
-the source data without a loss of relevant information, Text-to-SQL may not be suitable.
+It should be noted that for Direct Context Inference, the size of the database must be
+estimated after serialization because the resulting token count depends on the selected format and tokenizer.
+The structure of the data must also be considered. Flat tabular data can be represented compactly using CSV,
+whereas nested or more complex structures may require a format capable of preserving their relationships and meaning.
+
+Text-to-SQL requires a faithful relational representation and a reliable schema rather than the complete
+database contents. The tasks in the intended workload must also be expressible through the query in the
+available SQL engine. The relevant input is therefore the size and complexity of the schema prompt, not the
+number of stored rows. Table and column names should be sufficiently descriptive for the model to associate
+concepts in the natural-language question with the appropriate schema elements. If the schema is unavailable,
+incomplete, or cannot represent the source data without a loss of relevant information, Text-to-SQL may not
+be suitable. Its complete schema prompt must likewise fit the selected model's context capacity with
+sufficient output headroom.
 
 \subsubsection{Model and Infrastructure Constraints}
 
@@ -253,9 +259,8 @@ The available models, their capabilities, and their context-window sizes determi
 processed and how reliably each pipeline can perform its task. Direct Context Inference requires sufficient
 context capacity to accommodate the serialized data, while Text-to-SQL requires a model capable of
 interpreting the schema and generating syntactically and semantically correct queries. The target environment
-must also permit SQL generation and execution if Text-to-SQL is selected. Requirements for deterministic and
-reproducible behaviour may further influence whether a local open-weight model or an externally hosted model
-is appropriate.
+must also provide an SQL engine and permit access to the data and execution of the required queries.
+Requirements for deterministic and reproducible behaviour may further influence which pipeline is more suitable.
 
 \subsubsection{Quality Requirements}
 
@@ -277,18 +282,22 @@ alternative, provided that a queryable database and a sufficiently capable model
 
 \subsection{Method and Format Selection Rules}
 
-The primary decision concerns whether the data can be represented in a form that can be queried reliably.
-When a queryable representation and a suitable query engine are available, Text-to-SQL should generally be
-preferred. Under the evaluated conditions, it achieved substantially higher aggregate retrieval accuracy,
-required fewer input tokens, and produced lower average latency than Direct Context Inference. These results
-do not imply that Text-to-SQL was superior for every individual question or deployment environment, but they
-provide strong support for treating it as the default for queryable structured data.
+The primary decision concerns whether the SQL prerequisites are satisfied: a faithful relational
+representation, an available engine and execution permissions, an SQL-answerable workload, and a schema
+prompt that fits the model context. When these conditions are met, Text-to-SQL is the first candidate,
+including when the complete data could also fit into a direct-context prompt.
 
-Direct Context Inference remains appropriate when the data are sufficiently small and no suitable query
-engine is available, or when converting the source data into a queryable representation would introduce
-excessive complexity or lose relevant meaning. It may also be useful when answering a question requires
-inspecting values that cannot be inferred from the available schema. The complete prompt must nevertheless
-fit within the model's context window with sufficient space reserved for the output.
+Under the evaluated conditions, it achieved substantially higher aggregate retrieval accuracy, required fewer
+input tokens, and produced lower average latency than Direct Context Inference. These results do not imply
+that Text-to-SQL was superior for every individual question or deployment environment, but they provide
+strong support for treating it as the default for queryable structured data. A per-database comparison of
+mean scores across the same questions and ten retained models supports this preference across the observed
+size range: Text-to-SQL exceeded every direct-context format in Normalized Exact Match and BERTScore~F1 on
+all 31 databases, and in ROUGE-L~F1 on 30 of 31. The ROUGE-L exception was BIRD's \texttt{toxicology}. On the
+successful shared cohort defined in Section~\ref{sec:common-cohort-comparison}, it used fewer mean input
+tokens than every direct-context format on all 20 represented databases, and had lower mean latency than
+every format on 15 out of 20. Thus, the preference does not imply superiority on every measure at every
+database size, latency requires deployment-specific validation.
 
 When Direct Context Inference is selected for flat tabular data, CSV should be the preferred default. It
 required the fewest tokens in both datasets while maintaining competitive retrieval accuracy. TOON provided a
@@ -311,7 +320,8 @@ and the generation of syntactically valid and semantically correct queries. More
 improved these outcomes and reduced the frequency of expensive correction attempts. Direct Context Inference
 places a different demand on the model, requiring it to locate and reason over relevant values within a
 potentially long input. A weaker model's difficulty with SQL generation may justify evaluating Direct Context
-Inference for a small dataset, but this remains an application-specific decision rather than a general recommendation.
+Inference when its prompt fits the context budget, but this remains an application-specific decision
+requiring validation rather than a general recommendation.
 
 Applications with strict accuracy requirements should prefer Text-to-SQL under the evaluated conditions.
 Generated SQL also improves auditability because the operation can be inspected and re-executed against the
@@ -320,12 +330,13 @@ configuration, model version, database state, and decoding strategy. Both pipeli
 decoding in the experiments, so the visibility of the SQL query represents an auditability advantage rather
 than proof that Text-to-SQL is inherently more reproducible.
 
-Strict context-window, latency, or input-token constraints further favour Text-to-SQL because only the schema
-must be placed in the model context. When Direct Context Inference is required, formats that cause the
-complete prompt to exceed the context limit must be rejected, sufficient output headroom must be retained,
-and compact formats such as CSV or TOON should be preferred. Expected query volume must also be considered
-because repeatedly processing the complete serialized dataset can make Direct Context Inference expensive
-even when each individual prompt fits within the available context.
+Strict context window constraints further favour Text-to-SQL because only the schema rather than the complete
+database contents must be placed in the model context. Its lower aggregate latency also supports this
+starting choice, subject to validation against the application's latency requirement. When Direct Context
+Inference is required, formats that cause the complete prompt to exceed the context limit must be rejected,
+sufficient output headroom must be retained, and compact formats such as CSV or TOON should be preferred.
+Expected query volume must also be considered because repeatedly processing the complete serialized dataset
+can make Direct Context Inference expensive even when each individual prompt fits within the available context.
 
 The recommendation to prefer Text-to-SQL for queryable structured data and CSV for flat Direct Context
 Inference inputs is strongly supported by the experiments. The findings also strongly support checking
@@ -333,18 +344,40 @@ complete prompt size, avoiding unnecessary verbosity, considering both model fam
 distinguishing SQL execution success from result correctness. Recommendations concerning deeply nested data
 and the use of TOON for such structures remain conditional because this scenario was not evaluated directly.
 
-% \subsection{Decision Matrix or Flowchart}
-% a chart that is going to visualize the decision framework
+\subsection{Decision Tree}
 
-% !!! Not sure if this is needed !!!
-% \subsection{Application Scenarios}
-% Demonstrate the framework with a small number of representative scenarios drawn from the study:
-% a small flat database, a small but structured database, and a large or complex relational
-% database. For each scenario, explain the recommended choice, its expected trade-offs, and the
-% conditions under which the recommendation would change. Do not introduce new experimental
-% results in these examples.
+\begin{figure}[htb]
+  \centering
+  \input{figures/decision_framework}
+  \caption{Decision tree for selecting an extraction method and serialization format for a target
+    application. All listed conditions must be met to use Text-to-SQL. Both methods are checked against
+  the same application requirements.}
+  \label{fig:decision-framework}
+\end{figure}
+
+Figure~\ref{fig:decision-framework} presents the selection rules as a decision tree. Text-to-SQL is evaluated
+first when all the conditions listed above are met. Otherwise, Direct Context Inference is considered.
+Its serialization format is selected before checking whether the complete prompt fits within the context
+window. CSV is the default for flat tabular data, while nested data require a format that preserves their
+structure, such as TOON. The existing format can be kept when conversion offers little benefit or an
+interface requires it. The recommendation for nested data is based on the formats' ability to preserve
+structure, since retrieval from nested datasets was not evaluated in the experiments.
+
+For either method, the selected model and configuration must meet the required accuracy, latency, and
+resource limits when tested on representative questions. These limits depend on the application. The
+experiments support the preference for Text-to-SQL but do not provide limits that apply to every system.
+If several configurations meet the requirements, the application's priorities, such as lower latency or
+lower cost, determine the final choice.
+
+If a method cannot be used or does not meet the requirements, another model, configuration, or method can
+be tested within the same system constraints. Each alternative must pass the same checks. If none meets
+the requirements, neither evaluated approach is suitable for the application. For example, creating a
+database may not be allowed while the serialized data exceed the context window, or both pipelines may
+fail to reach the required accuracy. Preprocessing, selective retrieval, or another extraction approach may
+then be needed. These alternatives were not evaluated in this thesis.
 
 \section{SQL Error Correction: Benefits and Limitations}
+\label{sec:sql-error-correction}
 
 The SQL error-correction mechanism recovered 1.357 queries that did not execute successfully on their initial
 attempt: 282 on Spider and 1.075 on BIRD. However, only 605 of these recovered queries returned the correct
@@ -435,11 +468,3 @@ representational capability rather than experimental evidence. Absolute latency 
 another database engine, GPU architecture, model-serving stack, proprietary API, or pricing model. The results
 should therefore be generalized primarily to conditions similar to those evaluated, rather than treated as
 universal recommendations for every structured-data extraction system.
-
-% \section{Chapter Summary}
-% Close by synthesizing the implications: serialization is a decisive systems concern for Direct
-% Context Inference, whereas scalable Text-to-SQL depends primarily on model capability and
-% reliable query generation. Reiterate that the decision framework provides conditional guidance
-% based on data size, structure, operational constraints, and required reliability. End with a
-% transition to the conclusion chapter, which should give only the final high-level takeaways and
-% contributions rather than repeat this detailed interpretation.
