@@ -13,13 +13,12 @@ Centre at the Faculty of Computer and Information Science (RDC@FRI), University 
 managed by the Slurm workload scheduler, which provides GPU allocation and walltime-based job
 preemption. The primary compute target is a single NVIDIA H100 GPU with 80~GB of high-bandwidth memory, which
 provides sufficient capacity to hold even the largest quantized model (27~billion parameters) entirely in GPU
-memory while maintaining a 128K-token key-value cache. For scheduling flexibility, A100 80~GB nodes serve as
-a fallback partition.
+memory while maintaining a 128K-token key-value cache.
 
 \subsection{Container Environment}
 
 FRIDA does not expose a traditional module system. Instead, all software environments are packaged as Enroot
-containers managed through the Pyxis Slurm plugin. Our container image is based on NVIDIA's NGC
+containers managed through the Pyxis Slurm plugin. Our container image is based on the NVIDIA GPU Cloud image
 \texttt{pytorch:25.06-py3}, which provides CUDA, cuDNN, and Python~3.12 out of the box. On top of this base
 image, we add \texttt{llama.cpp}. The scoring dependencies (PyTorch,
 Transformers, rouge-score, bert-score) are co-installed as optional package extras. The
@@ -149,7 +148,8 @@ fit are recorded with an explicit context exceeded marker and skipped, keeping t
 
 \subsection{Text-to-SQL}
 
-For the Text-to-SQL pipeline, the model receives the database schema as DDL statements and must produce a
+For the Text-to-SQL pipeline, the model receives the database schema as data definition language statements
+and must produce a
 valid SQLite query. When the generated SQL fails to execute (due to syntax errors, missing columns, or
 runtime exceptions), the error message is appended to the conversation as a user message and the model is
 given another attempt. This error-correction loop runs up to three retry attempts beyond the initial
@@ -164,7 +164,8 @@ Both pipelines use deliberately minimal prompt templates. The direct inference p
 role of a 'precise information retrieval assistant' with constraints to use only the provided data, output
 'N/A' for missing information, and avoid conversational filler. The Text-to-SQL prompt assigns the role of
 a 'precise Text-to-SQL translator' constrained to output SQLite compatible SQL.
-Both templates inject the serialized data (or schema DDL) at a designated placeholder. The prompts are
+Both templates inject the serialized data (or schema expressed in data definition language) at a designated
+placeholder. The prompts are
 intentionally non-leading: we avoid few-shot examples or format-specific hints so that the model's inherent
 capability remains the variable under test.
 

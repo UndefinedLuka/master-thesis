@@ -25,7 +25,7 @@ to process, but it also creates some overhead during information tokenization. T
 classification system divides these into four main types:
 
 \begin{itemize}
-  \item \textbf{Tree and Tabular Formats:} These include CVS \cite{shafranovich2005common} files and custom
+  \item \textbf{Tree and Tabular Formats:} These include CSV \cite{shafranovich2005common} files and custom
     hierarchical notation. In these
     formats, relationships are defined either by positional alignment (as in CSV) or explicit pointers (as in
     tree structures). However, CSV fundamentally cannot represent nested structures, limiting its
@@ -69,7 +69,7 @@ that reduction in tokens used directly correlates to lower latency, when using t
 compared to JSON.
 
 In order to address these inefficiencies, there have been multiple efforts aimed at them, in form of ONTO
-(Object Notation for Token Optimization)\cite{onto-serialization-format} and TOON (Token Optimized Object
+(Object Notation for Token Optimization)\cite{onto-serialization-format} and TOON (Token-Oriented Object
 Notation)\cite{toon-format-2025}. Both formats are
 oriented at fixing the problem of repeated schema for each record, they fix this by declaring all the fields
 only once at the top of the record, and values are arranged in pipe delimited rows with indentation based
