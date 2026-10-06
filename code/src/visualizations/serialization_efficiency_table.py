@@ -20,6 +20,7 @@ from visualizations.config import (
     TOKENIZER_FAMILY_ORDER,
 )
 from visualizations.serialization_data import present_order, require_columns, sort_summary
+from visualizations.uncertainty import mean_intervals, table_estimate
 
 
 @dataclass(frozen=True, slots=True)
@@ -60,6 +61,13 @@ def calculate_serialization_efficiency(
         average_tokens["relative_to_lowest"] = average_tokens["mean_tokens"] / minimum
         average_tokens = sort_summary(average_tokens)
 
+    intervals = mean_intervals(
+        report.rename(columns={"database_id": "db_id"}), ["dataset"], {"mean_tokens": "tokens"},
+        comparison="format", reference="csv", effect="ratio",
+        pair_keys=("db_id", "tokenizer_family"),
+    )
+    average_tokens = average_tokens.merge(intervals, on=["dataset", "format"],
+                                         validate="one_to_one")
     fit_data = report.copy()
     fit_data["fits_context"] = fit_data["tokens"].le(context_window_tokens)
     database_fit = (
@@ -118,7 +126,7 @@ def render_serialization_efficiency_table(
     if caption is None:
         caption = (
             "Serialization efficiency by dataset and format. Token use reports the mean "
-            "serialized-payload token count and its within-dataset ratio to the lowest mean. "
+            "serialized-payload token count and its within-dataset ratio to CSV. "
             f"Context fit reports payloads at or below {context_window_tokens:,} tokens."
         )
 
@@ -138,8 +146,8 @@ def render_serialization_efficiency_table(
             cells = [
                 DATASET_LABELS.get(dataset, dataset) if index == 0 else "",
                 FORMAT_LABELS.get(serialization_format, serialization_format),
-                f"{float(average_row['mean_tokens']):,.0f}",
-                f"{float(average_row['relative_to_lowest']):.2f}$\\times$",
+                table_estimate(average_row, "mean_tokens", 0),
+                table_estimate(average_row, "mean_tokens_effect", suffix=r"$\times$"),
             ]
             for family in families:
                 family_rows = format_fit_rows[format_fit_rows["tokenizer_family"].eq(family)]
@@ -165,7 +173,8 @@ def render_serialization_efficiency_table(
         "representative tokenizer families. Context-fit cells show fitting databases/total "
         "databases (percentage) for each tokenizer family. Only the serialized database payload "
         "is counted; instructions, questions, chat-template tokens, and output-token headroom "
-        f"are excluded. {validation_note}"
+        "are excluded. Brackets show pointwise 95\\% database-bootstrap confidence intervals; "
+        f"ratios use CSV as the reference. {validation_note}"
     )
     family_headers = [TOKENIZER_FAMILY_LABELS.get(family, family) for family in families]
     column_spec = "@{}llrr" + "c" * len(families) + "@{}"
@@ -187,7 +196,7 @@ def render_serialization_efficiency_table(
             ),
             (r"      \cmidrule(lr){3-4}" + f"\\cmidrule(lr){{5-{4 + len(families)}}}"),
             (
-                r"       &  & Mean tokens & Relative to lowest & "
+                r"       &  & Mean tokens & Ratio to CSV & "
                 + " & ".join(family_headers)
                 + LATEX_ROW_END
             ),

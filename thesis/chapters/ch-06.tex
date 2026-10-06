@@ -1,11 +1,6 @@
 \chapter{Discussion}
 \label{ch:discussion}
 
-% This chapter should interpret the findings from Chapter~\ref{ch:results}, rather than repeat
-% the reported values. Organize the discussion around the research problem: selecting an
-% information-extraction approach and, for Direct Context Inference, a serialization format
-% that balances retrieval accuracy, latency, token consumption, and context-window feasibility.
-
 \section{Interpretation of the Main Findings}
 
 The experiments demonstrate that Direct Context Inference and Text-to-SQL have substantially different
@@ -32,9 +27,11 @@ consideration when Direct Context Inference is used.
 
 \subsection{Serialization Format Trade-offs in Direct Context Inference}
 
-The experiments show that serialization formats can achieve similar retrieval accuracy once they preserve the
-source data correctly, particularly on the smaller Spider databases. Consequently, format selection can focus
-primarily on minimizing input-token consumption without necessarily imposing a substantial accuracy penalty.
+The observed retrieval scores were closely grouped across serialization formats on Spider. The
+paired differences and their intervals provide a more direct comparison than the ordering of the
+mean scores, but do not establish that the formats are equivalent. Within the evaluated workload,
+format selection can therefore consider the substantial differences in input-token consumption
+alongside the smaller observed accuracy differences.
 This conclusion is conditional on the serialized representation retaining all information and relationships
 required to answer the question. Compactness should not be prioritized if it changes the meaning or structure
 of the source data.
@@ -348,7 +345,7 @@ and the use of TOON for such structures remain conditional because this scenario
 
 \begin{figure}[htb]
   \centering
-  \input{figures/decision_framework}
+  \resizebox{!}{0.4\textheight}{\input{figures/decision_framework}}
   \caption{Decision tree for selecting an extraction method and serialization format for a target
     application. All listed conditions must be met to use Text-to-SQL. Both methods are checked against
   the same application requirements.}
@@ -425,7 +422,12 @@ analysis because no model inference takes place and no meaningful timing or toke
 The strict complete-case cohort ensures that all serialization formats are compared using the same questions
 and models, avoiding a comparison in which verbose formats are evaluated only on the easiest inputs. However,
 this restriction narrows the representativeness of the operational results, particularly for BIRD, where only
-two databases remained in the common cohort. The observed negative relationship between effective database size
+two databases remained in the common cohort. Database-bootstrap intervals based on these two
+databases describe sensitivity to their relative representation, rather than reliable uncertainty
+for a broader population of databases. More generally, the intervals hold the evaluated models,
+prompts, and inference settings fixed and do not measure run-to-run hardware variation. They are
+not adjusted for multiple comparisons, so the figures support exploratory effect-size interpretation
+rather than formal significance claims. The observed negative relationship between effective database size
 and Direct Context Inference accuracy should also be interpreted carefully. Database size is a direct feasibility
 constraint when a prompt exceeds the context window, but below that boundary it covaries with domain, schema
 complexity, data quality, and question difficulty. The analysis therefore establishes an association rather than

@@ -5,6 +5,8 @@ from __future__ import annotations
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+import numpy as np
+
 from visualizations.common_cohort_data import CommonCohortAnalysis
 from visualizations.common_cohort_plotting import (
     cohort_datasets,
@@ -19,6 +21,7 @@ from visualizations.config import (
     COMMON_COHORT_TOKENS_FIGURE_FILENAME,
     FORMAT_COLORS,
 )
+from visualizations.uncertainty import interval_marks
 
 if TYPE_CHECKING:
     from matplotlib.figure import Figure
@@ -43,12 +46,15 @@ def plot_common_cohort_token_usage(analysis: CommonCohortAnalysis) -> Figure:
             axis = axes[row_index, column_index]
             values = [float(panel.loc[method, metric]) for method in methods]
             axis.barh(positions, values, color=[colors[m] for m in methods], height=0.64)
-            sql_value = float(panel.loc[COMMON_COHORT_SQL_METHOD, metric])
+            interval_marks(axis, positions, panel.reindex(methods), metric, horizontal=True)
+            upper = (panel.reindex(methods)[f"{metric}_high"].tolist()
+                     if f"{metric}_high" in panel else values)
+            upper = [bound if np.isfinite(bound) else value
+                     for bound, value in zip(upper, values, strict=True)]
             for position, method, value in zip(positions, methods, values, strict=True):
                 label = f"{value:,.0f}" if row_index == 0 else f"{value:,.1f}"
-                if row_index == 0 and method != COMMON_COHORT_SQL_METHOD:
-                    label += f"  ({value / sql_value:.1f}×)"
-                x = value * 1.08 if row_index == 0 else value + max(values) * 0.025
+                end = upper[position]
+                x = end * 1.08 if row_index == 0 else end + max(upper) * 0.025
                 axis.text(
                     x,
                     position,
@@ -63,7 +69,7 @@ def plot_common_cohort_token_usage(analysis: CommonCohortAnalysis) -> Figure:
             axis.invert_yaxis()
             if row_index == 0:
                 axis.set_xscale("log")
-                axis.set_xlim(max(1, min(values) / 2), max(values) * 5.5)
+                axis.set_xlim(max(1, min(values) / 2), max(upper) * 5.5)
                 axis.xaxis.set_major_formatter(
                     FuncFormatter(
                         lambda value, _: f"{value / 1000:g}k" if value >= 1000 else f"{value:g}"
@@ -75,21 +81,10 @@ def plot_common_cohort_token_usage(analysis: CommonCohortAnalysis) -> Figure:
                     panel_title(analysis, dataset), fontsize=11, fontweight="bold", pad=14
                 )
             else:
-                axis.set_xlim(0, max(values) * 1.25)
+                axis.set_xlim(0, max(upper) * 1.25)
                 axis.set_xlabel("Mean output tokens (linear scale)", fontsize=10)
             style_axis(axis)
-    figure.suptitle(
-        "Token consumption on the shared question cohort", fontsize=15, fontweight="bold", y=0.99
-    )
-    figure.text(
-        0.5,
-        0.012,
-        "SQL counts include all attempts; output counts include reasoning tokens. "
-        "Multipliers show mean input-token use relative to Text-to-SQL.",
-        ha="center",
-        fontsize=8.5,
-    )
-    figure.tight_layout(rect=(0, 0.045, 1, 0.95), w_pad=2.5, h_pad=2.2)
+    figure.tight_layout(rect=(0, 0, 1, 1), w_pad=2.5, h_pad=2.2)
     return figure
 
 

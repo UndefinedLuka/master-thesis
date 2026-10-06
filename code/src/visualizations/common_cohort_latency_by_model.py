@@ -96,27 +96,13 @@ def plot_common_cohort_latency_by_model(analysis: CommonCohortAnalysis) -> Figur
         axis.tick_params(which="both", length=0)
         for spine in axis.spines.values():
             spine.set_visible(False)
-    figure.suptitle(
-        "Direct-context latency relative to Text-to-SQL, by model",
-        fontsize=15,
-        fontweight="bold",
-        y=0.99,
-    )
-    figure.subplots_adjust(left=0.16, right=0.88, bottom=0.18, top=0.86, wspace=0.65)
+    figure.subplots_adjust(left=0.16, right=0.88, bottom=0.18, top=0.94, wspace=0.65)
     color_axis = figure.add_axes((0.91, 0.23, 0.016, 0.55))
     colorbar = figure.colorbar(image, cax=color_axis)
     ticks = [float(value) for value in (-4, -2, 0, 2, 4, 6, 8) if -limit <= value <= limit]
     colorbar.set_ticks(ticks, labels=[f"{2**value:g}×" for value in ticks])
     colorbar.set_label("Direct / SQL mean latency (log colour scale)", fontsize=9)
     colorbar.ax.tick_params(labelsize=8)
-    figure.text(
-        0.5,
-        0.035,
-        "1× denotes equal mean latency. Red: direct is slower; blue: direct is faster. "
-        "Every cell uses the same questions for both methods.",
-        ha="center",
-        fontsize=8.5,
-    )
     return figure
 
 

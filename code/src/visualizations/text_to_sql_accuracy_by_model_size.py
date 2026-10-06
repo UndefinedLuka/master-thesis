@@ -19,6 +19,7 @@ from visualizations.config import (
     TOKENIZER_FAMILY_ORDER,
 )
 from visualizations.text_to_sql_data import TextToSqlAnalysis
+from visualizations.uncertainty import interval_marks
 
 if TYPE_CHECKING:
     from matplotlib.axes import Axes
@@ -71,6 +72,8 @@ def plot_text_to_sql_accuracy(
                     linewidth=2,
                     color=TOKENIZER_FAMILY_COLORS[family],
                 )
+                interval_marks(axis, family_rows["model_size_b"], family_rows, metric,
+                               color=TOKENIZER_FAMILY_COLORS[family])
             axis.set_xscale("log")
             axis.set_xticks(all_sizes, [_format_size(value) for value in all_sizes])
             axis.minorticks_off()
@@ -79,7 +82,11 @@ def plot_text_to_sql_accuracy(
             axis.spines["top"].set_visible(False)
             axis.spines["right"].set_visible(False)
             axis.set_title(METRIC_TITLES[metric], fontweight="bold")
-            axis.set_ylim(*metric_limits[metric])
+            low, high = metric_limits[metric]
+            if f"{metric}_high" in summary:
+                low = min(low, float(summary[f"{metric}_low"].min()))
+                high = max(high, float(summary[f"{metric}_high"].max()) * 1.08)
+            axis.set_ylim(low, high)
             if column_index == 0:
                 axis.set_ylabel(f"{DATASET_LABELS[dataset]}\nMean score")
             if row_index == len(DATASET_ORDER) - 1:
@@ -101,24 +108,11 @@ def plot_text_to_sql_accuracy(
         handles=handles,
         title="Model family",
         loc="upper center",
-        bbox_to_anchor=(0.5, 0.955),
+        bbox_to_anchor=(0.5, 1.0),
         ncol=len(handles),
         frameon=False,
     )
-    figure.suptitle(
-        "Text-to-SQL retrieval accuracy by model size",
-        fontsize=17,
-        fontweight="bold",
-        y=0.995,
-    )
-    figure.text(
-        0.5,
-        0.01,
-        "Means include zero-scored runs whose SQL did not execute successfully.",
-        ha="center",
-        fontsize=9.5,
-    )
-    figure.tight_layout(rect=(0.03, 0.05, 1.0, 0.89))
+    figure.tight_layout(rect=(0.03, 0, 1.0, 0.94))
     return figure, axes
 
 

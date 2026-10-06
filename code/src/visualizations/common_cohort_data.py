@@ -22,6 +22,7 @@ from visualizations.direct_efficiency_data import (
 )
 from visualizations.experiment_outcomes import model_is_excluded
 from visualizations.text_to_sql_data import TEXT_TO_SQL_COLUMNS, calculate_text_to_sql_analysis
+from visualizations.uncertainty import mean_intervals
 
 COMMON_COHORT_COLUMNS = tuple(dict.fromkeys((*DIRECT_EFFICIENCY_COLUMNS, *TEXT_TO_SQL_COLUMNS)))
 PAIR_KEYS = ["dataset", "example_id", "model_id", "db_id"]
@@ -129,6 +130,13 @@ def calculate_common_cohort_analysis(
     aggregations = {name: (column, "mean") for name, column in SUMMARY_METRICS.items()}
     aggregations["observation_count"] = ("example_id", "size")
     summary = data.groupby(["dataset", "method"], as_index=False).agg(**aggregations)
+    summary = summary.merge(
+        mean_intervals(
+            data, ["dataset"], SUMMARY_METRICS, comparison="method",
+            reference=COMMON_COHORT_SQL_METHOD, effect="ratio",
+            pair_keys=("db_id", "example_id", "model_id"),
+        ), on=["dataset", "method"], validate="one_to_one",
+    )
     model_summary = data.groupby(["dataset", "model_id", "method"], as_index=False).agg(
         **aggregations
     )

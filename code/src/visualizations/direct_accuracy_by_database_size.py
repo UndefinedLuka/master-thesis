@@ -13,6 +13,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+import numpy as np
 import pandas as pd
 
 from visualizations.config import (
@@ -24,11 +25,11 @@ from visualizations.config import (
     DIRECT_DATABASE_SIZE_FIGURE_FILENAMES,
     EXPECTED_DATABASE_COUNTS,
     FORMAT_LABELS,
-    METRIC_TITLES,
     SERIALIZATION_FORMAT_ORDER,
 )
 from visualizations.direct_accuracy_data import prepare_direct_accuracy
 from visualizations.serialization_data import require_columns
+from visualizations.uncertainty import BOOTSTRAP_DRAWS, BOOTSTRAP_SEED
 
 if TYPE_CHECKING:
     from matplotlib.axes import Axes
@@ -260,10 +261,35 @@ def plot_database_size_accuracy_metric(
             correlation = correlation_lookup.get((dataset, serialization_format), math.nan)
             if math.isnan(correlation):
                 continue
+            selected = format_rows[format_rows["dataset"].eq(dataset)]
+            x = selected["log10_serialized_tokens"].to_numpy()
+            y = selected["mean_score"].to_numpy()
+            rng = np.random.default_rng(BOOTSTRAP_SEED)
+            indices = rng.integers(0, len(x), size=(BOOTSTRAP_DRAWS, len(x)))
+            bx, by = x[indices], y[indices]
+            dx, dy = bx - bx.mean(axis=1)[:, None], by - by.mean(axis=1)[:, None]
+            xx, yy = (dx * dx).sum(axis=1), (dy * dy).sum(axis=1)
+            xy = (dx * dy).sum(axis=1)
+            valid = (xx > 0) & (yy > 0)
+            interval = "CI unavailable"
+            if len(x) >= 3 and valid.mean() >= 0.95:
+                draws = xy[valid] / np.sqrt(xx[valid] * yy[valid])
+                lower, upper = np.quantile(draws, [0.025, 0.975])
+                interval = f"[{lower:.2f}, {upper:.2f}]"
+            valid_trend = xx > 0
+            if len(x) >= 3 and valid_trend.mean() >= 0.95:
+                grid = np.linspace(x.min(), x.max(), 100)
+                slopes = xy[valid_trend] / xx[valid_trend]
+                predictions = (
+                    by[valid_trend].mean(axis=1)[:, None]
+                    + slopes[:, None] * (grid - bx[valid_trend].mean(axis=1)[:, None])
+                )
+                band = np.quantile(predictions, [0.025, 0.975], axis=0)
+                axis.fill_between(10 ** grid, *band, color=DATASET_COLORS[dataset], alpha=0.10)
             axis.text(
                 0.97,
                 0.89 - correlation_index * 0.065,
-                f"{DATASET_LABELS[dataset]}: {correlation:.2f}",
+                f"{DATASET_LABELS[dataset]}: {correlation:.2f} {interval}",
                 transform=axis.transAxes,
                 ha="right",
                 va="top",
@@ -298,28 +324,11 @@ def plot_database_size_accuracy_metric(
         handles=handles,
         title="Dataset",
         loc="upper center",
-        bbox_to_anchor=(0.5, 0.94),
+        bbox_to_anchor=(0.5, 1.0),
         ncol=len(handles),
         frameon=False,
     )
-    figure.suptitle(
-        f"{METRIC_TITLES.get(metric, metric)} by database size and serialization format",
-        fontsize=17,
-        fontweight="bold",
-        y=0.995,
-    )
-    figure.text(
-        0.5,
-        0.015,
-        (
-            "Each point is one database. Size is the format-specific mean token count across "
-            "three tokenizer families; point area reflects question count. Dashed lines are "
-            "dataset-specific least-squares trends against log size."
-        ),
-        ha="center",
-        fontsize=9.2,
-    )
-    figure.tight_layout(rect=(0.03, 0.06, 1.0, 0.90))
+    figure.tight_layout(rect=(0.03, 0, 1.0, 0.96))
     return figure, axes
 
 

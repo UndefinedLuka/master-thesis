@@ -1,0 +1,190 @@
+"""Pointwise database-cluster bootstrap intervals for means and paired effects.
+
+Models are fixed configurations, not independent replications. Each draw retains every
+question and configuration from a sampled database; means retain their run weighting.
+"""
+
+from __future__ import annotations
+
+from functools import lru_cache
+
+import numpy as np
+import pandas as pd
+
+BOOTSTRAP_DRAWS = 10_000
+BOOTSTRAP_SEED = 20261006
+
+
+@lru_cache(maxsize=64)
+def database_weights(count: int) -> np.ndarray:
+    """Database multiplicities, shared by all configurations in a comparison."""
+    rng = np.random.default_rng(BOOTSTRAP_SEED)
+    return rng.multinomial(count, np.full(count, 1 / count), size=BOOTSTRAP_DRAWS)
+
+
+def bounds(draws: np.ndarray) -> tuple[float, float]:
+    if not np.isfinite(draws).all():
+        return float("nan"), float("nan")
+    return tuple(float(x) for x in np.quantile(draws, [0.025, 0.975]))
+
+
+def mean_intervals(
+    data: pd.DataFrame,
+    groups: list[str],
+    metrics: dict[str, str],
+    *,
+    comparison: str | None = None,
+    reference: str | None = None,
+    effect: str = "difference",
+    pair_keys: tuple[str, ...] = (),
+) -> pd.DataFrame:
+    """Return mean CIs and paired difference/ratio CIs, keyed like a summary.
+
+    With no explicit reference, use the smallest model in each supplied family group.
+    A single database gives no between-database interval (NaN), not false precision.
+    Pair identities must match exactly; incomplete comparisons fail rather than silently
+    changing cohorts. Ratios are ratios of means, never averages of individual ratios.
+    """
+    rows = []
+    for key, group in data.groupby(groups, observed=True, sort=True):
+        key = key if isinstance(key, tuple) else (key,)
+        identity = dict(zip(groups, key, strict=True))
+        databases = sorted(group["db_id"].unique())
+        weights = database_weights(len(databases))
+        categories = list(group[comparison].unique()) if comparison else [None]
+        baseline = reference
+        if comparison and baseline is None:
+            baseline = group.sort_values(["model_size_b", comparison])[comparison].iloc[0]
+        if comparison and baseline not in categories:
+            raise ValueError(f"Missing comparison reference {baseline!r} in {identity}")
+        estimates, samples = {}, {}
+        identities = None
+        for category in categories:
+            selected = group[group[comparison].eq(category)] if comparison else group
+            if comparison:
+                if not pair_keys:
+                    raise ValueError("Paired effects require explicit pair keys")
+                current = pd.MultiIndex.from_frame(selected[list(pair_keys)])
+                if current.has_duplicates:
+                    raise ValueError("Duplicate identities in paired comparison")
+                if identities is not None and set(current) != identities:
+                    raise ValueError("Paired comparison has unequal observation identities")
+                identities = set(current)
+            estimates[category], samples[category] = {}, {}
+            for name, source in metrics.items():
+                numeric = pd.to_numeric(selected[source], errors="raise")
+                if not np.isfinite(numeric).all():
+                    raise ValueError(f"Non-finite bootstrap metric: {source}")
+                aggregate = selected.assign(_value=numeric).groupby("db_id")["_value"].agg(
+                    ["sum", "count"]
+                ).reindex(databases, fill_value=0)
+                estimates[category][name] = float(numeric.mean())
+                samples[category][name] = (
+                    weights @ aggregate["sum"].to_numpy()
+                    / (weights @ aggregate["count"].to_numpy())
+                )
+        for category in categories:
+            row = {**identity}
+            if comparison:
+                row[comparison] = category
+                row["effect_reference"] = baseline
+            for name in metrics:
+                low, high = bounds(samples[category][name])
+                if len(databases) < 2:
+                    low = high = float("nan")
+                row[f"{name}_low"], row[f"{name}_high"] = low, high
+                if comparison:
+                    value, ref = estimates[category][name], estimates[baseline][name]
+                    if effect == "ratio":
+                        with np.errstate(divide="ignore", invalid="ignore"):
+                            draws = samples[category][name] / samples[baseline][name]
+                        estimate = value / ref if ref else float("nan")
+                    elif effect == "difference":
+                        draws = samples[category][name] - samples[baseline][name]
+                        estimate = value - ref
+                    else:
+                        raise ValueError(f"Unknown effect: {effect}")
+                    low, high = bounds(draws)
+                    if len(databases) < 2:
+                        low = high = float("nan")
+                    row[f"{name}_effect"] = estimate
+                    row[f"{name}_effect_low"] = low
+                    row[f"{name}_effect_high"] = high
+            rows.append(row)
+    return pd.DataFrame(rows)
+
+
+def interval_marks(axis, positions, rows, metric, *, horizontal=False, color="#333333"):
+    """Draw CI endpoints directly, including intervals not containing the estimate."""
+    if f"{metric}_low" not in rows:
+        return
+    low, high = rows[f"{metric}_low"], rows[f"{metric}_high"]
+    if horizontal:
+        axis.hlines(positions, low, high, color=color, linewidth=1.2, zorder=5)
+        axis.plot(low, positions, "|", color=color, markersize=5)
+        axis.plot(high, positions, "|", color=color, markersize=5)
+    else:
+        axis.vlines(positions, low, high, color=color, linewidth=1.2, zorder=5)
+        axis.plot(positions, low, "_", color=color, markersize=5)
+        axis.plot(positions, high, "_", color=color, markersize=5)
+
+
+def effect_axis(axis, *, horizontal=False, label="Difference from CSV", ratio=False):
+    """Expand an existing subplot with an aligned effect-size panel."""
+    grid = axis.get_subplotspec().subgridspec(
+        1 if horizontal else 2, 2 if horizontal else 1,
+        **({"width_ratios": [2, 1.3], "wspace": 0.15} if horizontal else
+           {"height_ratios": [2, 1], "hspace": 0.12}),
+    )
+    axis.set_subplotspec(grid[0])
+    companion = axis.figure.add_subplot(
+        grid[1], **({"sharey": axis} if horizontal else {"sharex": axis})
+    )
+    companion.spines[["top", "right"]].set_visible(False)
+    companion.grid(axis="x" if horizontal else "y", alpha=0.3)
+    if horizontal:
+        companion.axvline(1 if ratio else 0, color="#777777", linewidth=0.8)
+        companion.set_xlabel(label, fontsize=9)
+        companion.tick_params(axis="y", labelleft=False)
+    else:
+        companion.axhline(1 if ratio else 0, color="#777777", linewidth=0.8)
+        companion.set_ylabel(label, fontsize=8)
+        companion.set_xlabel(axis.get_xlabel(), fontsize=9)
+        axis.set_xlabel("")
+        axis.tick_params(axis="x", labelbottom=False)
+        companion.tick_params(axis="x", labelrotation=30, labelsize=8)
+    companion.tick_params(labelsize=8)
+    return companion
+
+
+def effect_marks(axis, positions, rows, metric, *, horizontal=False, color="#333333",
+                 scale=1.0):
+    if f"{metric}_effect" not in rows:
+        return
+    values = rows[f"{metric}_effect"] * scale
+    scaled = rows[[f"{metric}_effect_low", f"{metric}_effect_high"]] * scale
+    interval_marks(axis, positions, scaled, f"{metric}_effect",
+                   horizontal=horizontal, color=color)
+    axis.plot(values if horizontal else positions, positions if horizontal else values,
+              "o", color=color, markersize=4)
+
+
+def ci_text(row, metric: str, decimals: int = 2) -> str:
+    """Compact numerical interval for table cells and figure annotations."""
+    low, high = row[f"{metric}_low"], row[f"{metric}_high"]
+    if not np.isfinite([low, high]).all():
+        return "[not estimable]"
+    return f"[{low:.{decimals}f}, {high:.{decimals}f}]"
+
+
+def table_estimate(row, metric: str, decimals=2, *, scale=1.0, suffix="") -> str:
+    """Two-line LaTeX cell, keeping intervals below their estimates to limit width."""
+    if hasattr(row, "_asdict"):
+        row = row._asdict()
+    value = f"{row[metric] * scale:,.{decimals}f}{suffix}"
+    if f"{metric}_low" not in row:
+        return value
+    scaled = {f"{metric}_low": row[f"{metric}_low"] * scale,
+              f"{metric}_high": row[f"{metric}_high"] * scale}
+    return (r"\shortstack[r]{" + value + r"\\{\scriptsize "
+            + ci_text(scaled, metric, decimals) + "}}")

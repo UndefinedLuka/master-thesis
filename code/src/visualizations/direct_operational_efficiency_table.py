@@ -14,6 +14,7 @@ from visualizations.config import (
     SERIALIZATION_FORMAT_ORDER,
 )
 from visualizations.direct_efficiency_data import DirectEfficiencyAnalysis
+from visualizations.uncertainty import table_estimate
 
 
 def render_direct_operational_table(
@@ -57,11 +58,11 @@ def render_direct_operational_table(
                     (
                         DATASET_LABELS.get(dataset, dataset) if index == 0 else "",
                         FORMAT_LABELS.get(serialization_format, serialization_format),
-                        f"{float(row['average_input_tokens']):,.0f}",
-                        f"{float(row['average_output_tokens']):,.1f}",
-                        f"{float(row['average_ttft_s']):.2f}",
-                        f"{float(row['average_generation_time_s']):.2f}",
-                        f"{float(row['average_total_latency_s']):.2f}",
+                        table_estimate(row, "average_input_tokens", 0),
+                        table_estimate(row, "average_output_tokens", 1),
+                        table_estimate(row, "average_ttft_s"),
+                        table_estimate(row, "average_generation_time_s"),
+                        table_estimate(row, "average_total_latency_s"),
                     )
                 )
                 + LATEX_ROW_END
@@ -80,7 +81,9 @@ def render_direct_operational_table(
         + "; ".join(cohort_parts)
         + f", with all {analysis.model_count} retained models and all displayed formats. "
         "Generation time is measured from the first output token to completion; total latency "
-        "is measured from request submission to completion."
+        "is measured from request submission to completion. Brackets show pointwise "
+        "95\\% database-bootstrap confidence intervals. BIRD intervals describe only "
+        "the two observed databases."
     )
     return "\n".join(
         [

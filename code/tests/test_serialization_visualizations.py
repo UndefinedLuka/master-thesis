@@ -236,7 +236,7 @@ def test_rendered_table_contains_relative_and_fit_values() -> None:
         coverage_validated=False,
     )
 
-    assert r"Relative to lowest" in latex
+    assert r"Ratio to CSV" in latex
     assert r"1.00$\times$" in latex
     assert r"\label{tab:serialization-efficiency}" in latex
     assert "at or below 250 tokens" in latex

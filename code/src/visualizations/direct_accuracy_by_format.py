@@ -20,6 +20,7 @@ from visualizations.config import (
     SERIALIZATION_FORMAT_ORDER,
 )
 from visualizations.direct_accuracy_data import calculate_format_accuracy
+from visualizations.uncertainty import interval_marks
 
 if TYPE_CHECKING:
     from matplotlib.axes import Axes
@@ -53,10 +54,13 @@ def plot_direct_accuracy_by_format(
         value for value in DIRECT_ACCURACY_METRIC_ORDER if value in set(summary["metric"])
     ]
     formats = [
-        value for value in SERIALIZATION_FORMAT_ORDER if value in set(summary["format"])
+        value for value in SERIALIZATION_FORMAT_ORDER
+        if value in set(summary["format"])
     ]
     metric_limits = {
-        metric: _score_limits(summary[summary["metric"].eq(metric)]["mean_score"])
+        metric: _score_limits(summary[
+            summary["metric"].eq(metric) & summary["format"].ne("text_to_sql")
+        ]["mean_score"])
         for metric in metrics
     }
     figure, axes_array = plt.subplots(
@@ -74,17 +78,18 @@ def plot_direct_accuracy_by_format(
         for column_index, metric in enumerate(metrics):
             axis = axes[row_index][column_index]
             panel = dataset_rows[dataset_rows["metric"].eq(metric)].set_index("format")
+            panel = panel.reindex(formats)
             scores = [
                 float(panel.loc[value, "mean_score"]) if value in panel.index else float("nan")
                 for value in formats
             ]
-            bars = axis.bar(
+            axis.bar(
                 range(len(formats)),
                 scores,
-                color=[FORMAT_COLORS[value] for value in formats],
+                color=[FORMAT_COLORS.get(value, "#374151") for value in formats],
                 width=0.72,
             )
-            axis.bar_label(bars, fmt="%.3f", padding=3, fontsize=8)
+            interval_marks(axis, range(len(formats)), panel.reindex(formats), "mean_score")
             axis.axhline(0.0, color="#444444", linewidth=0.8)
             axis.grid(axis="y", color="#D0D0D0", linewidth=0.8)
             axis.set_axisbelow(True)
@@ -96,29 +101,20 @@ def plot_direct_accuracy_by_format(
             if row_index == len(datasets) - 1:
                 axis.set_xticks(
                     range(len(formats)),
-                    [FORMAT_LABELS[value] for value in formats],
+                    [FORMAT_LABELS.get(value, "Text-to-SQL") for value in formats],
                     rotation=30,
                     ha="right",
                 )
-            axis.set_ylim(*metric_limits[metric])
+            low, high = metric_limits[metric]
+            if "mean_score_high" in summary:
+                all_metric = summary[
+                    summary["metric"].eq(metric) & summary["format"].ne("text_to_sql")
+                ]
+                low = min(low, float(all_metric["mean_score_low"].min()))
+                high = max(high, float(all_metric["mean_score_high"].max()) * 1.08)
+            axis.set_ylim(low, high)
 
-    figure.suptitle(
-        "Direct-context retrieval accuracy by serialization format",
-        fontsize=17,
-        fontweight="bold",
-        y=0.995,
-    )
-    figure.text(
-        0.5,
-        0.01,
-        (
-            "Bars are arithmetic means across all retained models and questions; "
-            "zero-scored failed runs remain included."
-        ),
-        ha="center",
-        fontsize=9.5,
-    )
-    figure.tight_layout(rect=(0.03, 0.05, 1.0, 0.96))
+    figure.tight_layout(rect=(0.03, 0, 1.0, 1.0))
     return figure, axes
 
 

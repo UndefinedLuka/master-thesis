@@ -19,6 +19,7 @@ from visualizations.direct_accuracy_data import (
     parse_model_family_size,
 )
 from visualizations.experiment_outcomes import model_is_excluded
+from visualizations.uncertainty import mean_intervals
 
 ATTEMPT_TTFT_COLUMN = "attempts.llm_metrics.time_to_first_token_s"
 ATTEMPT_GENERATION_COLUMN = "attempts.llm_metrics.total_generation_time_s"
@@ -215,6 +216,25 @@ def calculate_text_to_sql_analysis(
         .sort_values(["dataset", "model_family", "model_size_b", "model_id"])
         .reset_index(drop=True)
     )
+    mean_metrics = {name: source for name, (source, operation) in aggregations.items()
+                    if operation == "mean"}
+    dataset_summary = dataset_summary.merge(
+        mean_intervals(data, ["dataset"], mean_metrics), on="dataset", validate="one_to_one"
+    )
+    for effect, metrics in (
+        ("difference", {name: source for name, source in mean_metrics.items()
+                        if not name.startswith("average_")}),
+        ("ratio", {name: source for name, source in mean_metrics.items()
+                   if name.startswith("average_")}),
+    ):
+        intervals = mean_intervals(
+            data, ["dataset", "model_family"], metrics, comparison="model_id", effect=effect,
+            pair_keys=("db_id", "example_id"),
+        )
+        model_summary = model_summary.merge(
+            intervals.drop(columns="effect_reference"),
+            on=["dataset", "model_family", "model_id"], validate="one_to_one",
+        )
     question_counts = {
         str(dataset): int(count)
         for dataset, count in data.groupby("dataset", observed=True)["example_id"].nunique().items()

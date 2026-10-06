@@ -11,6 +11,7 @@ from visualizations.config import (
     TEXT_TO_SQL_OPERATIONAL_TABLE_LABEL,
 )
 from visualizations.text_to_sql_data import TextToSqlAnalysis
+from visualizations.uncertainty import table_estimate
 
 
 def render_text_to_sql_operational_table(
@@ -26,13 +27,13 @@ def render_text_to_sql_operational_table(
             + " & ".join(
                 (
                     DATASET_LABELS.get(row.dataset, row.dataset),
-                    f"{row.average_input_tokens:,.0f}",
-                    f"{row.average_output_tokens:,.1f}",
-                    f"{row.average_cumulative_ttft_s:.2f}",
-                    f"{row.average_generation_time_s:.2f}",
-                    f"{row.average_sql_execution_time_s:.3f}",
-                    f"{row.average_total_latency_s:.2f}",
-                    f"{row.average_retries:.2f}",
+                    table_estimate(row, "average_input_tokens", 0),
+                    table_estimate(row, "average_output_tokens", 1),
+                    table_estimate(row, "average_cumulative_ttft_s"),
+                    table_estimate(row, "average_generation_time_s"),
+                    table_estimate(row, "average_sql_execution_time_s", 3),
+                    table_estimate(row, "average_total_latency_s"),
+                    table_estimate(row, "average_retries"),
                 )
             )
             + LATEX_ROW_END
@@ -63,7 +64,8 @@ def render_text_to_sql_operational_table(
                 r"  \parbox{\linewidth}{\scriptsize \textit{Note:} Token counts and model "
                 r"times are accumulated across the initial generation and all correction "
                 r"attempts. TTFT is the sum of first-token waits across attempts; Generation "
-                r"is the remaining model time. Total also includes SQL execution.}"
+                r"is the remaining model time. Total also includes SQL execution. Brackets "
+                r"show pointwise 95\% database-bootstrap confidence intervals.}"
             ),
             r"\end{table}",
             "",

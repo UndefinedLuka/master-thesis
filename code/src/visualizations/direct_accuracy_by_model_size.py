@@ -21,6 +21,7 @@ from visualizations.config import (
     TOKENIZER_FAMILY_ORDER,
 )
 from visualizations.direct_accuracy_data import calculate_model_size_accuracy
+from visualizations.uncertainty import interval_marks
 
 if TYPE_CHECKING:
     from matplotlib.axes import Axes
@@ -94,6 +95,8 @@ def plot_direct_accuracy_by_model_size(
                     color=TOKENIZER_FAMILY_COLORS[family],
                     label=TOKENIZER_FAMILY_LABELS[family],
                 )
+                interval_marks(axis, family_rows["model_size_b"], family_rows, "mean_score",
+                               color=TOKENIZER_FAMILY_COLORS[family])
             axis.set_xscale("log")
             axis.set_xticks(all_sizes, [_format_size(value) for value in all_sizes])
             axis.minorticks_off()
@@ -109,7 +112,12 @@ def plot_direct_accuracy_by_model_size(
                 axis.set_xlabel("Nominal model size (billions of parameters, log scale)")
                 axis.tick_params(axis="x", labelrotation=35, labelsize=8.5)
 
-            axis.set_ylim(*metric_limits[metric])
+            low, high = metric_limits[metric]
+            if "mean_score_high" in summary:
+                all_metric = summary[summary["metric"].eq(metric)]
+                low = min(low, float(all_metric["mean_score_low"].min()))
+                high = max(high, float(all_metric["mean_score_high"].max()) * 1.08)
+            axis.set_ylim(low, high)
 
     legend_handles = [
         Line2D(
@@ -126,27 +134,11 @@ def plot_direct_accuracy_by_model_size(
         handles=legend_handles,
         title="Model family",
         loc="upper center",
-        bbox_to_anchor=(0.5, 0.955),
+        bbox_to_anchor=(0.5, 1.0),
         ncol=max(1, len(families)),
         frameon=False,
     )
-    figure.suptitle(
-        "Direct-context retrieval accuracy by model size",
-        fontsize=17,
-        fontweight="bold",
-        y=0.995,
-    )
-    figure.text(
-        0.5,
-        0.01,
-        (
-            "Each point is the arithmetic mean across all six serialization formats and all "
-            "questions; zero-scored failed runs remain included."
-        ),
-        ha="center",
-        fontsize=9.5,
-    )
-    figure.tight_layout(rect=(0.03, 0.05, 1.0, 0.89))
+    figure.tight_layout(rect=(0.03, 0, 1.0, 0.94))
     return figure, axes
 
 

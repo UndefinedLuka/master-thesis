@@ -11,6 +11,7 @@ from visualizations.config import (
     TEXT_TO_SQL_RETRIEVAL_TABLE_LABEL,
 )
 from visualizations.text_to_sql_data import TextToSqlAnalysis
+from visualizations.uncertainty import table_estimate
 
 
 def render_text_to_sql_retrieval_table(
@@ -26,11 +27,11 @@ def render_text_to_sql_retrieval_table(
             + " & ".join(
                 (
                     DATASET_LABELS.get(row.dataset, row.dataset),
-                    f"{row.normalized_exact_match:.3f}",
-                    f"{row.bertscore_f:.3f}",
-                    f"{row.rouge_l_f:.3f}",
-                    f"{row.execution_success_rate * 100:.1f}\\%",
-                    f"{row.result_match_rate * 100:.1f}\\%",
+                    table_estimate(row, "normalized_exact_match", 3),
+                    table_estimate(row, "bertscore_f", 3),
+                    table_estimate(row, "rouge_l_f", 3),
+                    table_estimate(row, "execution_success_rate", 1, scale=100, suffix=r"\%"),
+                    table_estimate(row, "result_match_rate", 1, scale=100, suffix=r"\%"),
                 )
             )
             + LATEX_ROW_END
@@ -46,6 +47,7 @@ def render_text_to_sql_retrieval_table(
                 r"by dataset.}"
             ),
             f"  \\label{{{label}}}",
+            r"  \resizebox{\linewidth}{!}{%",
             r"  \begin{tabular}{@{}lrrrrr@{}}",
             r"    \toprule",
             (
@@ -56,12 +58,14 @@ def render_text_to_sql_retrieval_table(
             *rows,
             r"    \bottomrule",
             r"  \end{tabular}",
+            r"  }",
             r"  \vspace{0.4em}",
             (
                 r"  \parbox{\linewidth}{\scriptsize \textit{Note:} Text-similarity means "
                 r"include zero-scored failed SQL runs. Executed is the share of generated "
                 r"queries that ran successfully within the retry limit; Correct result is the "
-                r"share returning the reference rows.}"
+                r"share returning the reference rows. Brackets show pointwise 95\% "
+                r"database-bootstrap confidence intervals.}"
             ),
             r"\end{table}",
             "",

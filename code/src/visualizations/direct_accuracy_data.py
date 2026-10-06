@@ -14,6 +14,7 @@ from visualizations.config import (
     SERIALIZATION_FORMAT_ORDER,
 )
 from visualizations.experiment_outcomes import model_is_excluded
+from visualizations.uncertainty import mean_intervals
 
 METRIC_SOURCE_COLUMNS: dict[str, str] = {
     "normalized_exact_match": "scores.normalized_exact_match",
@@ -85,12 +86,27 @@ def calculate_format_accuracy(
     results: pd.DataFrame,
     *,
     excluded_model_markers: Sequence[str] = DEFAULT_EXCLUDED_MODEL_MARKERS,
+    include_sql: bool = False,
 ) -> pd.DataFrame:
     """Calculate mean direct-context score for each dataset, format, and metric."""
     data = prepare_direct_accuracy(
         results,
         excluded_model_markers=excluded_model_markers,
     )
+    if include_sql:
+        sql = results[results["pipeline"].eq("text_to_sql")].copy()
+        sql = sql.loc[~sql["model_id"].map(
+            lambda model: model_is_excluded(model, excluded_model_markers)
+        )]
+        sql["format"] = "text_to_sql"
+        sql = sql.rename(
+            columns={source: metric for metric, source in METRIC_SOURCE_COLUMNS.items()}
+        )
+        sql = sql.melt(
+            id_vars=("dataset", "db_id", "model_id", "example_id", "format"),
+            value_vars=DIRECT_ACCURACY_METRIC_ORDER, var_name="metric", value_name="score",
+        )
+        data = pd.concat([data, sql], ignore_index=True)
     if data.empty:
         return _empty_format_summary()
     summary = (
@@ -103,7 +119,14 @@ def calculate_format_accuracy(
         )
         .reset_index(drop=True)
     )
-    return _sort_accuracy_summary(summary)
+    intervals = mean_intervals(
+        data, ["dataset", "metric"], {"mean_score": "score"},
+        comparison="format", reference="csv",
+        pair_keys=("db_id", "example_id", "model_id"),
+    )
+    return _sort_accuracy_summary(summary.merge(
+        intervals, on=["dataset", "metric", "format"], validate="one_to_one"
+    ))
 
 
 def calculate_model_size_accuracy(
@@ -148,6 +171,13 @@ def calculate_model_size_accuracy(
             question_count=("example_id", "nunique"),
         )
         .reset_index(drop=True)
+    )
+    intervals = mean_intervals(
+        data, ["dataset", "metric", "model_family"], {"mean_score": "score"},
+        comparison="model_id", pair_keys=("db_id", "example_id", "format"),
+    )
+    summary = summary.merge(
+        intervals, on=["dataset", "metric", "model_family", "model_id"], validate="one_to_one"
     )
     return summary.sort_values(
         ["dataset", "metric", "model_family", "model_size_b", "model_id"]

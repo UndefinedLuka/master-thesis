@@ -12,6 +12,7 @@ from visualizations.config import (
     TOKENIZER_FAMILY_COLORS,
 )
 from visualizations.text_to_sql_data import TextToSqlAnalysis, text_to_sql_model_label
+from visualizations.uncertainty import interval_marks
 
 if TYPE_CHECKING:
     from matplotlib.axes import Axes
@@ -55,17 +56,11 @@ def plot_text_to_sql_token_usage(
             for row in rows.itertuples()
         ]
         colors = [TOKENIZER_FAMILY_COLORS[value] for value in rows["model_family"]]
-        for column_index, (metric, title, number_format) in enumerate(TOKEN_METRICS):
+        for column_index, (metric, title, _number_format) in enumerate(TOKEN_METRICS):
             axis = axes[row_index][column_index]
             values = rows[metric].astype(float).tolist()
-            bars = axis.bar(range(len(rows)), values, color=colors, width=0.75)
-            axis.bar_label(
-                bars,
-                labels=[format(value, number_format) for value in values],
-                padding=3,
-                fontsize=7.5,
-                rotation=90,
-            )
+            axis.bar(range(len(rows)), values, color=colors, width=0.75)
+            interval_marks(axis, range(len(rows)), rows, metric)
             axis.grid(axis="y", color="#D0D0D0", linewidth=0.8)
             axis.set_axisbelow(True)
             axis.spines["top"].set_visible(False)
@@ -74,22 +69,12 @@ def plot_text_to_sql_token_usage(
             axis.set_ylabel(DATASET_LABELS[dataset] if column_index == 0 else "")
             axis.yaxis.set_major_formatter(StrMethodFormatter("{x:,.0f}"))
             axis.set_xticks(range(len(rows)), labels, rotation=45, ha="right", fontsize=7.5)
-            axis.set_ylim(top=max(values) * 1.25)
+            maximum = max(values)
+            if f"{metric}_high" in rows:
+                maximum = max(maximum, float(rows[f"{metric}_high"].max()))
+            axis.set_ylim(top=maximum * 1.15)
 
-    figure.suptitle(
-        "Text-to-SQL token use by model",
-        fontsize=17,
-        fontweight="bold",
-        y=0.995,
-    )
-    figure.text(
-        0.5,
-        0.01,
-        "Token counts include all SQL correction attempts; colors identify model families.",
-        ha="center",
-        fontsize=9.5,
-    )
-    figure.tight_layout(rect=(0.03, 0.05, 1.0, 0.96))
+    figure.tight_layout(rect=(0.03, 0, 1.0, 1.0))
     return figure, axes
 
 

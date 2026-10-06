@@ -14,6 +14,7 @@ from visualizations.config import (
 )
 from visualizations.data import HAS_ANSWER_COLUMN, select_complete_question_cohort
 from visualizations.experiment_outcomes import model_is_excluded
+from visualizations.uncertainty import mean_intervals
 
 DIRECT_EFFICIENCY_COLUMNS: tuple[str, ...] = (
     "dataset",
@@ -123,7 +124,19 @@ def calculate_direct_efficiency(
         )
         .reset_index(drop=True)
     )
-    summary = _sort_summary(summary)
+    intervals = mean_intervals(
+        data, ["dataset"], {
+            "average_input_tokens": "input_tokens",
+            "average_output_tokens": "output_tokens",
+            "average_ttft_s": "time_to_first_token_s",
+            "average_generation_time_s": "generation_after_first_token_s",
+            "average_total_latency_s": "total_time_s",
+        }, comparison="format", reference="csv", effect="ratio",
+        pair_keys=("db_id", "example_id", "model_id"),
+    )
+    summary = _sort_summary(summary.merge(
+        intervals, on=["dataset", "format"], validate="one_to_one"
+    ))
     question_counts = {
         str(dataset): int(count)
         for dataset, count in data.groupby("dataset", observed=True)["example_id"].nunique().items()

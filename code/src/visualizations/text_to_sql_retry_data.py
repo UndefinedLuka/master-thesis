@@ -2,12 +2,13 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 import pandas as pd
 
 from visualizations.config import DATASET_ORDER, RETRY_OUTCOME_ORDER
 from visualizations.text_to_sql_data import TextToSqlAnalysis
+from visualizations.uncertainty import mean_intervals
 
 
 @dataclass(frozen=True, slots=True)
@@ -19,6 +20,7 @@ class TextToSqlRetryAnalysis:
     run_count: int
     retried_run_count: int
     total_retry_generation_s: float
+    gain_summary: pd.DataFrame = field(default_factory=pd.DataFrame)
 
 
 def calculate_text_to_sql_retry_analysis(
@@ -86,12 +88,27 @@ def calculate_text_to_sql_retry_analysis(
                 }
             )
     retry_stage_summary = pd.DataFrame(stage_rows)
+    data["execution_gain_pp"] = (
+        data["execution_success"].astype(bool) & data["attempt_count"].gt(1)
+    ).astype(float) * 100
+    data["correct_gain_pp"] = (
+        data["execution.result_match"].astype(bool) & data["attempt_count"].gt(1)
+    ).astype(float) * 100
+    metrics = {"execution_gain_pp": "execution_gain_pp", "correct_gain_pp": "correct_gain_pp",
+               "added_seconds": "retry_generation_overhead_s"}
+    gain_summary = data.groupby("dataset", as_index=False).agg(
+        **{name: (source, "mean") for name, source in metrics.items()}
+    )
+    gain_summary = gain_summary.merge(
+        mean_intervals(data, ["dataset"], metrics), on="dataset", validate="one_to_one"
+    )
     return TextToSqlRetryAnalysis(
         outcome_summary=outcome_summary,
         retry_stage_summary=retry_stage_summary,
         run_count=len(data),
         retried_run_count=int(data["attempt_count"].gt(1).sum()),
         total_retry_generation_s=float(data["retry_generation_overhead_s"].sum()),
+        gain_summary=gain_summary,
     )
 
 

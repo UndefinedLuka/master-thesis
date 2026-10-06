@@ -19,6 +19,7 @@ from visualizations.config import (
     COMMON_COHORT_SQL_METHOD,
     TEXT_TO_SQL_LATENCY_PHASE_COLORS,
 )
+from visualizations.uncertainty import interval_marks
 
 if TYPE_CHECKING:
     from matplotlib.figure import Figure
@@ -55,17 +56,16 @@ def plot_common_cohort_latency(analysis: CommonCohortAnalysis) -> Figure:
             )
             left = [a + b for a, b in zip(left, values, strict=True)]
         maximum = max(left)
-        sql_total = float(panel.loc[COMMON_COHORT_SQL_METHOD, "average_total_latency_s"])
+        interval_marks(axis, positions, panel.reindex(methods), "average_total_latency_s",
+                       horizontal=True)
+        if "average_total_latency_s_high" in panel:
+            maximum = max(maximum, float(panel["average_total_latency_s_high"].max()))
         for position, method, total in zip(positions, methods, left, strict=True):
-            ratio = (
-                "  (baseline)"
-                if method == COMMON_COHORT_SQL_METHOD
-                else (f"  ({total / sql_total:.1f}×)")
-            )
             axis.text(
-                total + maximum * 0.02,
+                (float(panel.loc[method, "average_total_latency_s_high"])
+                 if "average_total_latency_s_high" in panel else total) + maximum * 0.02,
                 position,
-                f"{total:.3f} s{ratio}",
+                f"{total:.3f} s",
                 va="center",
                 fontsize=8.5,
                 fontweight="bold" if method == COMMON_COHORT_SQL_METHOD else "normal",
@@ -83,23 +83,12 @@ def plot_common_cohort_latency(analysis: CommonCohortAnalysis) -> Figure:
         handles,
         labels,
         loc="upper center",
-        bbox_to_anchor=(0.5, 0.93),
+        bbox_to_anchor=(0.5, 1.0),
         ncol=3,
         frameon=False,
         fontsize=9,
     )
-    figure.suptitle(
-        "Response latency on identical successful questions", fontsize=15, fontweight="bold", y=0.99
-    )
-    figure.text(
-        0.5,
-        0.015,
-        "All SQL correction attempts are included. Multipliers compare arithmetic "
-        "mean latency with Text-to-SQL in the same panel.",
-        ha="center",
-        fontsize=8.5,
-    )
-    figure.tight_layout(rect=(0, 0.055, 1, 0.86), w_pad=2.5)
+    figure.tight_layout(rect=(0, 0, 1, 0.93), w_pad=2.5)
     return figure
 
 

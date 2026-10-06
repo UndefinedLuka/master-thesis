@@ -14,6 +14,7 @@ from visualizations.config import (
     TOKENIZER_FAMILY_COLORS,
 )
 from visualizations.text_to_sql_data import TextToSqlAnalysis, text_to_sql_model_label
+from visualizations.uncertainty import interval_marks
 
 if TYPE_CHECKING:
     from matplotlib.axes import Axes
@@ -66,6 +67,9 @@ def plot_text_to_sql_latency(
             )
             bottoms = [left + value for left, value in zip(bottoms, values, strict=True)]
         maximum = max(rows["average_total_latency_s"])
+        interval_marks(axis, positions, rows, "average_total_latency_s")
+        if "average_total_latency_s_high" in rows:
+            maximum = max(maximum, float(rows["average_total_latency_s_high"].max()))
         for position, total, retries in zip(
             positions,
             rows["average_total_latency_s"],
@@ -74,7 +78,8 @@ def plot_text_to_sql_latency(
         ):
             axis.text(
                 position,
-                float(total) + maximum * 0.025,
+                (float(rows.iloc[position]["average_total_latency_s_high"])
+                 if "average_total_latency_s_high" in rows else float(total)) + maximum * 0.025,
                 f"{float(total):.2f}s\n{float(retries):.2f} retries",
                 ha="center",
                 va="bottom",
@@ -98,27 +103,11 @@ def plot_text_to_sql_latency(
         labels,
         title="Latency phase",
         loc="upper center",
-        bbox_to_anchor=(0.5, 0.955),
+        bbox_to_anchor=(0.5, 1.0),
         ncol=3,
         frameon=False,
     )
-    figure.suptitle(
-        "Text-to-SQL response latency and correction retries",
-        fontsize=17,
-        fontweight="bold",
-        y=0.995,
-    )
-    figure.text(
-        0.5,
-        0.01,
-        (
-            "Stacks include all generation attempts and SQL executions. Labels report total "
-            "latency and mean retries beyond the first attempt."
-        ),
-        ha="center",
-        fontsize=9.5,
-    )
-    figure.tight_layout(rect=(0.03, 0.05, 1.0, 0.89))
+    figure.tight_layout(rect=(0.03, 0, 1.0, 0.94))
     return figure, axes
 
 

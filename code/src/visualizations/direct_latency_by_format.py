@@ -15,6 +15,7 @@ from visualizations.config import (
     SERIALIZATION_FORMAT_ORDER,
 )
 from visualizations.direct_efficiency_data import DirectEfficiencyAnalysis
+from visualizations.uncertainty import interval_marks
 
 if TYPE_CHECKING:
     from matplotlib.axes import Axes
@@ -83,10 +84,14 @@ def plot_direct_latency(
             label=LATENCY_PHASE_LABELS["generation"],
         )
         maximum = max(totals)
+        interval_marks(axis, positions, panel.reindex(formats), "average_total_latency_s")
+        if "average_total_latency_s_high" in panel:
+            maximum = max(maximum, float(panel["average_total_latency_s_high"].max()))
         for position, total in zip(positions, totals, strict=True):
             axis.text(
                 position,
-                total + maximum * 0.025,
+                (float(panel.loc[formats[position], "average_total_latency_s_high"])
+                 if "average_total_latency_s_high" in panel else total) + maximum * 0.025,
                 f"{total:.2f}s",
                 ha="center",
                 va="bottom",
@@ -115,27 +120,11 @@ def plot_direct_latency(
         labels,
         title="Latency phase",
         loc="upper center",
-        bbox_to_anchor=(0.5, 0.955),
+        bbox_to_anchor=(0.5, 1.0),
         ncol=2,
         frameon=False,
     )
-    figure.suptitle(
-        "Direct-context response latency by serialization format",
-        fontsize=17,
-        fontweight="bold",
-        y=0.995,
-    )
-    figure.text(
-        0.5,
-        0.01,
-        (
-            "Stack height is total response latency: TTFT plus generation after the first "
-            "token. Means use the common complete-case cohort."
-        ),
-        ha="center",
-        fontsize=9.5,
-    )
-    figure.tight_layout(rect=(0.03, 0.05, 1.0, 0.90))
+    figure.tight_layout(rect=(0.03, 0, 1.0, 0.95))
     return figure, axes
 
 

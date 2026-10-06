@@ -16,6 +16,7 @@ from visualizations.config import (
     SERIALIZATION_FORMAT_ORDER,
 )
 from visualizations.direct_efficiency_data import DirectEfficiencyAnalysis
+from visualizations.uncertainty import interval_marks
 
 if TYPE_CHECKING:
     from matplotlib.axes import Axes
@@ -60,20 +61,19 @@ def plot_direct_token_usage(
 
     for row_index, dataset in enumerate(datasets):
         panel = summary[summary["dataset"].eq(dataset)].set_index("format")
-        for column_index, (metric, title, number_format) in enumerate(TOKEN_METRICS):
+        for column_index, (metric, title, _number_format) in enumerate(TOKEN_METRICS):
             axis = axes[row_index][column_index]
             values = [
                 float(panel.loc[value, metric]) if value in panel.index else float("nan")
                 for value in formats
             ]
-            bars = axis.bar(
+            axis.bar(
                 range(len(formats)),
                 values,
                 color=[FORMAT_COLORS[value] for value in formats],
                 width=0.72,
             )
-            labels = [format(value, number_format) for value in values]
-            axis.bar_label(bars, labels=labels, padding=3, fontsize=8)
+            interval_marks(axis, range(len(formats)), panel.reindex(formats), metric)
             axis.grid(axis="y", color="#D0D0D0", linewidth=0.8)
             axis.set_axisbelow(True)
             axis.spines["top"].set_visible(False)
@@ -90,22 +90,11 @@ def plot_direct_token_usage(
                     ha="right",
                 )
             maximum = max((value for value in values if not pd.isna(value)), default=1.0)
+            if f"{metric}_high" in panel:
+                maximum = max(maximum, float(panel[f"{metric}_high"].max()))
             axis.set_ylim(top=maximum * 1.18)
 
-    figure.suptitle(
-        "Direct-context token use by serialization format",
-        fontsize=17,
-        fontweight="bold",
-        y=0.995,
-    )
-    figure.text(
-        0.5,
-        0.01,
-        "Means use the common complete-case cohort shown in the operational-efficiency table.",
-        ha="center",
-        fontsize=9.5,
-    )
-    figure.tight_layout(rect=(0.03, 0.05, 1.0, 0.96))
+    figure.tight_layout(rect=(0.03, 0, 1.0, 1.0))
     return figure, axes
 
 

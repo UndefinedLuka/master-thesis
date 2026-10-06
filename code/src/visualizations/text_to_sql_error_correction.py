@@ -98,23 +98,7 @@ def plot_error_correction_performance(
         axis.spines["top"].set_visible(False)
         axis.spines["right"].set_visible(False)
 
-    figure.suptitle(
-        "Text-to-SQL error-correction performance",
-        fontsize=17,
-        fontweight="bold",
-        y=0.995,
-    )
-    figure.text(
-        0.5,
-        0.015,
-        (
-            "Terminal outcomes identify the first successfully executed query. Added time "
-            "contains model generation after the initial attempt; SQL execution is excluded."
-        ),
-        ha="center",
-        fontsize=9.4,
-    )
-    figure.tight_layout(rect=(0.03, 0.07, 1.0, 0.94))
+    figure.tight_layout(rect=(0.03, 0, 1.0, 1.0))
     return figure, axes
 
 

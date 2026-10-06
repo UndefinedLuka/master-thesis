@@ -5,6 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+import numpy as np
 import pandas as pd
 
 from visualizations.config import (
@@ -18,6 +19,11 @@ from visualizations.config import (
     TOKENIZER_FAMILY_ORDER,
 )
 from visualizations.serialization_data import present_order, require_columns, sort_summary
+from visualizations.uncertainty import (
+    BOOTSTRAP_DRAWS,
+    BOOTSTRAP_SEED,
+    bounds,
+)
 
 if TYPE_CHECKING:
     from matplotlib.figure import Figure
@@ -48,11 +54,36 @@ def calculate_tokenizer_overhead(report: pd.DataFrame) -> pd.DataFrame:
         )
         .reset_index(drop=True)
     )
+    intervals = []
+    for (dataset, fmt), group in data.groupby(["dataset", "format"], observed=True):
+        tokens = group.pivot(index="database_id", columns="tokenizer_family", values="tokens")
+        if tokens.isna().any(axis=None):
+            raise ValueError("Tokenizer comparisons require identical databases")
+        reference = "qwen-3.5"
+        if reference not in tokens:
+            raise ValueError("Tokenizer comparison requires Qwen 3.5 as reference")
+        rng = np.random.default_rng(BOOTSTRAP_SEED)
+        indices = rng.integers(0, len(tokens), size=(BOOTSTRAP_DRAWS, len(tokens)))
+        for family in tokens:
+            overhead = ((tokens[family] / tokens.min(axis=1) - 1) * 100).to_numpy()
+            ratio = (tokens[family] / tokens[reference]).to_numpy()
+            low, high = bounds(np.median(overhead[indices], axis=1))
+            ratio_low, ratio_high = bounds(np.median(ratio[indices], axis=1))
+            if len(tokens) < 2:
+                low = high = ratio_low = ratio_high = float("nan")
+            intervals.append({
+                "dataset": dataset, "format": fmt, "tokenizer_family": family,
+                "median_overhead_pct_low": low, "median_overhead_pct_high": high,
+                "tokens_effect": float(np.median(ratio)),
+                "tokens_effect_low": ratio_low, "tokens_effect_high": ratio_high,
+            })
+    summary = summary.merge(pd.DataFrame(intervals),
+                            on=["dataset", "format", "tokenizer_family"], validate="one_to_one")
     return sort_summary(summary, family_column="tokenizer_family")
 
 
 def plot_tokenizer_comparison(summary: pd.DataFrame) -> Figure:
-    """Plot paired tokenizer overhead medians and interquartile ranges."""
+    """Plot paired tokenizer overhead medians and confidence intervals."""
     require_columns(
         summary,
         (
@@ -110,11 +141,11 @@ def plot_tokenizer_comparison(summary: pd.DataFrame) -> Figure:
                 for value in present_formats
             ]
             lower = [
-                float(family_rows.loc[value, "q1_overhead_pct"])
+                float(family_rows.loc[value, "median_overhead_pct_low"])
                 for value in present_formats
             ]
             upper = [
-                float(family_rows.loc[value, "q3_overhead_pct"])
+                float(family_rows.loc[value, "median_overhead_pct_high"])
                 for value in present_formats
             ]
             lower_errors = [median - bound for median, bound in zip(medians, lower, strict=True)]
@@ -147,23 +178,17 @@ def plot_tokenizer_comparison(summary: pd.DataFrame) -> Figure:
     )
     axes[-1, 0].set_xlabel("Serialization format", fontsize=12)
     figure.supylabel("Excess tokens over best tokenizer (%)", fontsize=12)
-    figure.suptitle(
-        "Tokenizer overhead for identical serialized payloads",
-        fontsize=17,
-        fontweight="bold",
-        y=0.985,
-    )
     handles, labels = axes[0, 0].get_legend_handles_labels()
     figure.legend(
         handles,
         labels,
         title="Tokenizer family",
         loc="upper center",
-        bbox_to_anchor=(0.5, 0.945),
+        bbox_to_anchor=(0.5, 1.0),
         ncol=max(1, len(families)),
         frameon=False,
     )
-    figure.tight_layout(rect=(0.04, 0.03, 1.0, 0.89))
+    figure.tight_layout(rect=(0.04, 0, 1.0, 0.94))
     return figure
 
 
