@@ -26,6 +26,40 @@ for both pipelines will be calculated in the same manner, it will be validated a
 which can be found in the chosen datasets. And finally we are going to collect and visualize all the data from the
 experiments so we can propose our decision framework.
 
+\subsection{Text-to-SQL Pipeline}
+\label{sec:minimalist-text-to-sql}
+
+The purpose of this thesis is to compare Direct Context Inference and Text-to-SQL under a controlled local
+inference setup, and to examine how serialization format and model scale affect accuracy, token consumption,
+and latency. We therefore use a deliberately minimalist Text-to-SQL architecture: the model receives the
+database schema and question, generates one query, and the database engine executes it. A bounded correction
+loop returns execution errors to the same model, allowing up to three retries beyond the initial generation.
+
+The architectures reviewed in Section~\ref{sec:sota-text-to-sql} introduce additional sources of performance
+variation. Adopting ideas presented in these papers would require evaluating their retrieval quality,
+prompts, candidate budgets, and verification policies alongside the variables studied here. Holding the
+surrounding workflow simple makes differences between the selected models and data-access approaches easier
+to interpret.
+
+This design also makes resource use easier to compare. Both pipelines begin with one generation by
+the same evaluated model, while any SQL correction attempts are recorded as additional work. Multiple
+candidates and selection calls would introduce a further inference-budget dimension; metadata extraction and
+index construction would introduce preprocessing costs requiring a separate amortization policy. The simpler
+design provides a reproducible baseline for the accuracy--resource trade-off on local hardware.
+
+Accordingly, we distinguish three meanings of state of the art:
+\begin{itemize}
+  \item \textbf{Language models:} The experiments use contemporary open-weight model families, including
+    Ministral~3, Qwen~3.5, and Gemma~4, as detailed in Chapter~\ref{ch:implementation}. This reflects recent
+    model development within the selected deployment constraints.
+  \item \textbf{Text-to-SQL architecture:} The evaluated system is a minimalist baseline, not a
+    state-of-the-art architecture. Its error-recovery loop addresses execution failures, but does not search
+    alternative candidates or revise an executable query on the basis of semantic verification.
+  \item \textbf{Benchmark scope:} Spider and BIRD provide established evaluation tasks, but the experiments
+    exclude Spider~2.0 and modify BIRD through subsampling. The results therefore characterize the evaluated
+    setup rather than state-of-the-art performance under official leaderboard protocols.
+\end{itemize}
+
 \section{Dataset Justification}
 
 We are going to be using two of the most prominent Text-to-SQL datasets in our experiments, Spider
@@ -71,10 +105,11 @@ don't support deeply nested data and this would provide additional concerns for 
     synthetic data into databases compatible with SQL engines, would present a significant technical
     challenge. Also a significant factor, is that the it generates inconsistent data across different formats
     which would prevent a level playing field between different formats.
-  \item \textbf{Spider 2.0:} While it is an important benchmark, it focuses on massive enterprise scale
-    workflows, that push the state of the art commercial models to their limits. Because the goal of this
-    thesis is to assess how local LLMs extract information from data, the extreme scale of data present in
-    this dataset falls outside the scope of this thesis.
+  \item \textbf{Spider 2.0:} This benchmark evaluates enterprise-scale workflows involving large schemas,
+    multiple SQL dialects, and external documentation \cite{lei2025spider}. These tasks would require a
+    different experimental setup, including context selection and multi-step tool use, to compare the two
+    pipelines meaningfully. We exclude it to retain the controlled comparison of complete serialized data
+    and schema-driven SQL generation within the selected context budget.
 \end{itemize}
 
 \section{Data Serialization Formats}

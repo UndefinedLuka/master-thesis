@@ -79,17 +79,15 @@ stating they have minimal impact on the accuracy.
 
 \section{Large Language Models for Text-to-SQL}
 
-Translating natural language to executable Structured Query Language (SQL) is a long standing problem. The first
-attempts at this problem operated primarily on rigid, handcrafted grammar rules and pattern-matching
-frameworks \cite{woods1972lunar, warren1982efficient}
-which worked decently fine on a narrow domain, but each new schema required new set of rules. With the raise
-of neural networks they started being used for this task, such as LSTM-based \cite{graves2012long} and
-Transformer-based \cite{vaswani2017attention}
-methods. But these two methods faced similar problems that they could not generalize on unseen schemas.
-Current state of the art, utilizes LLMs for generating queries, this has proven to be a great leap forward in
-overall accuracy \cite{hong2025next} compared to previous attempts. For example BIRD \cite{li2023can} and Spider
-\cite{yu2018spider} leader boards
-are covered with LLMs in their top 10 entries.
+Translating natural language to executable Structured Query Language (SQL) is a long standing problem. The
+first attempts at this problem operated primarily on rigid, handcrafted grammar rules and pattern-matching
+frameworks \cite{woods1972lunar, warren1982efficient} which worked decently fine on a narrow domain, but each
+new schema required new set of rules. With the raise of neural networks they started being used for this
+task, such as LSTM-based \cite{graves2012long} and Transformer-based \cite{vaswani2017attention} methods. But
+these two methods faced similar problems that they could not generalize on unseen schemas. State-of-the-art
+Text-to-SQL systems use LLMs as query generators, often within larger workflows that retrieve relevant
+context, generate alternative queries, and verify their outputs \cite{hong2025next}. Their performance
+therefore depends on both the underlying language model and the architecture surrounding it.
 
 When optimizing for Text-to-SQL accuracy there are multiple strategies to achieve it \cite{zhu2024large}:
 \begin{itemize}
@@ -105,6 +103,59 @@ When optimizing for Text-to-SQL accuracy there are multiple strategies to achiev
     SQL queries, handle database matching issues, and improve query accuracy and execution through external
     tools \cite{wang2025mac, wang2024tool}.
 \end{itemize}
+
+\subsection{State-of-the-Art Text-to-SQL Architectures}
+\label{sec:sota-text-to-sql}
+
+Recent work extends the basic sequence of providing a schema, generating SQL, and executing the query.
+The following papers illustrate complementary directions: metadata enrichment, test-time scaling,
+structured query verification, and broader agent-based data analysis.
+
+\textbf{Automatic Metadata Extraction for Text-to-SQL.} \cite{shkapenyuk2025metadata} address the difficulty
+of understanding database contents
+from schemas alone. Their approach profiles columns to collect properties such as value frequencies,
+NULL counts, and value formats, then uses an LLM to turn these statistics into field descriptions.
+Schema linking is performed by generating preliminary SQL under different metadata configurations and
+collecting the referenced fields, with value matching helping to correct misplaced filters. The BIRD
+submission further retrieves few-shot examples, generates three candidate queries, checks and repairs
+potentially problematic SQL, and selects an answer by agreement between execution results. The paper also
+investigates query-log analysis and SQL-to-text generation for recovering business logic and constructing
+examples, although query logs were unavailable for the held-out test databases. Using GPT-4o without
+task-specific fine-tuning, the authors report $77,14\%$ execution accuracy on BIRD-Test with question-specific
+hints. This demonstrates how database understanding and orchestration can improve results beyond the
+capabilities of a schema-only prompt.
+
+\textbf{Agentar-Scale-SQL.} \cite{wang2025agentar} organize additional inference computation along three dimensions:
+internal reasoning, sequential refinement, and parallel candidate generation and selection. A task-understanding
+stage retrieves relevant database values and few-shot examples. Two complementary generators then produce
+candidates: a reinforcement learning trained SQL reasoner using a data schema, and an
+in-context-learning generator using a compact Markdown schema. Syntax repair and semantic revision refine
+these candidates. Queries with identical execution results are grouped, and a reinforcement learning trained
+selector compares representatives in a pairwise tournament. The paper reports $81,67\%$ execution accuracy
+on BIRD-Test. This architecture explicitly trades additional generation, refinement, and selection work for
+higher accuracy, rather than relying on a single model response.
+
+\textbf{DeepEye and DeepEye-SQL.}
+DeepEye combines an agent-based analytical workflow with DeepEye-SQL as its query-generation component
+\cite{li2026deepeye,li2026deepeyesql}. DeepEye-SQL treats query generation as a small software-development process.
+Semantic value retrieval grounds the question in actual database values, while complementary schema-linking
+strategies identify relevant fields and retain the keys needed for joins. Three generation strategies (SQL
+skeleton construction, in-context learning, and divide-and-conquer reasoning) produce alternative queries.
+A deterministic tool-chain checks syntax, suspicious logical patterns, and quality issues, providing targeted
+feedback for LLM revision. Selection uses agreement between execution results as a confidence signal:
+strong consensus permits direct selection, while uncertain cases receive deeper execution-guided comparison.
+These checks target particular error patterns; they do not constitute a general proof of semantic correctness.
+Using open-weight mixture-of-experts models with approximately 30 billion total and 3 billion active parameters,
+without fine-tuning, the paper reports $75,07\%$ execution accuracy on BIRD-Test. Thus, sophisticated
+orchestration is relevant to open-weight models as well as proprietary ones.
+
+The broader DeepEye system \cite{li2026deepeye} extends this query-generation workflow to analytical tasks
+that combine databases, documents, and files. A memory-augmented planner constructs a directed acyclic
+graph of LLM-driven AgentNodes and deterministic ToolNodes. Each agent has an isolated reasoning context,
+while standardized input and output interfaces expose its role to the planner. A workflow engine compiles
+the plan, validates dependencies and interface compatibility, schedules independent nodes in parallel,
+and executes them. Runtime errors can trigger replanning, and users can inspect and edit the workflow.
+The resulting workflows produce outputs such as dashboards and reports.
 
 \section{Overview of Evaluation Datasets}
 
