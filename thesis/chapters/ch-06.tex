@@ -281,8 +281,7 @@ alternative, provided that a queryable database and a sufficiently capable model
 
 The primary decision concerns whether the SQL prerequisites are satisfied: a faithful relational
 representation, an available engine and execution permissions, an SQL-answerable workload, and a schema
-prompt that fits the model context. When these conditions are met, Text-to-SQL is the first candidate,
-including when the complete data could also fit into a direct-context prompt.
+prompt that fits the model context. When these conditions are met, Text-to-SQL is the first candidate.
 
 Under the evaluated conditions, it achieved substantially higher aggregate retrieval accuracy, required fewer
 input tokens, and produced lower average latency than Direct Context Inference. These results do not imply
@@ -422,12 +421,7 @@ analysis because no model inference takes place and no meaningful timing or toke
 The strict complete-case cohort ensures that all serialization formats are compared using the same questions
 and models, avoiding a comparison in which verbose formats are evaluated only on the easiest inputs. However,
 this restriction narrows the representativeness of the operational results, particularly for BIRD, where only
-two databases remained in the common cohort. Database-bootstrap intervals based on these two
-databases describe sensitivity to their relative representation, rather than reliable uncertainty
-for a broader population of databases. More generally, the intervals hold the evaluated models,
-prompts, and inference settings fixed and do not measure run-to-run hardware variation. They are
-not adjusted for multiple comparisons, so the figures support exploratory effect-size interpretation
-rather than formal significance claims. The observed negative relationship between effective database size
+two databases remained in the common cohort. The observed negative relationship between effective database size
 and Direct Context Inference accuracy should also be interpreted carefully. Database size is a direct feasibility
 constraint when a prompt exceeds the context window, but below that boundary it covaries with domain, schema
 complexity, data quality, and question difficulty. The analysis therefore establishes an association rather than

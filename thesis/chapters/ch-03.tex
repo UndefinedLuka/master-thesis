@@ -274,41 +274,10 @@ audience.
 \subsection{Confidence Intervals and Effect Sizes}
 \label{sec:confidence-intervals}
 
-We report effect sizes and 95\% confidence intervals to describe the magnitude and uncertainty of
-the observed differences. Comparisons are paired: formats and pipelines are evaluated on the same
-questions and models, while model comparisons use the same questions and, for Direct Context
-Inference, the same formats. Accuracy includes zero-scored failed runs. Operational comparisons
-retain the complete-case cohorts defined in Chapter~\ref{ch:results}.
-
-Confidence intervals are calculated using a database-level bootstrap with 10.000 resamples and
-a fixed random seed of 20261006. Within each dataset, databases are sampled with replacement,
-retaining all their questions and all evaluated configurations together. Each resample uses the
-same database multiplicities for both sides of a comparison. We then recalculate the original
-statistic and take the 2,5th and 97,5th percentiles of its bootstrap distribution. Means retain
-their original weighting by questions and runs; models are treated as fixed configurations rather
-than independent repetitions. Serialization measurements are resampled by database, retaining
-all tokenizer families and formats. The intervals describe variation across databases under the
-evaluated setup, rather than variation across repeated model runs or hardware measurements.
-
-For retrieval accuracy, the effect size is the difference in mean score. Normalized Exact Match
-differences are expressed in percentage points, while BERTScore and ROUGE-L differences retain
-their score units. For token consumption and latency, the effect size is the ratio of arithmetic
-means, not the mean of individual run ratios. CSV is the reference for format comparisons, the
-smallest retained model in each family is the reference for within-family model comparisons, and
-Text-to-SQL is the reference for shared-cohort operational comparisons. Tokenizer comparisons
-report the median paired token-count ratio relative to Qwen~3.5. Database-size associations use
-Pearson's $r$ between log-transformed token counts and mean accuracy, with databases resampled as
-paired size--score observations. Constant-score resamples have no defined correlation; these are
-omitted, and the correlation interval is reported as unavailable if more than 5\% of resamples
-are undefined. SQL correction gains compare final outcomes with those obtained
-on the first attempt, and additional time is averaged over all runs.
-
-Intervals are calculated for both the estimates and the paired effects. A difference of zero or
-a ratio of one represents no change. The intervals are pointwise and are not adjusted for multiple
-comparisons; we use them for exploratory interpretation rather than formal significance claims or
-proof of equivalence. The BIRD operational cohorts contain only two databases. Their bootstrap
-intervals therefore describe sensitivity to the composition of these observed cohorts and do not
-provide reliable coverage for generalization to other databases.
+Alongside the reported metrics, we plan to include 95\% confidence intervals and effect sizes. These
+will help us understand the uncertainty in the results and the size of the observed differences between
+serialization formats, models, and extraction methods. This will provide a clearer picture of the
+trade offs between accuracy, latency, and token consumption.
 
 \section{Large Language Model Selection}
 
