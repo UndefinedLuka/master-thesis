@@ -47,7 +47,6 @@
 
 \expandafter\convertDate\pdfcreationdate
 
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % get pdftex version string
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -119,7 +118,6 @@
   \includegraphics[scale=#1]{cc-licenca/cc_sa_30.pdf}%
 }
 
-
 %================================================================
 % SLO: začetne strani magistrskega dela
 % ENG: fist pages of the master's thesis
@@ -172,7 +170,6 @@
 \clearemptydoublepage
 \endgroup
 
-
 \ifSLO
 % SLO: seznam kratic
 \input{front_pages/slo/kratice} \clearemptydoublepage
@@ -199,21 +196,21 @@
 % include Slovenian abstract
 \input{front_pages/slo/povzetek}
 
-%  \cleardoublepage
-\let\oldthesection=\thesection %Special section numbering for this chapter - remember default one
-\let\oldthesubsection=\thesubsection
-\renewcommand{\thesection}{\Roman{section}} %Special section numbering for this chapter
-\renewcommand{\thesubsection}{\thesection.\Roman{subsection}}
+% %  \cleardoublepage
+% \let\oldthesection=\thesection %Special section numbering for this chapter - remember default one
+% \let\oldthesubsection=\thesubsection
+% \renewcommand{\thesection}{\Roman{section}} %Special section numbering for this chapter
+% \renewcommand{\thesubsection}{\thesection.\Roman{subsection}}
 
-% set roman page numbering
-\pagenumbering{roman}
-% set slovene language
-\selectlanguage{slovene}
-% insert extended abstract
-\input{extended_abstract}
+% % set roman page numbering
+% \pagenumbering{roman}
+% % set slovene language
+% \selectlanguage{slovene}
+% % insert extended abstract
+% \input{extended_abstract}
 
-\let\thesection=\oldthesection % Restore default section numbering
-\let\thesubsection=\oldthesubsection
+% \let\thesection=\oldthesection % Restore default section numbering
+% \let\thesubsection=\oldthesubsection
 \fi
 
 %----------------------------------------------------------------
