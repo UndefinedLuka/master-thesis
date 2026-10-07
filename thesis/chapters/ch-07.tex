@@ -1,11 +1,24 @@
 \chapter{Conclusion}
 \label{ch:conclusion}
 
-% \section{Future Work}
-% Identify extensions motivated directly by the findings. Possible directions include evaluating
-% more datasets and production schemas; testing longer-context and proprietary models; measuring
-% actual energy use and API costs; studying schema linking, examples, constrained decoding, and
-% result validation for Text-to-SQL; comparing selective retrieval or chunking with full-context
-% inference; evaluating nested and non-relational data; and conducting controlled experiments
-% that isolate format comprehension from context-window feasibility. Prioritize the most valuable
-% directions rather than presenting an unstructured list.
+In this thesis we explored how the choice of extraction method and data serialization format influences
+the performance of LLMs when working with structured data. We compared Direct Context Inference and
+Text-to-SQL using ten local open-weight models on Spider and sampled BIRD databases. Alongside retrieval
+accuracy, we considered latency and token usage, in order to understand the trade-offs involved in choosing
+an approach. Based on these results, we developed a decision framework which helps select an extraction
+method and serialization format according to the data and requirements of the system.
+
+The results have shown that Text-to-SQL achieved higher overall retrieval accuracy, lower average latency,
+and lower input-token usage under the evaluated conditions. This makes it the preferred starting point
+when the data is stored in a relational form and a database engine is available. When passing the data
+directly to the model, CSV and TOON provided the best overall balance between accuracy and operational
+efficiency. Their compact representation allowed more data to fit within the context window and reduced
+the time needed to process the input. However, no format performed best across all retrieval metrics.
+These findings show that we should first consider how the information is going to be extracted, and then
+choose a suitable representation when using Direct Context Inference.
+
+The findings are limited to the evaluated datasets, models, and experimental setup. Future work could
+extend the comparison to full-scale databases and nested data, as well as approaches which retrieve only
+the relevant parts of the data before passing them to the model. Overall, this thesis provides practical
+guidance for choosing an approach which balances retrieval accuracy, latency, and token usage when
+extracting information from structured data with LLMs.
