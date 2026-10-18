@@ -116,7 +116,8 @@ don't support deeply nested data and this would provide additional concerns for 
 
 This section presents data serialization formats selected for the experiment. Choosing an optimal format
 requires balancing model's familiarity with the structure against token efficiency and character overhead.
-For the experiments we have chosen six different serialization formats.
+For the experiments we have chosen six different serialization formats, applying the distinction between
+structural and positional representations introduced in Chapter~\ref{ch:related_work}.
 
 \subsection{Structural Formats}
 
@@ -278,6 +279,22 @@ Alongside the reported metrics, we plan to include 95\% confidence intervals and
 will help us understand the uncertainty in the results and the size of the observed differences between
 serialization formats, models, and extraction methods. This will provide a clearer picture of the
 trade offs between accuracy, latency, and token consumption.
+
+We will use a database-level bootstrap with 10,000 repetitions. Within each
+dataset and analysis cohort, each repetition will sample the original number of databases with replacement
+and equal probability. All included questions and configurations from each sampled database will be retained,
+preserving dependence among observations from the same database. Means will be recomputed over the retained
+observations, giving each observation equal weight.
+
+Pointwise 95\% confidence intervals will be calculated using the percentile
+method: the lower and upper bounds will be set at 2.5th and 97.5th percentiles of the bootstrap estimates.
+
+Tokenizer comparisons will instead use the median of database-wise paired token-count ratios within each
+dataset and format.
+
+Both configurations will use matched observations and the same sampled
+databases. The corresponding effect-size statistic will be recomputed in each bootstrap repetition, and
+its confidence interval will be calculated using the same percentile method.
 
 \section{Large Language Model Selection}
 
