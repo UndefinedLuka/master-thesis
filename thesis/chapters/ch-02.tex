@@ -111,8 +111,8 @@ Recent work extends the basic sequence of providing a schema, generating SQL, an
 The following papers illustrate complementary directions: metadata enrichment, test-time scaling,
 structured query verification, and broader agent-based data analysis.
 
-\textbf{Automatic Metadata Extraction for Text-to-SQL.} \cite{shkapenyuk2025metadata} address the difficulty
-of understanding database contents
+\textbf{Automatic Metadata Extraction for Text-to-SQL.} Shkapenyuk et~al.~\cite{shkapenyuk2025metadata} address
+the difficulty of understanding database contents
 from schemas alone. Their approach profiles columns to collect properties such as value frequencies,
 NULL counts, and value formats, then uses an LLM to turn these statistics into field descriptions.
 Schema linking is performed by generating preliminary SQL under different metadata configurations and
@@ -125,9 +125,9 @@ task-specific fine-tuning, the authors report $77,14\%$ execution accuracy on BI
 hints. This demonstrates how database understanding and orchestration can improve results beyond the
 capabilities of a schema-only prompt.
 
-\textbf{Agentar-Scale-SQL.} \cite{wang2025agentar} organize additional inference computation along three dimensions:
-internal reasoning, sequential refinement, and parallel candidate generation and selection. A task-understanding
-stage retrieves relevant database values and few-shot examples. Two complementary generators then produce
+\textbf{Agentar-Scale-SQL.} Wang et~al.~\cite{wang2025agentar} organize additional inference computation along
+three dimensions: internal reasoning, sequential refinement, and parallel candidate generation and selection.
+A task-understanding stage retrieves relevant database values and few-shot examples. Two complementary generators then produce
 candidates: a reinforcement learning trained SQL reasoner using a data schema, and an
 in-context-learning generator using a compact Markdown schema. Syntax repair and semantic revision refine
 these candidates. Queries with identical execution results are grouped, and a reinforcement learning trained
