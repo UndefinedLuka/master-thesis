@@ -7,12 +7,10 @@ integrated into enterprise pipelines, the way data is structured, be it JSON, XM
 shown to hold a significant influence over the overall performance of the models (cost, accuracy,
 latency). This is not a mere question of our format preference, the benchmarks such as StrucText-Eval
 \cite{struct-text-eval} has given us insight how such formats influence the overall accuracy of the models.
-Results point to most common formats (CSV and JSON) performing the best over different models. For example
-for Llama-3.1-405B we can see that the most common formats achieve the following accuracies respectively,
-$96,6\%$ and $82,0\%$, while all the other formats record a significant drop off in accuracy
-\cite{struct-text-eval}. These results point
-that LLM's understanding of the structured data remains tied to patterns present in the training data rather
-than true grasp of the data structure.
+
+We are going to review structured data representations and their implications for token efficiency.
+Then we examine Text-to-SQL as an alternative approach to information retrieval, before discussing the
+benchmarks and metrics used to evaluate these approaches.
 
 \section{A Survey of Structured Data Representations}
 
@@ -41,6 +39,16 @@ the following three categories.
     specifically being developed to minimize number of tokens being used when providing information in this format
     to an LLM. In this group we can identify TOON \cite{toon-format-2025} and ONTO \cite{onto-serialization-format}.
 \end{itemize}
+
+These differences in representation matter both for how data is organized, and for how accurately
+models interpret it. Results point to most common formats (CSV and JSON) performing the best over different
+models. For example, Llama-3.1-405B in \cite{struct-text-eval} achieves the highest accuracies for CSV and
+JSON (respectively, $96,6\%$ and $82,0\%$), while all the other formats record a significant drop off in
+accuracy. These results point that LLM's understanding of the structured data remains tied to patterns
+present in the training data rather than true grasp of the data structure.
+
+Accuracy is only one aspect of format choice. Different representations also require different numbers of
+tokens to encode the same data, affecting the resources needed to process it.
 
 \section{Token Efficiency and Economic Impact of Data Serialization}
 
@@ -72,6 +80,10 @@ only once at the top of the record, and values are arranged in pipe delimited ro
 hierarchy. Both of these models claim to use significantly less tokens (TOON $39,9\%$ fewer tokens compared
 to JSON \cite{toon-format-2025}, and ONTO $46-51\%$ compared to JSON\cite{onto-serialization-format}) while
 stating they have minimal impact on the accuracy.
+
+Compact formats reduce the amount of text supplied to the model, but direct-context inference still
+requires the relevant records to be included in its input. Text-to-SQL offers another approach: the model
+generates a query, while the database engine retrieves the requested information.
 
 \section{Large Language Models for Text-to-SQL}
 
@@ -106,6 +118,8 @@ When optimizing for Text-to-SQL accuracy there are multiple strategies to achiev
 Recent work extends the basic sequence of providing a schema, generating SQL, and executing the query.
 The following papers illustrate complementary directions: metadata enrichment, test-time scaling,
 structured query verification, and broader agent-based data analysis.
+The systems reviewed below report results on BIRD \cite{li2023can}, a Text-to-SQL benchmark involving large
+databases and real-world data challenges, discussed further in the following section.
 
 \textbf{Automatic Metadata Extraction for Text-to-SQL.} Shkapenyuk et~al.~\cite{shkapenyuk2025metadata} address
 the difficulty of understanding database contents
@@ -117,9 +131,9 @@ submission further retrieves few-shot examples, generates three candidate querie
 potentially problematic SQL, and selects an answer by agreement between execution results. The paper also
 investigates query-log analysis and SQL-to-text generation for recovering business logic and constructing
 examples, although query logs were unavailable for the held-out test databases. Using GPT-4o without
-task-specific fine-tuning, the authors report $77,14\%$ execution accuracy on BIRD-Test with question-specific
-hints. This demonstrates how database understanding and orchestration can improve results beyond the
-capabilities of a schema-only prompt.
+task-specific fine-tuning, the authors report $77,14\%$ execution accuracy on BIRD-Test \cite{li2023can} with
+question-specific hints. This demonstrates how database understanding and orchestration can improve results
+beyond the capabilities of a schema-only prompt.
 
 \textbf{Agentar-Scale-SQL.} Wang et~al.~\cite{wang2025agentar} organize additional inference computation along
 three dimensions: internal reasoning, sequential refinement, and parallel candidate generation and selection.
@@ -175,9 +189,11 @@ consider because all the question present in the WikiSQL dataset were classified
 
 Even though the Spider data set introduced a lot of improvements, it still was not a perfect. All of the data
 present in the Spider dataset is clean and does not suffer from real life problems, such as integer values being
-stored as string, and other inconsistencies. It also significantly increased the sizes of the databases. As
-stated before this introduced new challenges, dealing with dirty database contents (both values and schemas),
-requiring external knowledge about the data in order to link the natural language question to the present database.
+stored as string, and other inconsistencies.
+
+BIRD \cite{li2023can} introduced larger databases and additional challenges involving real-world data.
+These include dealing with dirty database contents (both values and schemas) and using external knowledge
+about the data in order to link the natural language question to the present database.
 
 The newest addition to these benchmarks is Spider 2.0 \cite{lei2025spider}, it introduces data directly
 pulled from enterprise environments like Google Analytic and Salesforce. It pulls the real world tasks from
@@ -188,6 +204,10 @@ BigQuery and Snowflake that require knowledge of external documentation. The cha
 moves this task from simple one shot examples into multi step agentic workflows where queries stretch more
 than 100 lines.
 
+Benchmarks define the tasks on which systems are evaluated, while metrics determine which aspects of their
+outputs count as successful. Comparing the two retrieval approaches requires considering both answer
+quality and SQL correctness.
+
 \section{Metrics for Automated Output Verification}
 
 In order to evaluate the performance of each model and check its alignment with the ground truth data, we
@@ -197,9 +217,8 @@ validation. The first section is \emph{Word Overlap Metrics}, which check for li
 text similarity, after it we have \emph{Semantic Similarity} which tries to
 capture contextual meaning beyond the exact word matches \cite{novikova2017we}. Finally, for the Text-to-SQL
 purposes we are also
-going to take a look at \emph{Code Execution Metrics} \cite{yu2018spider}, these
-metrics are going to
-check programmatic correctness of outputs by executing them against an isolated environment.
+going to take a look at \emph{SQL Evaluation Metrics} \cite{yu2018spider}, which assess generated queries
+through structural comparison or execution against a database.
 
 \subsection{Word Overlap Metrics}
 
@@ -298,7 +317,7 @@ ideas of how to apply this idea in practice.
     decern between subtle differences between specific answers, and the results may become unstable.
 \end{itemize}
 
-\subsection{Code Execution Metrics}
+\subsection{SQL Evaluation Metrics}
 
 When we are reliant on code execution to retrieve information (such as SQL queries, and Python code), textual
 and semantic similarity metric are ineffective. Generated query can be syntactically different to the
@@ -326,3 +345,9 @@ efficiency directly influences latency and cost. This is the reason for introduc
 (VES) in \cite{li2023can}, and it aims to score both correctness and efficiency. By evaluation both of these it
 ensures that models are penalized for inefficient queries, such as joins using unindexed columns, which are
 unsuitable for production workflows.
+
+When trying to retrieve information from structured data we are faced with two choices: how to represent data
+for direct use by an LLM, and how to retrieve information through generated SQL. Serialization studies
+examine the effects of format on accuracy and token usage, while Text-to-SQL research explores improvements
+in query generation and verification. These findings motivate the comparison developed in the next chapter,
+which evaluates both approaches in terms of retrieval accuracy, token consumption, and latency.
