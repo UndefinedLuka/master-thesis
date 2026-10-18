@@ -21,29 +21,25 @@ representations that we are going to be using. We can identify several main cate
 shown by the StrucText-Eval \cite{struct-text-eval}. These categories show the range of data formats, from
 those that are strictly structured to those that are semi-structured. Structured data is consistent and
 organized. This makes it easy for computers
-to process, but it also creates some overhead during information tokenization. The most common
-classification system divides these into four main types:
+to process, but it also creates some overhead during information tokenization. We can divide these formats in
+the following three categories.
 
 \begin{itemize}
-  \item \textbf{Tree and Tabular Formats:} These include CSV \cite{shafranovich2005common} files and custom
-    hierarchical notation. In these
-    formats, relationships are defined either by positional alignment (as in CSV) or explicit pointers (as in
-    tree structures). However, CSV fundamentally cannot represent nested structures, limiting its
-    applicability to flat tabular data.
-  \item \textbf{Object Notation:} This category represents the most common data interchange languages in
+  \item \textbf{Positional Formats:} These include CSV \cite{shafranovich2005common} files and custom
+    hierarchical notation. In these formats, relationships are defined either by positional alignment (as in
+    CSV) or explicit pointers (as in tree structures). However, CSV fundamentally cannot represent nested
+    structures, limiting its applicability to flat tabular data. These also include semi-structured data
+    types like Markdown \cite{macfarlane2024commonmark}, and LaTeX \cite{lamport1994latex}, which represent
+    information in a human-readable form while embedding structural metadata (headings, lists, and semantic tags).
+  \item \textbf{Structural Formats:} This category represents the most common data interchange languages in
     software development, notably JSON (JavaScript Object Notation) \cite{bray2017javascript}, YAML (YAML
-    Ain't Markup Language) \cite{benkiki2009yaml}, and
-    TOML \cite{preston2021toml}. These formats rely on key-value pairs and nesting to represent multi-dimensional data
-  \item \textbf{Markup Languages:} Semi-structured data types like Markdown \cite{macfarlane2024commonmark},
-    LaTeX \cite{lamport1994latex}, represent
-    information in a human-readable form while embedding structural metadata (headings, lists, and semantic
-    tags). Markdown has become the de facto standard for general-purpose LLM interactions due to its presence
-    in training data.
-  \item \textbf{Code Based Formats:} These include HTML \cite{whatwghtml}, SVG \cite{ferajoli2011svg},
-    and XML \cite{bray1998xml}. These formats are special
-    because they are measured not only by how well they follow the rules of language, but also by how well they
-    can create a visual or logical output that meets the requirements of the user.
+    Ain't Markup Language) \cite{benkiki2009yaml}, TOML \cite{preston2021toml}, HTML \cite{whatwghtml}, SVG
+    \cite{ferajoli2011svg}, and XML \cite{bray1998xml}. These formats rely on key-value pairs and nesting to
+    represent multi-dimensional data
 
+  \item \textbf{Token Optimized Formats:} This category represents a newly forming group of formats which are
+    specifically being developed to minimize number of tokens being used when providing information in this format
+    to an LLM. In this group we can identify TOON \cite{toon-format-2025} and ONTO \cite{onto-serialization-format}.
 \end{itemize}
 
 \section{Token Efficiency and Economic Impact of Data Serialization}
@@ -127,7 +123,8 @@ capabilities of a schema-only prompt.
 
 \textbf{Agentar-Scale-SQL.} Wang et~al.~\cite{wang2025agentar} organize additional inference computation along
 three dimensions: internal reasoning, sequential refinement, and parallel candidate generation and selection.
-A task-understanding stage retrieves relevant database values and few-shot examples. Two complementary generators then produce
+A task-understanding stage retrieves relevant database values and few-shot examples. Two complementary
+generators then produce
 candidates: a reinforcement learning trained SQL reasoner using a data schema, and an
 in-context-learning generator using a compact Markdown schema. Syntax repair and semantic revision refine
 these candidates. Queries with identical execution results are grouped, and a reinforcement learning trained
