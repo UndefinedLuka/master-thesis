@@ -103,7 +103,6 @@ class ScoringConfig:
     with_bertscore: bool = True
     model_type: str = BERTSCORE_MODEL
     lang: str = BERTSCORE_LANG
-    force_order_sensitive: bool | None = None
     overwrite: bool = False
 
 

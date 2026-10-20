@@ -99,7 +99,10 @@ def test_cli_directory_mode_with_execution(tmp_path: Path) -> None:
 
     sql_rows = _scored_lines(sql_out)
     assert sql_rows[0]["scores"]["normalized_exact_match"] == 1.0
-    assert sql_rows[0]["execution"]["execution_accuracy"] == 1.0
+    assert sql_rows[0]["execution"] == {
+        "execution_success": True,
+        "execution_accuracy": 1.0,
+    }
 
 
 def test_cli_skips_already_scored_files(tmp_path: Path) -> None:

@@ -67,7 +67,6 @@ def _matrix() -> pd.DataFrame:
                             "scores.normalized_exact_match": 0,
                             "scores.bertscore_f": 0.4,
                             "scores.rouge_l_f": 0.5,
-                            "execution.result_match": False if sql else None,
                             ATTEMPT_TTFT_COLUMN: [0.2] if sql else None,
                             ATTEMPT_GENERATION_COLUMN: [1.0] if sql else None,
                             "predicted_sql": "SELECT 1" if sql else None,
@@ -128,7 +127,6 @@ def test_success_after_retry_is_retained_with_cumulative_cost_and_wrong_answers(
     assert sql["average_total_latency_s"] == pytest.approx((3.1 + 3 * 1.1) / 4)
     assert sql["average_input_tokens"] == 30
     assert sql["average_retries"] == 0.25
-    assert not analysis.records["execution.result_match"].eq(True).any()
     assert sql["average_ttft_s"] + sql["average_generation_time_s"] + sql[
         "average_sql_execution_time_s"
     ] == pytest.approx(sql["average_total_latency_s"])

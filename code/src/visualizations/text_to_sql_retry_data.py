@@ -26,13 +26,12 @@ class TextToSqlRetryAnalysis:
 def calculate_text_to_sql_retry_analysis(
     analysis: TextToSqlAnalysis,
 ) -> TextToSqlRetryAnalysis:
-    """Calculate terminal attempt counts, correctness, and exact retry model time."""
+    """Calculate terminal attempt counts and exact retry model time."""
     data = analysis.records.copy()
     required = {
         "dataset",
         "example_id",
         "execution_success",
-        "execution.result_match",
         "attempt_count",
         "attempt_generation_times_s",
         "retry_generation_overhead_s",
@@ -44,12 +43,10 @@ def calculate_text_to_sql_retry_analysis(
         raise ValueError("No Text-to-SQL retry records are available")
 
     data["terminal_outcome"] = data.apply(_terminal_outcome, axis=1)
-    data["result_match_numeric"] = data["execution.result_match"].astype(int)
     outcome_summary = (
         data.groupby(["dataset", "terminal_outcome"], as_index=False, observed=True)
         .agg(
             run_count=("example_id", "size"),
-            correct_result_count=("result_match_numeric", "sum"),
             total_retry_generation_s=("retry_generation_overhead_s", "sum"),
             average_retry_generation_s=("retry_generation_overhead_s", "mean"),
         )
@@ -57,9 +54,6 @@ def calculate_text_to_sql_retry_analysis(
     )
     totals = outcome_summary.groupby("dataset", observed=True)["run_count"].transform("sum")
     outcome_summary["run_percentage"] = outcome_summary["run_count"] / totals * 100.0
-    outcome_summary["correct_within_outcome_percentage"] = (
-        outcome_summary["correct_result_count"] / outcome_summary["run_count"] * 100.0
-    )
     outcome_summary = _complete_outcome_grid(outcome_summary)
 
     stage_rows: list[dict[str, object]] = []
@@ -91,11 +85,10 @@ def calculate_text_to_sql_retry_analysis(
     data["execution_gain_pp"] = (
         data["execution_success"].astype(bool) & data["attempt_count"].gt(1)
     ).astype(float) * 100
-    data["correct_gain_pp"] = (
-        data["execution.result_match"].astype(bool) & data["attempt_count"].gt(1)
-    ).astype(float) * 100
-    metrics = {"execution_gain_pp": "execution_gain_pp", "correct_gain_pp": "correct_gain_pp",
-               "added_seconds": "retry_generation_overhead_s"}
+    metrics = {
+        "execution_gain_pp": "execution_gain_pp",
+        "added_seconds": "retry_generation_overhead_s",
+    }
     gain_summary = data.groupby("dataset", as_index=False).agg(
         **{name: (source, "mean") for name, source in metrics.items()}
     )
@@ -127,14 +120,11 @@ def _complete_outcome_grid(summary: pd.DataFrame) -> pd.DataFrame:
         names=("dataset", "terminal_outcome"),
     )
     completed = summary.set_index(["dataset", "terminal_outcome"]).reindex(index)
-    count_columns = ("run_count", "correct_result_count")
-    for column in count_columns:
-        completed[column] = completed[column].fillna(0).astype(int)
+    completed["run_count"] = completed["run_count"].fillna(0).astype(int)
     for column in (
         "total_retry_generation_s",
         "average_retry_generation_s",
         "run_percentage",
-        "correct_within_outcome_percentage",
     ):
         completed[column] = completed[column].fillna(0.0)
     return completed.reset_index()

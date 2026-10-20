@@ -31,7 +31,6 @@ def render_text_to_sql_retrieval_table(
                     table_estimate(row, "bertscore_f", 3),
                     table_estimate(row, "rouge_l_f", 3),
                     table_estimate(row, "execution_success_rate", 1, scale=100, suffix=r"\%"),
-                    table_estimate(row, "result_match_rate", 1, scale=100, suffix=r"\%"),
                 )
             )
             + LATEX_ROW_END
@@ -48,12 +47,9 @@ def render_text_to_sql_retrieval_table(
             ),
             f"  \\label{{{label}}}",
             r"  \resizebox{\linewidth}{!}{%",
-            r"  \begin{tabular}{@{}lrrrrr@{}}",
+            r"  \begin{tabular}{@{}lrrrr@{}}",
             r"    \toprule",
-            (
-                r"    Dataset & NEM & BERTScore F1 & ROUGE-L F1 & Executed & "
-                r"Correct result \\"
-            ),
+            "    Dataset & NEM & BERTScore F1 & ROUGE-L F1 & Executed \\\\",
             r"    \midrule",
             *rows,
             r"    \bottomrule",
@@ -63,8 +59,8 @@ def render_text_to_sql_retrieval_table(
             (
                 r"  \parbox{\linewidth}{\scriptsize \textit{Note:} Text-similarity means "
                 r"include zero-scored failed SQL runs. Executed is the share of generated "
-                r"queries that ran successfully within the retry limit; Correct result is the "
-                r"share returning the reference rows. Brackets show pointwise 95\% "
+                r"queries that ran successfully within the retry limit. Brackets show "
+                r"pointwise 95\% "
                 r"database-bootstrap confidence intervals.}"
             ),
             r"\end{table}",

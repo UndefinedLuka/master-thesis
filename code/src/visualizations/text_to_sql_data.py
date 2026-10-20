@@ -40,7 +40,6 @@ TEXT_TO_SQL_COLUMNS: tuple[str, ...] = (
     "retry_count",
     "execution_success",
     *METRIC_SOURCE_COLUMNS.values(),
-    "execution.result_match",
     ATTEMPT_TTFT_COLUMN,
     ATTEMPT_GENERATION_COLUMN,
 )
@@ -177,7 +176,6 @@ def calculate_text_to_sql_analysis(
     data["model_size_b"] = [value[1] for value in metadata]
     data["size_label"] = data["model_id"].map(model_size_label)
     data["execution_success_numeric"] = data["execution_success"].astype(float)
-    data["result_match_numeric"] = data["execution.result_match"].astype(float)
 
     aggregations: dict[str, tuple[str, str]] = {
         "normalized_exact_match": (
@@ -187,7 +185,6 @@ def calculate_text_to_sql_analysis(
         "bertscore_f": (METRIC_SOURCE_COLUMNS["bertscore_f"], "mean"),
         "rouge_l_f": (METRIC_SOURCE_COLUMNS["rouge_l_f"], "mean"),
         "execution_success_rate": ("execution_success_numeric", "mean"),
-        "result_match_rate": ("result_match_numeric", "mean"),
         "average_input_tokens": ("input_tokens", "mean"),
         "average_output_tokens": ("output_tokens", "mean"),
         "average_cumulative_ttft_s": ("cumulative_ttft_s", "mean"),

@@ -98,7 +98,6 @@ def main(argv: list[str] | None = None) -> int:
             records,
             references,
             with_bertscore=scoring.with_bertscore,
-            force_order_sensitive=scoring.force_order_sensitive,
             model_type=scoring.model_type,
             lang=scoring.lang,
         )

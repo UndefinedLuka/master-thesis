@@ -14,8 +14,9 @@ The dominant factor differed between the two pipelines. For Direct Context Infer
 strongly influenced by the number of input tokens. Compact formats allowed more information to fit within the
 context window and reduced the time required to process the prompt. For Text-to-SQL, serialization format was
 not a variable because the model received the database schema rather than its serialized contents. Instead,
-model selection had the greatest influence, as more capable models generally generated more accurate queries
-and required fewer correction attempts.
+model selection had the greatest influence, as more capable models generally achieved higher text-based
+agreement scores and required fewer correction attempts. These scores do not independently verify semantic
+correctness.
 
 The results broadly support the expectation that compact data representations improve the operational
 efficiency and feasibility of Direct Context Inference. However, two findings were less expected. First,
@@ -98,7 +99,8 @@ locate relevant values and reason over a potentially long raw-data context. Text
 input data but requires the model to interpret the schema, associate concepts from the question with the
 correct tables and columns, and generate a query that is both syntactically valid and semantically correct.
 The Text-to-SQL results indicate that model selection is particularly important because more capable models
-generally produced more accurate queries and required fewer correction attempts.
+generally achieved higher text-based agreement scores and required fewer correction attempts. These scores do
+not independently verify that generated queries were semantically correct.
 
 This distinction creates a trade-off between data visibility and scalable retrieval. Direct Context Inference
 allows the model to inspect the actual values, which can be useful when the required meaning cannot be
@@ -129,8 +131,7 @@ Chapter~\ref{ch:methodolgy}, Spider contains comparatively clean data with descr
 whereas BIRD contains more realistic and less sanitized data. BIRD also produced larger serialized databases
 and larger schema prompts under the evaluated setup. These differences were accompanied by lower performance.
 In the Text-to-SQL pipeline, query-execution success decreased from 95,3\% on Spider to 89,8\% on BIRD, a
-difference of 5,5 percentage points. The proportion of queries returning the correct result decreased from
-65,8\% to 58,5\%, a difference of 7,3 percentage points. These differences are consistent with BIRD
+difference of 5,5 percentage points. This difference is consistent with BIRD
 presenting a more difficult task, although the experiment does not isolate the individual contribution of
 schema size, data quality, domain, or question complexity.
 
@@ -202,9 +203,9 @@ serialized, and transferred into the prompt for each request.
 Practitioners should therefore monitor input, output, and reasoning-token consumption separately, together
 with context-window utilization and overflow frequency. Latency should be decomposed into TTFT,
 generation time after the first token, SQL execution time, and total end-to-end response time.
-Text-to-SQL systems should additionally track retry counts, cumulative costs across attempts, query timeouts,
-and execution-success and correct-result rates as separate measures. Local deployments should also monitor
-throughput and hardware utilization, while API-based deployments should track actual expenditure under the
+Text-to-SQL systems should additionally track retry counts, cumulative costs across attempts, and query
+timeouts. Execution success should not be treated as evidence of semantic correctness. Local deployments should
+also monitor throughput and hardware utilization, while API-based deployments should track actual expenditure under the
 selected provider's pricing model.
 
 \section{Decision Framework for Structured Data Information Extraction}
@@ -261,10 +262,10 @@ Requirements for deterministic and reproducible behaviour may further influence 
 
 \subsubsection{Quality Requirements}
 
-The required level of retrieval accuracy affects both pipeline and model selection. Applications with strict
-correctness requirements may require a more capable model and additional result-validation measures. In such
-settings, it is important to distinguish between a query that executes successfully and one that returns the
-correct result. Conversely, applications that tolerate occasional extraction errors may prioritize lower
+The required level of answer quality affects both pipeline and model selection. Applications with strict
+correctness requirements may require a more capable model and application-specific answer validation. In such
+settings, it is important to distinguish between a query that executes successfully and an answer that is
+semantically correct. Conversely, applications that tolerate occasional extraction errors may prioritize lower
 latency or resource consumption.
 
 \subsubsection{Operational Workload and Cost Constraints}
@@ -313,13 +314,15 @@ after representational correctness has been ensured.
 Model capability should influence the model selected within a pipeline, but it does not reverse the general
 preference for Text-to-SQL when the data are queryable. Text-to-SQL requires reliable schema interpretation
 and the generation of syntactically valid and semantically correct queries. More capable models generally
-improved these outcomes and reduced the frequency of expensive correction attempts. Direct Context Inference
-places a different demand on the model, requiring it to locate and reason over relevant values within a
+achieved higher reference-agreement scores and reduced the frequency of expensive correction attempts.
+Execution success does not establish semantic correctness. Direct Context Inference places a different demand
+on the model, requiring it to locate and reason over relevant values within a
 potentially long input. A weaker model's difficulty with SQL generation may justify evaluating Direct Context
 Inference when its prompt fits the context budget, but this remains an application-specific decision
 requiring validation rather than a general recommendation.
 
-Applications with strict accuracy requirements should prefer Text-to-SQL under the evaluated conditions.
+Applications prioritizing agreement with benchmark reference answers should prefer Text-to-SQL under the
+evaluated conditions. This comparison does not establish semantic correctness for a deployment workload.
 Generated SQL also improves auditability because the operation can be inspected and re-executed against the
 same database state. This should not be confused with reproducibility, which also depends on the inference
 configuration, model version, database state, and decoding strategy. Both pipelines used deterministic
@@ -337,7 +340,7 @@ can make Direct Context Inference expensive even when each individual prompt fit
 The recommendation to prefer Text-to-SQL for queryable structured data and CSV for flat Direct Context
 Inference inputs is strongly supported by the experiments. The findings also strongly support checking
 complete prompt size, avoiding unnecessary verbosity, considering both model family and size, and
-distinguishing SQL execution success from result correctness. Recommendations concerning deeply nested data
+distinguishing SQL execution success from semantic correctness. Recommendations concerning deeply nested data
 and the use of TOON for such structures remain conditional because this scenario was not evaluated directly.
 
 \subsection{Decision Tree}
@@ -376,16 +379,14 @@ then be needed. These alternatives were not evaluated in this thesis.
 \label{sec:sql-error-correction}
 
 The SQL error-correction mechanism recovered 1.357 queries that did not execute successfully on their initial
-attempt: 282 on Spider and 1.075 on BIRD. However, only 605 of these recovered queries returned the correct
-result. Database feedback was therefore useful for correcting detectable problems, such as invalid syntax,
-nonexistent tables or columns, and other runtime errors, but successful execution did not guarantee semantic
+attempt: 282 on Spider and 1.075 on BIRD. Database feedback was therefore useful for correcting detectable
+problems, such as invalid syntax, nonexistent tables or columns, and other runtime errors, but successful execution does not guarantee semantic
 correctness. Queries containing incorrect joins, filters, aggregations, or schema-element selections could
 execute without producing an error while still returning the wrong rows.
 
 The benefit of correction declined with each attempt. The first retry recovered 1.128 executable queries,
-including 518 correct results, accounting for 83,1\% of all execution recoveries and 85,6\% of all correct
-results recovered by the mechanism. The second and third retries recovered only 190 and 39 additional
-executable queries, of which 74 and 13 returned the correct result, respectively. Later attempts also became
+accounting for 83,1\% of all execution recoveries. The second and third retries recovered only 190 and 39
+additional executable queries, respectively. Later attempts also became
 more expensive per run because their prompts contained the preceding conversation and database error
 feedback. The exact token overhead of each retry stage was not recorded separately, but all retries increased
 accumulated token consumption and generation time.
@@ -448,9 +449,9 @@ conditions. These effects do not necessarily produce an empty answer. The questi
 retained, the resulting tasks may differ in answerability and difficulty from those evaluated on the original
 databases. No systematic validation of foreign-key preservation was performed, recomputing reference answers
 on the sampled databases ensures evaluation consistency, but does not establish equivalence to the original
-BIRD benchmark. Furthermore, different SQL queries can produce the same result on a reduced database,
-particularly when both return an empty result. Result matching therefore establishes agreement on the final
-answer, not general query equivalence.
+BIRD benchmark. Sampling may make distinct query outputs more similar or identical in their textual
+representation, potentially affecting text-based agreement scores. These scores describe agreement on sampled
+data and do not establish query equivalence or correctness on the original databases.
 
 Finally, the findings are limited to the Spider and BIRD development splits, the six evaluated serialization
 formats, local open-weight models, SQLite, and the dedicated H100-based experimental environment. Spider

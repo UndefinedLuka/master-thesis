@@ -86,7 +86,7 @@ The evaluation workflow is divided into six sequential stages, each exposed as a
     for inspection and debugging.
   \item \textbf{Benchmark} - runs one slice of the experiment (a specific model, dataset, pipeline, and set
     of formats), recording raw model outputs and timing metrics.
-  \item \textbf{Score} - computes NEM, ROUGE-L, BERTScore, and result match in a
+  \item \textbf{Score} - computes NEM, ROUGE-L, and BERTScore in a
     deferred pass over the benchmark outputs.
 \end{enumerate}
 
@@ -192,9 +192,6 @@ Chapter~\ref{ch:methodolgy}:
     reference answer, using Porter stemming for normalization.
   \item \textbf{BERTScore:} computes contextual embedding similarity using the Roberta large model
     with baseline rescaling.
-  \item \textbf{Result match:} (Text-to-SQL only) compares the predicted query's result set against the
-    gold query's result set. Comparison is order-sensitive only when the gold SQL contains a top-level
-    \texttt{ORDER BY} clause; otherwise, row sets are compared as unordered collections with numeric canonicalization.
 \end{itemize}
 
 It should be noted, because of subsampling some gold queries for BIRD dataset yielded empty sets as result,

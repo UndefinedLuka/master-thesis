@@ -20,8 +20,7 @@ class AccuracyScores(TypedDict):
 
 
 class ExecutionScore(TypedDict):
-    """Binary Text-to-SQL execution metric with a separate result-match diagnostic."""
+    """Binary Text-to-SQL execution metric."""
 
     execution_success: bool  # query executed without error (within the retry cap)
-    result_match: bool  # predicted rows equal gold rows (per comparison policy)
     execution_accuracy: float  # 1.0 iff execution_success, otherwise 0.0

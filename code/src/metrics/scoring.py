@@ -10,13 +10,11 @@ Text construction (Chapter 3 §Retrieval Accuracy):
   * Reference text (both)     -> the gold result rows, stringified.
   * Empty Direct references   -> the prompt's canonical no-answer text, ``N/A``.
 
-Text-to-SQL additionally gets binary Execution Accuracy (whether its query ran successfully)
-and a separate result-match diagnostic on the raw rows.
+Text-to-SQL additionally gets binary Execution Accuracy (whether its query ran successfully).
 """
 
 from __future__ import annotations
 
-import re
 from collections.abc import Callable, Sequence
 from typing import Any, TypedDict
 
@@ -32,7 +30,7 @@ from metrics.rouge import rouge_l
 from metrics.types import AccuracyScores
 from pipelines.types import PipelineResult
 
-# A reference row set keyed by example_id: gold rows (or None if gold SQL errored) + gold SQL.
+# A reference row set keyed by example_id: gold rows (or None if gold SQL errored).
 ReferenceLookup = dict[str, "ReferenceEntry"]
 
 ExactMatchFn = Callable[[str, str], float]
@@ -43,10 +41,9 @@ DIRECT_NO_ANSWER_TEXT = "N/A"
 
 
 class ReferenceEntry(TypedDict):
-    """One example's gold result: rows (None if the gold SQL errored) + the gold SQL."""
+    """One example's gold result rows (None if the gold SQL errored)."""
 
     rows: list[dict[str, Any]] | None
-    gold_sql: str
 
 
 def rows_to_text(rows: list[dict[str, Any]] | None) -> str:
@@ -90,25 +87,6 @@ def scoring_text_pair(result: PipelineResult, entry: ReferenceEntry) -> tuple[st
     return prediction, reference
 
 
-def has_order_by(gold_sql: str) -> bool:
-    """Whether the gold query imposes an order on its RESULT rows.
-
-    Only an ORDER BY at parenthesis depth 0 counts — one inside a subquery/CTE does not
-    constrain the outer result's order, so matching it would force order-sensitive comparison
-    spuriously.
-    """
-    depth = 0
-    for match in re.finditer(r"[()]|\border\s+by\b", gold_sql, re.IGNORECASE):
-        token = match.group(0)
-        if token == "(":
-            depth += 1
-        elif token == ")":
-            depth = max(0, depth - 1)
-        elif depth == 0:
-            return True
-    return False
-
-
 class ScoringStats(TypedDict):
     """Summary counters returned by :func:`score_records` alongside the scored copies."""
 
@@ -125,7 +103,6 @@ def score_records(
     references: ReferenceLookup,
     *,
     with_bertscore: bool = True,
-    force_order_sensitive: bool | None = None,
     exact_match_fn: ExactMatchFn = normalized_exact_match,
     rouge_fn: RougeFn = rouge_l,
     bert_batch_fn: BertBatchFn | None = None,
@@ -138,10 +115,8 @@ def score_records(
     ``example_id``. If such a record has a pipeline/backend ``error``, all enabled accuracy
     metrics are set to zero without comparing its placeholder output to the reference. This
     prevents failed empty outputs from matching empty gold result sets. Text-to-SQL records
-    additionally receive binary Execution Accuracy based only on whether the query ran. Their
-    separate result-match diagnostic is order-sensitive iff the gold SQL has ``ORDER BY``,
-    unless ``force_order_sensitive`` overrides it. Heavy BERTScore runs once over the eligible,
-    non-failed batch.
+    additionally receive binary Execution Accuracy based only on whether the query ran. Heavy
+    BERTScore runs once over the eligible, non-failed batch.
 
     ``exact_match_fn`` / ``rouge_fn`` / ``bert_batch_fn`` are injectable for testing; all
     default to the real implementations.
@@ -160,18 +135,9 @@ def score_records(
     for idx, record in enumerate(scored):
         entry = references.get(record["example_id"])
 
-        # Binary execution success plus result matching (text_to_sql only); both are
-        # independent of text-scoring eligibility.
+        # Binary execution success (text_to_sql only), independent of text-scoring eligibility.
         if record["pipeline"] == "text_to_sql":
-            gold_rows = entry["rows"] if entry else None
-            order_sensitive = (
-                force_order_sensitive
-                if force_order_sensitive is not None
-                else (has_order_by(entry["gold_sql"]) if entry else False)
-            )
-            record["execution"] = execution_accuracy(
-                record["predicted_rows"], gold_rows, order_sensitive=order_sensitive
-            )
+            record["execution"] = execution_accuracy(record["predicted_rows"])
             stats_exec += 1
 
         # Accuracy scoring requires a usable gold reference. A failed output with a valid
@@ -243,10 +209,7 @@ def _failed_output_scores(*, with_bertscore: bool) -> AccuracyScores:
 
 def references_from_rows(reference_rows: Sequence[dict[str, Any]]) -> ReferenceLookup:
     """Index loaded ReferenceAnswer dicts by ``example_id`` for fast lookup during scoring."""
-    return {
-        row["example_id"]: ReferenceEntry(rows=row.get("rows"), gold_sql=row.get("gold_sql", ""))
-        for row in reference_rows
-    }
+    return {row["example_id"]: ReferenceEntry(rows=row.get("rows")) for row in reference_rows}
 
 
 def _default_bert_batch(model_type: str, lang: str) -> BertBatchFn:

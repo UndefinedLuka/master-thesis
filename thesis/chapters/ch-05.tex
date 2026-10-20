@@ -360,22 +360,19 @@ This section evaluates retrieval accuracy and operational efficiency for the 25.
 
 \subsection{Retrieval accuracy}
 
-Text-to-SQL retrieval was evaluated in three complementary ways. First, we convert the returned rows to text
-and compare them with the reference rows using NEM, BERTScore~F1, and ROUGE-L~F1.
-Second, execution success records whether a query ran
-without error within the retry limit, irrespective of whether it returned the correct data. Finally, result
-match records whether the executed query returned the same rows as the reference query. Failed SQL runs retain
-zero text-similarity scores, so the reported means represent end-to-end pipeline accuracy rather than accuracy
-conditioned on successful execution.
+Text-to-SQL retrieval was evaluated using NEM, BERTScore~F1, and ROUGE-L~F1 on text representations of
+the returned and reference rows. NEM measures normalized textual equality, ROUGE-L measures lexical sequence
+overlap, and BERTScore measures semantic similarity. Execution success records whether a query ran without
+error within the retry limit; it does not establish that the query retrieved the intended information. Failed
+SQL runs retain zero text-based scores, so the reported means represent end-to-end pipeline performance rather
+than scores conditioned on successful execution. The text-based metrics measure agreement with the reference
+representation and do not independently verify semantic correctness.
 
 \input{../code/analysis/tables/text_to_sql_retrieval_accuracy}
 
 Table~\ref{tab:text-to-sql-retrieval-accuracy} summarizes the dataset-level results. On Spider, 95,3\% of
-queries executed successfully, but only 65,8\% of all runs returned the correct result. BIRD was more difficult:
-89,8\% executed successfully and 58,5\% returned the correct rows. Among queries that did execute, this
-corresponds to correct-result rates of approximately 69,0\% for Spider and 65,1\% for BIRD. Successful execution
-was therefore necessary but not sufficient for correctness; many syntactically valid queries selected the
-wrong tables, columns, conditions, or aggregations.
+queries executed successfully; on BIRD, 89,8\% did so. Successful execution only indicates that a query ran
+without error and does not establish that it selected the intended tables, columns, conditions, or aggregations.
 
 The text-based metrics show a similar dataset difference. Spider reached mean scores of 0,645 for NEM,
 0,744 for BERTScore~F1, and 0,705 for ROUGE-L~F1. BIRD reached 0.598, 0,675, and 0,373,
@@ -393,13 +390,13 @@ similarity. The two metric values are not directly comparable because they use d
 \end{figure}
 
 Figure~\ref{fig:text-to-sql-accuracy-by-model-size} shows a strong relationship between model size and
-retrieval quality, particularly within Qwen~3.5. On Spider, Qwen~3.5 NEM increased from
+text-based agreement scores, particularly within Qwen~3.5. On Spider, Qwen~3.5 NEM increased from
 0,292 at 0.8B parameters to 0,719 at 9B; on BIRD it increased from 0,202 to 0,686. Most of this improvement
 occurred between 0.8B and 4B, after which the curve began to flatten. Gemma~4 was the strongest family overall
 and improved consistently with size. Its 26B-A4B variant achieved the highest observed scores: 0,778
 NEM, 0,852 BERTScore~F1, and 0,816 ROUGE-L~F1 on Spider, and 0,745, 0,819, and 0,487 on
 BIRD. Ministral~3 improved more modestly between 8B and 14B and remained below similarly sized Gemma~4 models.
-These results show that model scale substantially improves SQL generation, but architecture remains important
+These results show that model scale improves the reported retrieval metrics, but architecture remains important
 because models of similar nominal size did not achieve equivalent accuracy.
 
 The paired Qwen~3.5 9B-minus-0.8B NEM gain was 42,65 percentage points
@@ -479,28 +476,26 @@ four attempts. This mechanism can respond to detectable failures such as invalid
 columns, and responses from which no SQL statement can be extracted. It cannot identify a semantically wrong
 query that executes successfully, because no database error is produced. Consequently, an attempt reported as
 successful in this subsection means that its query executed; Table~\ref{tab:text-to-sql-error-correction}
-reports correct-result counts separately.
+reports execution-success counts by attempt.
 
 \input{../code/analysis/tables/text_to_sql_error_correction}
 
 Most queries executed without correction. On Spider, 9.577 of 10.340 runs (92,62\%) succeeded on the first
-attempt, of which 6.705 returned the correct result. A further 250 executed on the second attempt, 30 on the
-third, and 2 on the fourth; their corresponding correct-result counts were 82, 15, and 0. The retry mechanism
-therefore recovered executable queries in 282 Spider runs, but only 97 of those recovered runs returned the
-reference rows. The remaining 481 runs (4,65\%) failed completely after all available attempts.
+attempt. A further 250 executed on the second attempt, 30 on the third, and 2 on the fourth. The retry
+mechanism therefore recovered executable queries in 282 Spider runs. The remaining 481 runs (4,65\%) failed
+completely after all available attempts.
 
-BIRD required correction more frequently. Of 15.340 runs, 12.707 (82,84\%) executed on the first attempt and
-8.464 returned the correct result. The second, third, and fourth attempts recovered execution for 878, 160,
-and 37 runs, respectively, with 436, 59, and 13 correct results. In total, retries recovered 1.075 executable
-queries and 508 correct results, while 1.558 runs (10,16\%) remained complete failures. Considering only runs
-that either recovered after a retry or ultimately failed, the mechanism recovered execution in 37,0\% of
-Spider cases and 40,8\% of BIRD cases. These results show that database feedback was useful, but that execution
-recovery did not guarantee semantic correctness.
+BIRD required correction more frequently. Of 15.340 runs, 12.707 (82,84\%) executed on the first attempt.
+The second, third, and fourth attempts recovered execution for 878, 160, and 37 runs, respectively. In total,
+retries recovered 1.075 executable queries, while 1.558 runs (10,16\%) remained complete failures. Considering
+only runs that either recovered after a retry or ultimately failed, the mechanism recovered execution in 37,0\% of
+Spider cases and 40,8\% of BIRD cases. These results show that database feedback was useful for
+recovering execution, although successful execution alone does not establish semantic correctness.
 
 Relative to stopping after the first attempt, retries increased execution success by 2,73
 percentage points on Spider (95\% interval: 1,79--3,59) and 7,01 on BIRD (5,77--8,44).
-The gains in correct results were smaller: 0,94 (0,59--1,25) and 3,31 (2,72--3,99)
-percentage points, respectively. These paired gains are measured across all runs.
+These paired execution-success gains are measured across all runs. They do not measure whether recovered
+queries returned semantically correct answers.
 
 Retries also introduced a measurable operational cost. Attempts after the first added 1.850,4 seconds
 (30,8 minutes) of model-generation time on Spider and 7.234,3 seconds (120,6 minutes) on BIRD, or 2,52 hours
@@ -611,10 +606,10 @@ token. Accuracy generally improved with model size but decreased as the effectiv
 showing that direct inference becomes less reliable and less practical as more data must be included in the
 prompt.
 
-Text-to-SQL achieved substantially higher retrieval accuracy while using a much smaller schema-based input,
-and its performance generally improved with model size. Query execution itself contributed little to total
-latency; model generation and correction retries accounted for most of the cost. The retry mechanism recovered
-1.357 otherwise non-executable queries, but many recovered queries still returned incorrect results, and failed
-correction sequences added most of the retry overhead. Overall, the results demonstrate that format selection
-is central to Direct Context Inference, while model capability and reliable SQL generation are the main factors
+Text-to-SQL achieved substantially higher scores for text-based agreement with the reference while using a
+much smaller schema-based input, and its scores generally improved with model size. Query execution itself
+contributed little to total latency; model generation and correction retries accounted for most of the cost. The retry
+mechanism recovered 1.357 otherwise non-executable queries, while failed correction sequences added most of
+the retry overhead. Execution success does not establish semantic correctness. Overall, the results demonstrate
+that format selection is central to Direct Context Inference, while model capability and reliable SQL generation are the main factors
 for Text-to-SQL.

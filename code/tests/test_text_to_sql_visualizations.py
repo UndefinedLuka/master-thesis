@@ -68,7 +68,6 @@ def _record(
     sql_time: float = 0.1,
     retry_count: int = 0,
     execution_success: bool = True,
-    result_match: bool = True,
 ) -> dict[str, object]:
     attempt_ttft = attempt_ttft or [0.5]
     attempt_generation = attempt_generation or [model_time]
@@ -91,7 +90,6 @@ def _record(
         "scores.normalized_exact_match": exact,
         "scores.bertscore_f": bert,
         "scores.rouge_l_f": rouge,
-        "execution.result_match": result_match,
         "attempts.llm_metrics.time_to_first_token_s": attempt_ttft,
         "attempts.llm_metrics.total_generation_time_s": attempt_generation,
     }
@@ -116,7 +114,6 @@ def _results() -> pd.DataFrame:
                     model_time=3.0,
                     retry_count=1,
                     execution_success=False,
-                    result_match=False,
                 ),
                 _record(
                     dataset=dataset,
@@ -157,6 +154,8 @@ def test_analysis_includes_failed_accuracy_zeroes_and_accumulates_retry_ttft() -
 
     assert spider["normalized_exact_match"] == pytest.approx((0.0 + 0.8 + 0.9) / 3)
     assert spider["execution_success_rate"] == pytest.approx(2 / 3)
+    assert "result_match_rate" not in analysis.dataset_summary.columns
+    assert "result_match_rate" not in analysis.model_summary.columns
     assert qwen_2b["average_cumulative_ttft_s"] == pytest.approx(1.2)
     assert qwen_2b["average_generation_time_s"] == pytest.approx(1.8)
     assert qwen_2b["average_total_latency_s"] == pytest.approx(3.1)
@@ -177,8 +176,10 @@ def test_text_to_sql_tables_report_accuracy_execution_and_operations(tmp_path: P
     operational = render_text_to_sql_operational_table(analysis)
 
     assert "NEM" in retrieval
+    assert "BERTScore F1" in retrieval
+    assert "ROUGE-L F1" in retrieval
     assert "Executed" in retrieval
-    assert "Correct result" in retrieval
+    assert "Correct result" not in retrieval
     assert "Input tokens" in operational
     assert "SQL (s)" in operational
     assert "Retries" in operational
@@ -190,7 +191,7 @@ def test_text_to_sql_tables_report_accuracy_execution_and_operations(tmp_path: P
     assert operational_path == tables_dir / TEXT_TO_SQL_OPERATIONAL_TABLE_FILENAME
 
 
-def test_retry_analysis_reports_terminal_stage_correctness_and_added_time() -> None:
+def test_retry_analysis_reports_terminal_stage_execution_and_added_time() -> None:
     sql_analysis = calculate_text_to_sql_analysis(_results())
     retry_analysis = calculate_text_to_sql_retry_analysis(sql_analysis)
     spider = retry_analysis.outcome_summary[
@@ -201,12 +202,20 @@ def test_retry_analysis_reports_terminal_stage_correctness_and_added_time() -> N
     ].set_index("retry_index")
 
     assert spider.loc["attempt_1", "run_count"] == 2
-    assert spider.loc["attempt_1", "correct_result_count"] == 2
     assert spider.loc["failure", "run_count"] == 1
     assert spider.loc["failure", "total_retry_generation_s"] == pytest.approx(2.0)
+    assert "correct_result_count" not in retry_analysis.outcome_summary.columns
+    assert "correct_gain_pp" not in retry_analysis.gain_summary.columns
     assert stages.loc[1, "run_count"] == 1
     assert stages.loc[1, "total_generation_s"] == pytest.approx(2.0)
     assert retry_analysis.total_retry_generation_s == pytest.approx(4.0)
+
+    successful_retry = _results()
+    successful_retry.loc[0, "execution_success"] = True
+    retry_gain = calculate_text_to_sql_retry_analysis(
+        calculate_text_to_sql_analysis(successful_retry)
+    ).gain_summary.set_index("dataset")
+    assert retry_gain.loc["spider", "execution_gain_pp"] == pytest.approx(100 / 3)
 
 
 def test_error_correction_table_and_figure(tmp_path: Path) -> None:
@@ -219,6 +228,7 @@ def test_error_correction_table_and_figure(tmp_path: Path) -> None:
     assert "First attempt" in latex
     assert "Complete failure" in latex
     assert "Added time (s)" in latex
+    assert "Correct results" not in latex
     assert [axis.get_title() for axis in axes] == [
         "Terminal query-execution outcome",
         "Additional model time by retry stage",

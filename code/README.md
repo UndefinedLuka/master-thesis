@@ -159,8 +159,8 @@ that every format is averaged over the same successfully processed questions and
 latency figure decomposes total response latency into time to first token and generation after
 the first token. Text-to-SQL operational artifacts include all correction attempts: tokens and
 model time are accumulated, and the retry-aware latency figure also includes SQL execution. The
-error-correction artifacts separately report the terminal execution attempt, correct-result
-counts, and exact model-generation time added by attempts after the first.
+error-correction artifacts report the terminal execution attempt and exact model-generation
+time added by attempts after the first.
 
 Qwen 3.5 27B is excluded from the outcome and retrieval-accuracy analyses by default; use
 `--exclude-model` to override this. `--context-window` changes the serialization-fit threshold,
@@ -246,9 +246,10 @@ each input:
   correctly abstaining model is not compared against an empty string. Normalized Exact Match uses
   the established SQuAD normalization: lowercase, remove punctuation and English articles, and
   collapse whitespace before binary exact comparison.
-- **Execution accuracy** for Text-to-SQL: binary `1.0` when the generated query executes
-  successfully within the retry cap, otherwise `0.0`. Gold-row equality is retained separately
-  as the `result_match` diagnostic.
+- **Execution success** for Text-to-SQL: binary `1.0` when the generated query executes
+  successfully within the retry cap, otherwise `0.0` (stored as `execution_accuracy`). This
+  operational measure does not assess answer correctness; both pipelines use the three
+  text-based metrics above to assess reference-answer agreement.
 
 References resolve automatically from `data/<dataset>_references.ndjson` per record, or
 pass `--references <file>` explicitly. Already-scored files are skipped unless

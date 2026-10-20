@@ -20,7 +20,7 @@ Framework is going to be divided into two pipelines:
 
 In order to collect reliable metrics we are going to subject both pipelines to similar metrics collection. We
 are going to track performance metrics for both pipelines, which will provide us with a clear picture of
-their operational efficiency. For Text-to-SQL, we will also track execution success, result match, and query
+their operational efficiency. For Text-to-SQL, we will also track execution success and query
 execution time. Reference-answer agreement
 for both pipelines will be calculated in the same manner, it will be validated against the reference answers
 which can be found in the chosen datasets. And finally we are going to collect and visualize all the data from the
@@ -248,23 +248,24 @@ query is executed, and its result rows are converted to text for comparison with
 
 We report \emph{Normalized Exact Match (NEM)}, \emph{ROUGE-L}, and \emph{BERTScore} as complementary measures of
 reference-answer agreement. NEM checks equality after textual normalization,
-ROUGE-L measures lexical sequence overlap, and BERTScore measures contextual embedding
-similarity. These metrics were selected to capture both strict agreement and similarity under
-difference in wording, particularly for free-text answers. However, they do not provide equivalent
-evidence of correctness. ROUGE-L and BERTScore can assign high scores to answers containing
+ROUGE-L measures lexical sequence overlap, and BERTScore measures semantic similarity using contextual
+embeddings. These metrics were selected to capture strict agreement and similarity under differences in
+wording, particularly for free-text answers. However, they do not provide equivalent evidence of correctness.
+ROUGE-L and BERTScore can assign high scores to answers containing
 incorrect numbers, identifiers, or entities when the surrounding content remains similar.
 Conversely, a correct answer expressed in a different form may receive a lower score. NEM
 is stricter, but remains sensitive to how equivalent results are represented.
 The text-based metrics therefore measure agreement with the reference representation, rather
 than directly verifying the correctness of each retrieved value.
 
-For Text-to-SQL, execution success indicates whether a query runs without error, while result match
-indicates whether it returns the reference rows. We are also going to
-implement an error correction loop, which will entail the following steps. If a generated SQL query fails
+For Text-to-SQL, execution success indicates whether a query runs without error; it does not establish that
+the query retrieves the intended information. We are also going to implement an error correction loop, which
+will entail the following steps. If a generated SQL query fails
 to execute due to a database syntax or runtime error, the error log is fed back to the model, granting it up
 to three retries beyond the initial attempt to self-correct the query. The system logs the exact number of retries
 required to achieve successful execution. If the model fails to produce an executable query after all four
-attempts, it is marked as a definitive failure. Result correctness is evaluated separately.
+attempts, it is marked as a definitive failure. The text-based metrics assess agreement with the reference
+answer, rather than independently verifying semantic correctness.
 
 The decision to enforce a strict three-retry cap reflects a user-centric evaluation philosophy. Since
 non-technical end users typically lack the SQL knowledge required to fix broken queries manually, a model

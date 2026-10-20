@@ -13,7 +13,7 @@ than re-exported here, because it depends on ``pipelines.types`` (which depends 
 
 from metrics.bertscore import bert_score_batch
 from metrics.exact_match import normalized_exact_match
-from metrics.execution import execution_accuracy, rows_to_canonical
+from metrics.execution import execution_accuracy
 from metrics.rouge import rouge_l
 from metrics.types import AccuracyScores, ExecutionScore
 
@@ -22,7 +22,6 @@ __all__ = [
     "rouge_l",
     "bert_score_batch",
     "execution_accuracy",
-    "rows_to_canonical",
     "AccuracyScores",
     "ExecutionScore",
 ]

@@ -316,7 +316,6 @@ def test_single_orchestrator_cli_writes_every_artifact(tmp_path: Path) -> None:
             "bertscore_f": 0.9,
             "rouge_l_f": 0.7,
         },
-        "execution": {"result_match": True},
         "attempts": [
             {
                 "llm_metrics": {

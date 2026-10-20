@@ -60,7 +60,6 @@ DEFAULT_COLUMNS: tuple[str, ...] = (
     "scores.bertscore_r",
     "scores.bertscore_f",
     "execution.execution_accuracy",
-    "execution.result_match",
     SOURCE_FILE_COLUMN,
 )
 
@@ -88,7 +87,7 @@ def select_complete_question_cohort(results: pd.DataFrame) -> CompleteQuestionCo
     in that dataset has a row with no pipeline error and a non-empty generated answer. The
     returned records therefore give every displayed method the same questions and models.
     Text-to-SQL success here means successful generation, matching the historical filtering of
-    the efficiency plots; SQL execution correctness is analyzed separately.
+    the efficiency plots; reference-answer agreement is scored separately.
     """
     required_columns = {
         "dataset",

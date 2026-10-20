@@ -21,7 +21,7 @@ def render_error_correction_table(
     *,
     label: str = TEXT_TO_SQL_RETRY_TABLE_LABEL,
 ) -> str:
-    """Render terminal execution attempt, correctness, and retry-time counts."""
+    """Render terminal execution attempt and retry-time counts."""
     rows: list[str] = []
     for dataset in DATASET_ORDER:
         dataset_rows = analysis.outcome_summary[
@@ -37,7 +37,6 @@ def render_error_correction_table(
                         RETRY_OUTCOME_LABELS[outcome],
                         f"{int(row['run_count']):,}",
                         f"{float(row['run_percentage']):.2f}\\%",
-                        f"{int(row['correct_result_count']):,}",
                         f"{float(row['total_retry_generation_s']):,.1f}",
                         f"{float(row['average_retry_generation_s']):.2f}",
                     )
@@ -60,11 +59,11 @@ def render_error_correction_table(
             ),
             f"  \\label{{{label}}}",
             r"  \resizebox{\textwidth}{!}{%",
-            r"  \begin{tabular}{@{}llrrrrr@{}}",
+            r"  \begin{tabular}{@{}llrrrr@{}}",
             r"    \toprule",
             (
-                r"    Dataset & Terminal outcome & Runs & Share & Correct results & "
-                r"Added time (s) & Mean added (s) \\"
+                r"    Dataset & Terminal outcome & Runs & Share & Added time (s) & "
+                r"Mean added (s) \\"
             ),
             r"    \midrule",
             *rows,
@@ -74,8 +73,8 @@ def render_error_correction_table(
             r"  \vspace{0.4em}",
             (
                 r"  \parbox{\linewidth}{\scriptsize \textit{Note:} Attempt labels identify "
-                r"the generation on which SQL first executed successfully. Correct results "
-                r"also matched the reference rows. Added time is model-generation time from "
+                r"the generation on which SQL first executed successfully. Added time is "
+                r"model-generation time from "
                 r"attempts after the first; per-attempt SQL execution time was not persisted "
                 r"separately and is excluded.}"
             ),
