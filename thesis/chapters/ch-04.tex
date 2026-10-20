@@ -9,11 +9,11 @@ test reproducibility.
 
 All experiments are executed on the FRIDA \cite{ulfri_rdc} high-performance computing cluster operated by the
 Research Data
-Centre at the Faculty of Computer and Information Science (RDC@FRI), University of Ljubljana. FRIDA is
+Centre at the Faculty of Computer and Information Science, University of Ljubljana. FRIDA is
 managed by the Slurm workload scheduler, which provides GPU allocation and walltime-based job
 preemption. The primary compute target is a single NVIDIA H100 GPU with 80~GB of high-bandwidth memory, which
 provides sufficient capacity to hold even the largest quantized model (27~billion parameters) entirely in GPU
-memory while maintaining a 128K-token key-value cache.
+memory while maintaining a 128K-token key--value (KV) cache.
 
 \subsection{Container Environment}
 
@@ -64,7 +64,7 @@ The following parameters are held constant across all models and experiments:
   \item \textbf{GPU offload:} all model layers reside on the GPU (no CPU fallback is used).
   \item \textbf{Temperature:} 0,0 (greedy decoding), ensuring deterministic and reproducible outputs across runs.
   \item \textbf{Maximum output tokens:} 2.048.
-  \item \textbf{KV-cache reset:} the key-value cache is fully cleared between consecutive questions,
+  \item \textbf{KV-cache reset:} the KV cache is fully cleared between consecutive questions,
     preventing any information leakage or prefix-caching effects that could distort timing measurements.
 \end{itemize}
 
@@ -72,7 +72,7 @@ The following parameters are held constant across all models and experiments:
 
 The benchmark system is implemented as a Python package, structured using a standard \texttt{src} layout.
 
-\subsection{CLI Pipeline}
+\subsection{Command-Line Pipeline}
 
 The evaluation workflow is divided into six sequential stages, each exposed as an independent command-line entry point:
 
@@ -81,12 +81,12 @@ The evaluation workflow is divided into six sequential stages, each exposed as a
   \item \textbf{Sample} - materializes sub-sampled BIRD databases to disk as standalone SQLite files,
     ensuring all downstream consumers read identical data.
   \item \textbf{References} - executes each example's gold SQL query against the appropriate database,
-    producing reference answer rows persisted as NDJSON.
+    producing reference answer rows persisted as newline-delimited JSON (NDJSON).
   \item \textbf{Convert} - optionally serializes all databases into all six formats and writes them to disk
     for inspection and debugging.
   \item \textbf{Benchmark} - runs one slice of the experiment (a specific model, dataset, pipeline, and set
     of formats), recording raw model outputs and timing metrics.
-  \item \textbf{Score} - computes retrieval accuracy metrics (ROUGE-L, BERTScore, execution accuracy) in a
+  \item \textbf{Score} - computes NEM, ROUGE-L, BERTScore, and result match in a
     deferred pass over the benchmark outputs.
 \end{enumerate}
 
@@ -98,8 +98,8 @@ the same conditions during all the experiment runs.
 
 \subsection{Streaming and Timing Measurement}
 
-Backend always streams its responses (token by token). Streaming is essential because time-to-first-token
-(TTFT), can only be measured by observing when the first token arrives after the request is dispatched.
+The backend always streams its responses (token by token). Streaming is essential because TTFT
+can only be measured by observing when the first token arrives after the request is dispatched.
 
 We monitor the token stream for reasoning phase markers. Models in the Qwen~3.5 family emit explicit
 \texttt{<think>...</think>} blocks containing their thinking part of the answer. We timestamp the closing
@@ -183,15 +183,16 @@ capability remains the variable under test.
 \section{Scoring Pass}
 
 Accuracy metrics are computed in a separate pass. We read the raw benchmark NDJSON, and join each record with
-its pre-computed reference answer, and write a scored output file. Three metrics are computed as described in
+its pre-computed reference answer, and write a scored output file. The metrics are computed as described in
 Chapter~\ref{ch:methodolgy}:
 
 \begin{itemize}
+  \item \textbf{NEM:} checks equality between the textual output and reference answer after normalization.
   \item \textbf{ROUGE-L:} measures the longest common subsequence overlap between the model's output and the
     reference answer, using Porter stemming for normalization.
   \item \textbf{BERTScore:} computes contextual embedding similarity using the Roberta large model
     with baseline rescaling.
-  \item \textbf{Exact match:} (Text-to-SQL only) compares the predicted query's result set against the
+  \item \textbf{Result match:} (Text-to-SQL only) compares the predicted query's result set against the
     gold query's result set. Comparison is order-sensitive only when the gold SQL contains a top-level
     \texttt{ORDER BY} clause; otherwise, row sets are compared as unordered collections with numeric canonicalization.
 \end{itemize}

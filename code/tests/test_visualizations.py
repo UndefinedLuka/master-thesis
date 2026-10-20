@@ -31,7 +31,7 @@ def test_shared_display_labels_match_publication_style() -> None:
         "SQL",
     ]
     assert list(METRIC_TITLES.values()) == [
-        "Normalized Exact Match",
+        "NEM",
         "ROUGE-L F1",
         "BERTScore F1",
     ]

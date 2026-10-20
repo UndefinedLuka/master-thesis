@@ -271,7 +271,7 @@ def plot_database_size_accuracy_metric(
             xx, yy = (dx * dx).sum(axis=1), (dy * dy).sum(axis=1)
             xy = (dx * dy).sum(axis=1)
             valid = (xx > 0) & (yy > 0)
-            interval = "CI unavailable"
+            interval = "Interval unavailable"
             if len(x) >= 3 and valid.mean() >= 0.95:
                 draws = xy[valid] / np.sqrt(xx[valid] * yy[valid])
                 lower, upper = np.quantile(draws, [0.025, 0.975])

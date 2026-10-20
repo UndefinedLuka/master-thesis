@@ -167,7 +167,7 @@ def test_table_and_figures_contain_all_requested_metrics(tmp_path: Path) -> None
     ]
     assert len(latency_axes[0].containers) == 2
     assert [text.get_text() for text in latency_figure.legends[0].get_texts()] == [
-        "Time to first token",
+        "TTFT",
         "Generation after first token",
     ]
 

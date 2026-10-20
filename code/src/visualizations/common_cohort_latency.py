@@ -35,7 +35,7 @@ def plot_common_cohort_latency(analysis: CommonCohortAnalysis) -> Figure:
     datasets = cohort_datasets(analysis)
     figure, axes = plt.subplots(1, len(datasets), figsize=(12.2, 5.1), squeeze=False)
     phases = (
-        ("average_ttft_s", "ttft", "First-token waits"),
+        ("average_ttft_s", "ttft", "TTFT (cumulative for SQL)"),
         ("average_generation_time_s", "generation", "Generation after first tokens"),
         ("average_sql_execution_time_s", "sql", "SQL execution"),
     )

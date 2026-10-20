@@ -40,11 +40,11 @@ CSV and TOON provided the strongest overall balance between token consumption an
 required the fewest tokens in both datasets, while TOON remained close behind. In contrast, JSON and XML
 include field names for individual values, causing their overhead to grow as the number of
 rows and columns increases. The resulting increase in input tokens primarily extended the time required to
-process the prompt, as reflected in the higher time to first token and total response latency reported in
+process the prompt, as reflected in the higher TTFT and total response latency reported in
 Chapter~\ref{ch:results}. Compact formats also allowed more databases to fit within the context window.
 
 No serialization format was uniformly best across both datasets and all retrieval metrics. On Spider, TOON
-achieved the highest Normalized Exact Match, Markdown the highest BERTScore~F1, and CSV the highest
+achieved the highest NEM, Markdown the highest BERTScore~F1, and CSV the highest
 ROUGE-L~F1. On BIRD, CSV achieved the highest score for all three metrics, with TOON following closely. The
 greater separation between formats on BIRD can largely be attributed to its larger and more realistic
 databases, schemas, and questions. Verbose representations produced larger serialized payloads and more
@@ -153,7 +153,7 @@ unnecessary complexity or risk losing relevant meaning.
 \subsection{Operational Cost and Latency Implications}
 
 The latency profiles of the two pipelines were dominated by different stages. In Direct Context Inference,
-most of the latency occurred before the first output token was generated. Time to first token increased with
+most of the latency occurred before the first output token was generated. TTFT increased with
 input size because the model had to process the complete serialized database before producing an answer. This
 effect was particularly visible for verbose formats such as JSON and XML. Differences in output-token
 consumption were comparatively modest, indicating that serialization primarily affected the cost of
@@ -200,8 +200,8 @@ database. Direct Context Inference avoids query execution but requires the relev
 serialized, and transferred into the prompt for each request.
 
 Practitioners should therefore monitor input, output, and reasoning-token consumption separately, together
-with context-window utilization and overflow frequency. Latency should be decomposed into time to first
-token, generation time after the first token, SQL execution time, and total end-to-end response time.
+with context-window utilization and overflow frequency. Latency should be decomposed into TTFT,
+generation time after the first token, SQL execution time, and total end-to-end response time.
 Text-to-SQL systems should additionally track retry counts, cumulative costs across attempts, query timeouts,
 and execution-success and correct-result rates as separate measures. Local deployments should also monitor
 throughput and hardware utilization, while API-based deployments should track actual expenditure under the
@@ -288,7 +288,7 @@ input tokens, and produced lower average latency than Direct Context Inference. 
 that Text-to-SQL was superior for every individual question or deployment environment, but they provide
 strong support for treating it as the default for queryable structured data. A per-database comparison of
 mean scores across the same questions and ten retained models supports this preference across the observed
-size range: Text-to-SQL exceeded every direct-context format in Normalized Exact Match and BERTScore~F1 on
+size range: Text-to-SQL exceeded every direct-context format in NEM and BERTScore~F1 on
 all 31 databases, and in ROUGE-L~F1 on 30 of 31. The ROUGE-L exception was BIRD's \texttt{toxicology}. On the
 successful shared cohort defined in Section~\ref{sec:common-cohort-comparison}, it used fewer mean input
 tokens than every direct-context format on all 20 represented databases, and had lower mean latency than
@@ -402,7 +402,7 @@ efficiency by adapting the retry limit according to the error type and the accum
 \label{sec:validity-limitations}
 
 The reported accuracy measures should be interpreted as complementary indicators rather than as a complete
-definition of factual correctness. Normalized Exact Match is strict and can penalize a correct answer expressed
+definition of factual correctness. NEM is strict and can penalize a correct answer expressed
 differently from the reference, while ROUGE-L depends on lexical sequence overlap and BERTScore measures
 semantic similarity that may not always distinguish between a related but factually incorrect answer and a
 correct one. Reporting all three metrics therefore reduces dependence on the limitations of any individual

@@ -30,14 +30,15 @@ the following three categories.
     types like Markdown \cite{macfarlane2024commonmark}, and LaTeX \cite{lamport1994latex}, which represent
     information in a human-readable form while embedding structural metadata (headings, lists, and semantic tags).
   \item \textbf{Structural Formats:} This category represents the most common data interchange languages in
-    software development, notably JSON (JavaScript Object Notation) \cite{bray2017javascript}, YAML (YAML
-    Ain't Markup Language) \cite{benkiki2009yaml}, TOML \cite{preston2021toml}, HTML \cite{whatwghtml}, SVG
+    software development, notably JSON \cite{bray2017javascript}, YAML (YAML Ain't Markup Language)
+    \cite{benkiki2009yaml}, TOML \cite{preston2021toml}, HTML \cite{whatwghtml}, SVG
     \cite{ferajoli2011svg}, and XML \cite{bray1998xml}. These formats rely on key-value pairs and nesting to
     represent multi-dimensional data
 
   \item \textbf{Token Optimized Formats:} This category represents a newly forming group of formats which are
     specifically being developed to minimize number of tokens being used when providing information in this format
-    to an LLM. In this group we can identify TOON \cite{toon-format-2025} and ONTO \cite{onto-serialization-format}.
+    to an LLM. In this group we can identify Token-Oriented Object Notation (TOON) \cite{toon-format-2025}
+    and Object Notation for Token Optimization (ONTO) \cite{onto-serialization-format}.
 \end{itemize}
 
 These differences in representation matter both for how data is organized, and for how accurately
@@ -64,7 +65,7 @@ verbosity. These formats are designed in such a way that each fields carries its
 \cite{bray1998xml, bray2017javascript}, through
 repeated key words, which create overhead when working with LLMs. The experiments performed in
 \cite{onto-serialization-format}, were
-carried out across $1.000$ IoT telemetry records. They have shown that majority of the tokens used for
+carried out across $1.000$ Internet of Things telemetry records. They have shown that majority of the tokens used for
 encoding data in the JSON format is used up by field names and punctuation ($60.500$ tokens), while the
 actual semantic values take up only $14.274$ tokens, out of $79.774$ tokens. This overhead proves to be
 problematic, as most pricing is done based on the input and output tokens used, with this higher token
@@ -73,8 +74,7 @@ that reduction in tokens used directly correlates to lower latency, when using t
 compared to JSON.
 
 In order to address these inefficiencies, there have been multiple efforts aimed at them, in form of ONTO
-(Object Notation for Token Optimization)\cite{onto-serialization-format} and TOON (Token-Oriented Object
-Notation)\cite{toon-format-2025}. Both formats are
+\cite{onto-serialization-format} and TOON \cite{toon-format-2025}. Both formats are
 oriented at fixing the problem of repeated schema for each record, they fix this by declaring all the fields
 only once at the top of the record, and values are arranged in pipe delimited rows with indentation based
 hierarchy. Both of these models claim to use significantly less tokens (TOON $39,9\%$ fewer tokens compared
@@ -85,13 +85,14 @@ Compact formats reduce the amount of text supplied to the model, but direct-cont
 requires the relevant records to be included in its input. Text-to-SQL offers another approach: the model
 generates a query, while the database engine retrieves the requested information.
 
-\section{Large Language Models for Text-to-SQL}
+\section{LLMs for Text-to-SQL}
 
-Translating natural language to executable Structured Query Language (SQL) is a long standing problem. The
+Translating natural language to executable SQL is a long standing problem. The
 first attempts at this problem operated primarily on rigid, handcrafted grammar rules and pattern-matching
 frameworks \cite{woods1972lunar, warren1982efficient} which worked decently fine on a narrow domain, but each
 new schema required new set of rules. With the raise of neural networks they started being used for this
-task, such as LSTM-based \cite{graves2012long} and Transformer-based \cite{vaswani2017attention} methods. But
+task, through methods based on long short-term memory networks \cite{graves2012long} and Transformers
+\cite{vaswani2017attention}. But
 these two methods faced similar problems that they could not generalize on unseen schemas. State-of-the-art
 Text-to-SQL systems use LLMs as query generators, often within larger workflows that retrieve relevant
 context, generate alternative queries, and verify their outputs \cite{hong2025next}. Their performance
@@ -229,8 +230,8 @@ different in structure.
 
 \subsubsection{Exact Match and Token-Level F1 Score}
 
-The simplest metric is the Exact Match (EM) and token level F1 score. They were popularized by early benchmarks like
-Stanford Question Answering Dataset (SQuAD) \cite{rajpurkar2016squad}. EM is a strict binary indicator,
+The simplest metrics are exact match and token-level F1. They were popularized by early benchmarks like
+the Stanford Question Answering Dataset \cite{rajpurkar2016squad}. Exact match is a strict binary indicator,
 giving a score of $100$ only
 if the normalized candidate is completely the same as ground truth. Otherwise it gives the score of $0$. This
 is effective for short answers and answers that are part of a strict set (single digits, dates, or specific
@@ -243,9 +244,10 @@ correctness and is not a strict binary indicator.
 
 \subsubsection{Bilingual Evaluation Understudy}
 
-Originally it was designed for scoring machine translations, the BLEU \cite{papineni2002bleu} metric measures
+Originally designed for scoring machine translations, the Bilingual Evaluation Understudy (BLEU)
+\cite{papineni2002bleu} metric measures
 precision of $n$-grams
-in a candidate answer compared to the reference text. Brevity penalty was added to prevent models from
+in a candidate answer compared to the reference text. A brevity penalty (BP) was added to prevent models from
 outputting excessively short sequences.
 
 \begin{equation}
@@ -260,7 +262,7 @@ outputting excessively short sequences.
 
 As stated in \cite{callison2006re}, still the metric has shortcomings, it cannot distinguish between
 synonyms, all the words are equally weighted
-and missing content-bearing words brings no additional penalty. The brevity penalty is an attempt to
+and missing content-bearing words brings no additional penalty. BP is an attempt to
 compensate for a shortcoming that it cannot compute recall.
 
 \subsubsection{Recall-Oriented Understudy for Gisting Evaluation}
@@ -290,7 +292,7 @@ We can use this score to calculate precision and recall. In order to get precisi
 greedy cosine similarity with candidate length, and for recall we should normalize it with the length of the
 reference text. These two can later be used to calculate F1 score
 
-\subsubsection{Large Language Model Evaluators}
+\subsubsection{LLM Evaluators}
 
 The general idea is to use a superior LLM to score the results of an LLM which has fewer parameters. The idea
 is that the model will be able to capture subtle differences between answers. Two papers present different
@@ -325,7 +327,7 @@ reference one, but produce the same result, or it can be very similar but fail t
 
 \subsubsection{Exact Set Match}
 
-Exact Set Match (ESM), was introduced in Spider benchmark \cite{yu2018spider}, it tries to evaluate queries
+Exact Set Match was introduced in the Spider benchmark \cite{yu2018spider}; it tries to evaluate queries
 without executing
 them. The idea is to parse both reference and proposed queries into abstract syntax trees, normalize them to
 remove syntactic variations, and at the end perform set based comparison of the SQL subclasses. This allows
@@ -334,15 +336,15 @@ different syntax, such as using nested subqueries instead of a join.
 
 \subsubsection{Execution Accuracy}
 
-Execution Accuracy (EX) \cite{yu2018spider}, evaluates both queries directly on the same database and tries
+Execution Accuracy \cite{yu2018spider} evaluates both queries directly on the same database and tries
 to compare the
 results. This is a binary evaluation metric and it evaluates the score of $100$ if and only if the results
 are completely the same, otherwise it awards score of $0$.
 
 \subsubsection{Valid Efficiency Score}
 When working with enterprise databases, correctness is only one piece of the equation. Query execution
-efficiency directly influences latency and cost. This is the reason for introduction Valid Efficiency Score
-(VES) in \cite{li2023can}, and it aims to score both correctness and efficiency. By evaluation both of these it
+efficiency directly influences latency and cost. This motivated the introduction of the Valid Efficiency Score
+in \cite{li2023can}, which aims to score both correctness and efficiency. By evaluating both of these it
 ensures that models are penalized for inefficient queries, such as joins using unindexed columns, which are
 unsuitable for production workflows.
 

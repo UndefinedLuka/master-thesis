@@ -189,6 +189,9 @@ def test_artifacts_show_all_methods_and_distinguish_log_and_linear_scales(tmp_pa
     tokens = plot_common_cohort_token_usage(analysis)
     models = plot_common_cohort_latency_by_model(analysis)
     assert len(latency.axes) == 2
+    assert [text.get_text() for text in latency.legends[0].get_texts()][0] == (
+        "TTFT (cumulative for SQL)"
+    )
     assert len(tokens.axes) == 4
     assert [axis.get_xscale() for axis in tokens.axes] == ["log", "log", "linear", "linear"]
     assert len(models.axes) == 3  # two panels plus the colorbar

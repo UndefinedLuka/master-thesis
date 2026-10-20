@@ -70,7 +70,7 @@ TOKENIZER_FAMILY_COLORS: dict[str, str] = {
 }
 
 METRIC_TITLES: dict[str, str] = {
-    "normalized_exact_match": "Normalized Exact Match",
+    "normalized_exact_match": "NEM",
     "rouge_l_f": "ROUGE-L F1",
     "bertscore_f": "BERTScore F1",
 }
@@ -162,7 +162,7 @@ RETRY_OUTCOME_LABELS: dict[str, str] = {
 
 
 LATENCY_PHASE_LABELS: dict[str, str] = {
-    "ttft": "Time to first token",
+    "ttft": "TTFT",
     "generation": "Generation after first token",
 }
 LATENCY_PHASE_COLORS: dict[str, str] = {
@@ -170,7 +170,7 @@ LATENCY_PHASE_COLORS: dict[str, str] = {
     "generation": "#E69F00",
 }
 TEXT_TO_SQL_LATENCY_PHASE_LABELS: dict[str, str] = {
-    "ttft": "Cumulative first-token waits",
+    "ttft": "Cumulative TTFT",
     "generation": "Generation after first tokens",
     "sql": "SQL execution",
 }

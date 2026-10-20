@@ -169,6 +169,9 @@ def test_each_metric_plot_has_six_format_panels_and_both_datasets(tmp_path: Path
         ]
         assert all(axis.get_xscale() == "log" for axis in axes)
         assert all(len(axis.collections) == 2 for axis in axes)
+        annotations = [text.get_text() for axis in axes for text in axis.texts]
+        assert any("Interval unavailable" in text for text in annotations)
+        assert not any("CI unavailable" in text for text in annotations)
         assert [text.get_text() for text in figure.legends[0].get_texts()] == [
             "Spider",
             "BIRD",

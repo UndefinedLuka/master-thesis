@@ -6,7 +6,7 @@
 In the current age of information technology the amount of generated and stored information is increasing
 exponentially. A lot of this data comes in the structured form, which allows for easier processing, searching
 and exchange of information between different systems. Alongside the speed of data creation we are witnesses
-of the rise of LLMs (Large Language Models). These models show a promising ability in understanding natural
+of the rise of large language models (LLMs). These models show a promising ability in understanding natural
 language, generating texts, analyzing code and coming to conclusions.
 
 This far LLMs have shown a great promise when utilized for the purposes of extracting and processing information from
@@ -15,8 +15,9 @@ researchers have to carefully balance the three key aspects: accuracy, latency a
 
 In order for LLMs to process structured data, we first need to provide it to the model in the form it can
 understand. Since it cannot read the data directly, we need to choose
-the right serialization format. Currently the most widespread formats in the industry are JSON, XML, and
-CSV, but many others are present as well. Since these formats can easily be converted between each other,
+the right serialization format. Currently the most widespread formats in the industry are JavaScript Object
+Notation (JSON), Extensible Markup Language (XML), and comma-separated values (CSV), but many others are present
+as well. Since these formats can easily be converted between each other,
 the question arises: which format is the optimal when working with LLMs? By choosing the right format
 we could directly influence cost, latency, and accuracy, with minimal price being paid by the whole system
 for changing from one format to another.
@@ -30,7 +31,7 @@ isolation. However,
 there is a lack of a unified framework that jointly consider data serialization format, extraction method, and
 system-level efficiency. Choice of data serialization format directly dictates the number of tokens, which increases
 computational complexity, finally leading to higher latency and operational costs. In real
-information systems, where the number of queries is high, and each API is
+information systems, where the number of queries is high, and each application programming interface (API) is
 limited, only optimizing for accuracy and increasing the latency and cost is not acceptable.
 
 Alongside data formats we have to consider other possibilities for information extraction. We are going to
@@ -39,7 +40,7 @@ explore the following two paths:
 \begin{itemize}
   \item In-Context Inference: Directly passing the raw serialized data to the prompt (context) of the LLM, so
     it can extract the information directly
-  \item Program aided extraction: By using the LLM for generating code or an SQL prompt, based on the limited
+  \item Program aided extraction: By using the LLM for generating code or a Structured Query Language (SQL) query, based on the limited
     number of examples, which is executed on the given data in order to extract information
 \end{itemize}
 

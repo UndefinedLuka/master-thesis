@@ -244,7 +244,7 @@ def test_text_to_sql_figures_show_metrics_tokens_latency_and_retries(tmp_path: P
     assert len(accuracy_axes) == 2
     assert all(len(row) == 3 for row in accuracy_axes)
     assert [axis.get_title() for axis in accuracy_axes[0]] == [
-        "Normalized Exact Match",
+        "NEM",
         "BERTScore F1",
         "ROUGE-L F1",
     ]
@@ -253,6 +253,9 @@ def test_text_to_sql_figures_show_metrics_tokens_latency_and_retries(tmp_path: P
         "Average output tokens",
     ]
     assert all(len(axis.containers) == 3 for axis in latency_axes)
+    assert [text.get_text() for text in latency_figure.legends[0].get_texts()][0] == (
+        "Cumulative TTFT"
+    )
     assert any("1.00 retries" in text.get_text() for text in latency_axes[0].texts)
 
     figures_dir = tmp_path / "figures"
