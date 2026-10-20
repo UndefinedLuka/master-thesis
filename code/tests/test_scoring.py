@@ -204,6 +204,53 @@ def test_score_records_failed_output_keeps_bertscore_null_when_disabled() -> Non
     assert stats["failed_output_zeroed"] == 1
 
 
+def test_score_records_mixed_valid_and_failed_batch_with_bertscore() -> None:
+    direct = base_result(_ex(0), pipeline="direct", fmt="json", model_id="m")
+    direct["raw_output"] = "Alice"
+    direct_failed = base_result(_ex(1), pipeline="direct", fmt="json", model_id="m")
+    direct_failed["error"] = "generation failed"
+
+    sql = base_result(_ex(2), pipeline="text_to_sql", fmt=None, model_id="m")
+    sql["predicted_rows"] = [{"name": "Bob"}]
+    sql_failed = base_result(_ex(3), pipeline="text_to_sql", fmt=None, model_id="m")
+    sql_failed["execution_success"] = False
+    sql_failed["definitive_failure"] = True
+
+    refs = references_from_rows(
+        [
+            _ref([{"name": "Alice"}]),
+            {"example_id": "spider:db:1", "rows": [{"name": "Carol"}]},
+            {"example_id": "spider:db:2", "rows": [{"name": "Bob"}]},
+            {"example_id": "spider:db:3", "rows": [{"name": "Dana"}]},
+        ]
+    )
+    captured: dict[str, list[str]] = {}
+
+    def capture_bert(preds: list[str], reference_texts: list[str]) -> list[ScoreTriple]:
+        captured["predictions"] = preds
+        captured["references"] = reference_texts
+        return [(0.91, 0.82, 0.87) for _ in preds]
+
+    scored, stats = score_records(
+        [direct, direct_failed, sql, sql_failed],
+        refs,
+        exact_match_fn=_fake_exact_match,
+        rouge_fn=_fake_rouge,
+        bert_batch_fn=capture_bert,
+    )
+
+    assert captured == {
+        "predictions": ["Alice", "Bob"],
+        "references": ["Alice", "Bob"],
+    }
+    assert scored[0]["scores"]["bertscore_f"] == 0.87
+    assert scored[1]["scores"]["bertscore_f"] == 0.0
+    assert scored[2]["scores"]["bertscore_f"] == 0.87
+    assert scored[3]["scores"]["bertscore_f"] == 0.0
+    assert stats["bertscore_enabled"] is True
+    assert stats["failed_output_zeroed"] == 2
+
+
 def test_score_records_skips_missing_reference() -> None:
     r = base_result(_ex(99), pipeline="direct", fmt="json", model_id="m")
     r["raw_output"] = "x"

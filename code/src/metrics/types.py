@@ -8,8 +8,11 @@ from typing import TypedDict
 class AccuracyScores(TypedDict):
     """Retrieval-accuracy scores attached to a pipeline result by the scoring pass.
 
-    BERTScore fields are ``None`` when scoring ran with ``--no-bertscore`` — never 0.0,
-    so downstream analysis can distinguish "not computed" from "scored zero".
+    BERTScore precision, recall, and F1 contain raw, unrescaled similarities when computed.
+    Failed outputs with a usable reference receive zero for each enabled accuracy metric; these
+    BERTScore fields are ``None`` instead when scoring ran with ``--no-bertscore``. Records
+    without a usable reference are not scored. Thus ``None`` means "not computed," distinct from
+    a computed raw score or an explicit failure zero.
     """
 
     normalized_exact_match: float

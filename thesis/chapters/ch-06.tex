@@ -21,18 +21,19 @@ correctness.
 The results broadly support the expectation that compact data representations improve the operational
 efficiency and feasibility of Direct Context Inference. However, two findings were less expected. First,
 Text-to-SQL achieved a substantially greater accuracy advantage over Direct Context Inference than
-anticipated. Second, the differences in retrieval accuracy among serialization formats on Spider were
-relatively small, despite their considerable differences in token consumption. These findings indicate that
+anticipated. Second, the differences in NEM and ROUGE-L among serialization formats on Spider were
+relatively small, despite their considerable differences in token consumption; raw BERTScore showed greater
+separation between compact CSV/TOON and the other formats. These findings indicate that
 pipeline selection is the primary decision, while serialization format becomes an important secondary
 consideration when Direct Context Inference is used.
 
 \subsection{Serialization Format Trade-offs in Direct Context Inference}
 
-The observed retrieval scores were closely grouped across serialization formats on Spider. The
-paired differences and their intervals provide a more direct comparison than the ordering of the
-mean scores, but do not establish that the formats are equivalent. Within the evaluated workload,
-format selection can therefore consider the substantial differences in input-token consumption
-alongside the smaller observed accuracy differences.
+NEM and ROUGE-L retrieval scores were closely grouped across serialization formats on Spider, but raw
+BERTScore separated CSV and TOON from the other formats. The paired differences and their intervals provide
+a more direct comparison than the ordering of the mean scores, but do not establish that the formats are
+equivalent. Within the evaluated workload, format selection should therefore consider the substantial
+differences in input-token consumption alongside metric-dependent accuracy differences.
 This conclusion is conditional on the serialized representation retaining all information and relationships
 required to answer the question. Compactness should not be prioritized if it changes the meaning or structure
 of the source data.
@@ -45,9 +46,12 @@ process the prompt, as reflected in the higher TTFT and total response latency r
 Chapter~\ref{ch:results}. Compact formats also allowed more databases to fit within the context window.
 
 No serialization format was uniformly best across both datasets and all retrieval metrics. On Spider, TOON
-achieved the highest NEM, Markdown the highest BERTScore~F1, and CSV the highest
-ROUGE-L~F1. On BIRD, CSV achieved the highest score for all three metrics, with TOON following closely. The
-greater separation between formats on BIRD can largely be attributed to its larger and more realistic
+achieved the highest NEM, while CSV achieved the highest BERTScore~F1 and ROUGE-L~F1. Raw BERTScore means
+were 0,8154 for CSV and 0,8148 for TOON, compared with 0,717--0,720 for the other formats; NEM and ROUGE-L
+differences remained smaller. On BIRD, CSV achieved the highest score for all three metrics, with TOON
+following closely. For BERTScore, CSV's mean was 0,424 versus 0,169 for XML, a ratio of about 2,5; the
+CSV-to-XML ratio was about 2 for NEM and ROUGE-L. The greater separation between formats on BIRD can largely
+be attributed to its larger and more realistic
 databases, schemas, and questions. Verbose representations produced larger serialized payloads and more
 context-window failures, which reduced their end-to-end accuracy. Therefore, compactness affects not only
 operational efficiency but also whether Direct Context Inference is feasible at all.
@@ -135,13 +139,14 @@ difference of 5,5 percentage points. This difference is consistent with BIRD
 presenting a more difficult task, although the experiment does not isolate the individual contribution of
 schema size, data quality, domain, or question complexity.
 
-The Direct Context Inference results show a consistently negative relationship between effective database
-size and retrieval accuracy. Across serialization formats, the Pearson correlations ranged from approximately
-\(-0,57\) to \(-0,66\) on Spider and from \(-0,58\) to \(-0,79\) on BIRD. Effective database size is
-therefore an important predictor of Direct Context Inference performance. The relationship should be interpreted
-as an association rather than proof that database size alone causes lower accuracy. Each database also
-differs in its domain, schema, data quality, and questions, while context-window failures introduce
-structural zero scores into the analysis. By contrast, the relationship between input size and
+Across the complete database sets, the Direct Context Inference results show a negative relationship between
+effective database size and accuracy for each metric and format. For raw BERTScore, Pearson correlations
+ranged from approximately \(-0,85\) to \(-0,86\) on Spider and \(-0,60\) to \(-0,84\) on BIRD. Effective
+database size is therefore associated with Direct Context Inference performance, although the relationship is
+not proof that size alone causes lower accuracy. Each database also differs in its domain, schema, data quality,
+and questions, while context-window failures introduce structural zero scores. Among databases with positive
+scores, feasible subsets can be small and their size relationships are not uniformly negative, so they do not
+establish a consistent within-feasible-data trend. By contrast, the relationship between input size and
 prompt-processing latency is direct, since processing additional input tokens requires additional computation.
 
 These findings further clarify the conditions that favour each extraction method. When information is already
@@ -289,8 +294,10 @@ input tokens, and produced lower average latency than Direct Context Inference. 
 that Text-to-SQL was superior for every individual question or deployment environment, but they provide
 strong support for treating it as the default for queryable structured data. A per-database comparison of
 mean scores across the same questions and ten retained models supports this preference across the observed
-size range: Text-to-SQL exceeded every direct-context format in NEM and BERTScore~F1 on
-all 31 databases, and in ROUGE-L~F1 on 30 of 31. The ROUGE-L exception was BIRD's \texttt{toxicology}. On the
+size range: Text-to-SQL exceeded every direct-context format in NEM on all 31 databases, in BERTScore~F1 on
+29 of 31, and in ROUGE-L~F1 on 30 of 31. The BERTScore exceptions were Spider's \texttt{poker\_player} and
+BIRD's \texttt{thrombosis\_prediction}; the ROUGE-L exception was BIRD's \texttt{toxicology}. These are
+comparisons of database-level means, not evidence that one method is better on every question. On the
 successful shared cohort defined in Section~\ref{sec:common-cohort-comparison}, it used fewer mean input
 tokens than every direct-context format on all 20 represented databases, and had lower mean latency than
 every format on 15 out of 20. Thus, the preference does not imply superiority on every measure at every
@@ -406,8 +413,10 @@ The reported accuracy measures should be interpreted as complementary indicators
 definition of factual correctness. NEM is strict and can penalize a correct answer expressed
 differently from the reference, while ROUGE-L depends on lexical sequence overlap and BERTScore measures
 semantic similarity that may not always distinguish between a related but factually incorrect answer and a
-correct one. Reporting all three metrics therefore reduces dependence on the limitations of any individual
-measure. For Text-to-SQL, execution success indicates only that a query is syntactically valid and can run
+correct one. Raw BERTScore values are unrescaled semantic similarities, not probabilities; a high similarity
+does not establish correctness, and pipeline failures retain zero scores in end-to-end means. Reporting all
+three metrics therefore reduces dependence on the limitations of any individual measure. For Text-to-SQL,
+execution success indicates only that a query is syntactically valid and can run
 against the database; it does not establish that the query selected the correct tables, joins, filters, or
 aggregations. However, the conversion of SQL result rows into a stable textual representation can still
 affect text-based metrics through choices concerning row ordering, formatting, numeric representation, and
@@ -422,11 +431,12 @@ analysis because no model inference takes place and no meaningful timing or toke
 The strict complete-case cohort ensures that all serialization formats are compared using the same questions
 and models, avoiding a comparison in which verbose formats are evaluated only on the easiest inputs. However,
 this restriction narrows the representativeness of the operational results, particularly for BIRD, where only
-two databases remained in the common cohort. The observed negative relationship between effective database size
-and Direct Context Inference accuracy should also be interpreted carefully. Database size is a direct feasibility
-constraint when a prompt exceeds the context window, but below that boundary it covaries with domain, schema
-complexity, data quality, and question difficulty. The analysis therefore establishes an association rather than
-an isolated causal effect. Similarly, the additional model-generation time caused by SQL retries was measured
+two databases remained in the common cohort. The overall negative relationship between effective database size
+and Direct Context Inference accuracy should also be interpreted carefully. Below the context-window failure
+boundary, feasible positive-score subsets may contain few databases and do not show a uniformly negative
+relationship. Database size covaries with domain, schema complexity, data quality, and question difficulty, so
+the analysis establishes an association rather than an isolated causal effect. Similarly, the additional
+model-generation time caused by SQL retries was measured
 directly, whereas retry-specific SQL execution time was not retained separately. The reported retry overhead
 should consequently be interpreted as model-generation overhead rather than complete end-to-end retry latency.
 

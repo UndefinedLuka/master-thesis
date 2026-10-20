@@ -5,8 +5,8 @@ a single in-memory model — instantiating per call is the main performance trap
 are lazy so the package imports without the optional ``[metrics]`` extra.
 
 Defaults are pinned (``roberta-large`` / ``en``) for reproducibility; change them in
-``config/config.py`` (BERTSCORE_MODEL / BERTSCORE_LANG). ``rescale_with_baseline`` is enabled
-so scores spread across a human-readable range instead of clustering near ~0.85.
+``config/config.py`` (BERTSCORE_MODEL / BERTSCORE_LANG). Scores are the raw BERTScore values:
+baseline rescaling is disabled, so values are not adjusted to spread across a human-readable range.
 """
 
 from __future__ import annotations
@@ -35,7 +35,7 @@ def _scorer(model_type: str, lang: str) -> BERTScorer:
     return BERTScorer(
         model_type=model_type,
         lang=lang,
-        rescale_with_baseline=True,
+        rescale_with_baseline=False,
         use_fast_tokenizer=False,
     )
 

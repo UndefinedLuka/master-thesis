@@ -245,16 +245,37 @@ each input:
   an empty gold SQL answer is represented as the prompt's canonical no-answer value, `N/A`, so a
   correctly abstaining model is not compared against an empty string. Normalized Exact Match uses
   the established SQuAD normalization: lowercase, remove punctuation and English articles, and
-  collapse whitespace before binary exact comparison.
+  collapse whitespace before binary exact comparison. BERTScore uses `roberta-large` with
+  `en` and baseline rescaling disabled; its precision, recall, and F1 are the raw computed values,
+  without clipping. These similarities are not probabilities and raw values are not guaranteed to
+  be nonnegative. Like other text-similarity metrics, BERTScore can still score an incorrect answer
+  highly when it contains similar wording or entities.
 - **Execution success** for Text-to-SQL: binary `1.0` when the generated query executes
   successfully within the retry cap, otherwise `0.0` (stored as `execution_accuracy`). This
   operational measure does not assess answer correctness; both pipelines use the three
   text-based metrics above to assess reference-answer agreement.
 
+When a pipeline, backend, or SQL execution fails and a usable gold reference exists, every enabled
+accuracy metric is explicitly set to zero rather than comparing placeholder output. Records without
+a usable reference are not scored. With `--no-bertscore`, BERTScore fields are `null` for scored
+records; failure zeroes apply to enabled metrics only.
+
 References resolve automatically from `data/<dataset>_references.ndjson` per record, or
 pass `--references <file>` explicitly. Already-scored files are skipped unless
 `--overwrite`. With `--no-bertscore` the `bertscore_*` fields are written as `null` (never
 `0.0`), so "not computed" stays distinguishable from "scored zero".
+
+**Rescoring existing results:** files produced with the previous baseline-rescaled BERTScore
+must be updated consistently before comparing or combining them with raw scores. Move or copy
+prior scored files outside the `results/` tree first so recursive discovery cannot find duplicate
+inputs, then run a full overwrite rescore:
+
+```bash
+uv run python -m cli.score_results --results results/ --overwrite
+```
+
+This regular `score_results` command supports full rescoring; keep the old files outside `results/`
+until the new scores have been validated.
 
 ## Tests & lint
 

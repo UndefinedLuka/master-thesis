@@ -399,8 +399,21 @@ Config knobs (edit `src/config/config.py` before syncing, or on the cluster dire
 sbatch code/deploy/score_results.sbatch
 ```
 
-Runs `score_results` over `results/` on a GPU (BERTScore/roberta-large; downloads once into
-`HF_HOME=thesis/hf-cache`, which the job creates). Re-running skips already-scored slices.
+Runs `score_results` over `results/` on a GPU. BERTScore uses `roberta-large` / `en` with
+baseline rescaling disabled, and downloads the model once into `HF_HOME=thesis/hf-cache` (which
+the job creates). It stores raw precision, recall, and F1 without clipping; these are similarity
+scores, not probabilities, and are not guaranteed to be nonnegative. A failed pipeline, backend,
+or SQL execution receives zero for each enabled accuracy metric when a usable gold reference
+exists; records without one are not scored. With BERTScore disabled its fields are `null`, not
+zero. Re-running skips already-scored slices.
+
+If rescoring files created with baseline-rescaled BERTScore, move prior scored files outside the
+`results/` tree first to avoid duplicate discovery, then run a full overwrite rescore (the regular
+command remains supported):
+
+```bash
+sbatch code/deploy/score_results.sbatch --overwrite
+```
 
 Then `rsync` `results/` back to your machine for analysis:
 

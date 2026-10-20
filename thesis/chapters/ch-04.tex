@@ -190,9 +190,14 @@ Chapter~\ref{ch:methodolgy}:
   \item \textbf{NEM:} checks equality between the textual output and reference answer after normalization.
   \item \textbf{ROUGE-L:} measures the longest common subsequence overlap between the model's output and the
     reference answer, using Porter stemming for normalization.
-  \item \textbf{BERTScore:} computes contextual embedding similarity using the Roberta large model
-    with baseline rescaling.
+  \item \textbf{BERTScore:} computes contextual embedding similarity using \texttt{roberta-large}
+    for English (\texttt{en}), with baseline rescaling disabled. The reported precision, recall,
+    and F1 are raw values.
 \end{itemize}
+
+For a failed pipeline, backend, or SQL execution with a usable reference, each enabled accuracy
+metric is set to zero. Records without a usable reference are not scored; when BERTScore is
+disabled, its fields are null. BERTScore values are similarities, not probabilities.
 
 It should be noted, because of subsampling some gold queries for BIRD dataset yielded empty sets as result,
 such successfully executed quires were retained in the evaluation.

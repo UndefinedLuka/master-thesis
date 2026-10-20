@@ -257,6 +257,9 @@ Conversely, a correct answer expressed in a different form may receive a lower s
 is stricter, but remains sensitive to how equivalent results are represented.
 The text-based metrics therefore measure agreement with the reference representation, rather
 than directly verifying the correctness of each retrieved value.
+BERTScore uses \texttt{roberta-large} for English (\texttt{en}) with baseline rescaling disabled.
+The scoring pass stores raw precision, recall, and F1, while the results report F1. These similarity
+values are not probabilities and are not constrained to be nonnegative.
 
 For Text-to-SQL, execution success indicates whether a query runs without error; it does not establish that
 the query retrieves the intended information. We are also going to implement an error correction loop, which

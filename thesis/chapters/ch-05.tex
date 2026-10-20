@@ -142,9 +142,11 @@ efficiency, and the influence of database size.
 
 Retrieval accuracy was evaluated using NEM, BERTScore~F1, and ROUGE-L~F1. NEM
 measures whether the generated and reference answers are equal after text normalization,
-BERTScore measures their semantic similarity, and ROUGE-L measures their longest-subsequence overlap. The
-reported means include all direct-context runs from the ten retained models, including runs assigned a score
-of zero because the serialized database exceeded the context window. The results therefore represent
+BERTScore reports raw, unrescaled embedding similarities, and ROUGE-L measures their longest-subsequence
+overlap. These BERTScore values are not probabilities: successful answers can have high semantic similarity
+even when they are incorrect, while failed runs retain a score of zero. The reported means include all
+direct-context runs from the ten retained models, including runs assigned a score of zero because the
+serialized database exceeded the context window. The results therefore represent
 end-to-end effectiveness under the fixed 128K-token limit, rather than accuracy conditional on the model
 having produced an answer. Each Spider format summarizes 10.340 runs, while each BIRD format summarizes
 15.340 runs.
@@ -158,12 +160,12 @@ having produced an answer. Each Spider format summarizes 10.340 runs, while each
   \label{fig:direct-accuracy-by-format}
 \end{figure}
 
-Figure~\ref{fig:direct-accuracy-by-format} compares the six serialization formats. The Spider results were
-closely grouped: TOON achieved the highest NEM (0,178), Markdown the highest BERTScore~F1
-(0,211), and CSV the highest ROUGE-L~F1 (0,340). XML had the lowest mean for all three metrics, but the
-absolute difference between the best and worst formats remained limited to 0,014 for NEM,
-0,019 for BERTScore~F1, and 0,032 for ROUGE-L~F1. Consequently, no format was uniformly best on Spider,
-although the compact CSV and TOON representations remained among the strongest across the three metrics.
+Figure~\ref{fig:direct-accuracy-by-format} compares the six serialization formats. On Spider, TOON achieved
+the highest NEM (0,178), CSV the highest BERTScore~F1 (0,815), and CSV the highest ROUGE-L~F1 (0,340).
+The raw BERTScore means separate compact CSV and TOON (0,8154 and 0,8148) from the other formats, which
+range from 0,717 for XML to 0,720 for Markdown; CSV exceeds XML by 0,098. NEM and ROUGE-L are more
+closely grouped, with best-to-worst differences of 0,014 and 0,032, respectively. Thus, no format is
+uniformly best on Spider, but CSV and TOON remain among the strongest across the three metrics.
 
 The paired intervals show the uncertainty behind this ordering. On Spider, TOON exceeded CSV
 by 0,23 percentage points in NEM, with a 95\% interval from $-0,81$ to
@@ -172,9 +174,10 @@ $-2,67$ to 0,68. Both intervals include zero, so the observed ordering does not 
 clear accuracy advantage for these comparisons.
 
 The separation between formats was clearer on BIRD. CSV achieved the highest values for NEM,
-BERTScore~F1, and ROUGE-L~F1 (0,090, 0,057, and 0,109), with TOON close behind (0,087, 0,053, and
-0,106). XML produced the lowest values (0,041, 0,029, and 0,052), approximately half of the corresponding CSV
-scores. This ordering is consistent with the context-fit results in Table~\ref{tab:serialization-efficiency}:
+BERTScore~F1, and ROUGE-L~F1 (0,090, 0,424, and 0,109), with TOON close behind (0,087, 0,424, and
+0,106). XML produced the lowest values (0,041, 0,169, and 0,052). The CSV-to-XML ratio is about 2,5 for
+BERTScore and about 2 for NEM and ROUGE-L. This ordering is consistent with the context-fit results in
+Table~\ref{tab:serialization-efficiency}:
 compact formats allowed more BIRD databases to enter the model context, whereas verbose formats produced more
 zero-scored context failures. The observed difference therefore reflects both the model's ability to interpret
 a format and the format's ability to represent the database within the available context.
@@ -199,18 +202,18 @@ comparisons use the complete benchmark, including context-window failures.
 Figure~\ref{fig:direct-accuracy-by-model-size} examines the influence of model size. Each point averages one
 model's scores across all six formats and all questions, corresponding to 6.204 Spider runs or 9.204 BIRD
 runs. On Spider, accuracy generally increased with model size in every family. Gemma~4 showed the clearest
-trend: from E2B to 26B-A4B, NEM increased from 0,138 to 0,294, BERTScore~F1 from 0,234 to
-0,357, and ROUGE-L~F1 from 0,302 to 0,478. Qwen~3.5 also improved substantially between 0.8B and 9B, while
+trend: from E2B to 26B-A4B, NEM increased from 0,138 to 0,294, BERTScore~F1 from 0,756 to
+0,777, and ROUGE-L~F1 from 0,302 to 0,478. Qwen~3.5 also improved substantially between 0.8B and 9B, while
 the improvement from Ministral~3 8B to 14B was smaller.
 
 The same general relationship was present on BIRD, but at considerably lower score levels. Gemma~4 improved
-consistently with size and reached 0,095 NEM, 0,103 BERTScore~F1, and 0,113 ROUGE-L~F1 at
+consistently with size and reached 0,095 NEM, 0,311 BERTScore~F1, and 0,113 ROUGE-L~F1 at
 26B-A4B. Qwen~3.5 improved steadily in NEM and ROUGE-L, but its BERTScore did not increase
 monotonically, and Ministral~3 14B improved over 8B on NEM and ROUGE-L while obtaining a
 lower BERTScore. Model scale was therefore beneficial overall, but parameter count alone did not determine
-performance; model family and metric also affected the observed trend. BERTScore was calculated with baseline
-rescaling, so the negative values visible for Qwen~3.5 0.8B indicate similarity below that baseline rather
-than an invalid negative probability. The horizontal axis uses the nominal sizes encoded in the model names;
+performance; model family and metric also affected the observed trend. BERTScore values are raw, unrescaled
+similarities, not probabilities; failed runs retain zero scores in these means. The horizontal axis uses the
+nominal sizes encoded in the model names;
 Gemma~4 26B-A4B is positioned at 26B total parameters even though approximately 4B parameters are active per
 token.
 
@@ -329,20 +332,20 @@ with separate least-squares trend lines because their construction and difficult
 separate avoids hiding differences in both token footprint and context-window feasibility behind one
 cross-format average.
 
-Accuracy decreased as effective database size increased for every metric in both datasets. Although the exact
-correlation varied by format, the direction of the fitted relationship was consistently negative across the
-candidate figures. The decline was visible for NEM, BERTScore~F1, and ROUGE-L~F1, showing
-that the association is not specific to either strict textual equality or a single similarity measure.
+Across the complete database sets, accuracy generally decreased as effective database size increased: the
+database-level correlations were negative across formats for NEM, BERTScore~F1, and ROUGE-L~F1. The decline
+was therefore not specific to strict textual equality or a single similarity measure.
 
 The largest databases also expose the hard context-window limit of direct inference. All runs associated with
 five BIRD databases---\texttt{california\_schools}, \texttt{card\_games},
 \texttt{codebase\_community}, \texttt{european\_football\_2}, and \texttt{formula\_1}---exceeded the
 context window in every format and consequently received zero scores. The same occurred for Spider's
-\texttt{wta\_1} database. These structural zeroes contribute to the downward trend, but they do not explain it
-entirely: among databases with at least one positive score, the association remained negative. This suggests
-that increasing context size affects direct inference in two stages: first by making some databases impossible
-to process within the fixed window, and then by making retrieval more difficult even when at least part of the
-experiment remains feasible.
+\texttt{wta\_1} database. These structural zeroes contribute to the downward trend. Among databases with at
+least one positive score, associations were usually negative, but some remaining samples are too small for
+a firm generalization: for example, only two BIRD databases have positive XML scores, and the BIRD YAML NEM
+association is a small exception to the negative direction. The results
+therefore show both context-window failures and an overall association between larger databases and lower
+scores, without establishing a uniform decline among every feasible subset.
 
 Database size should nevertheless not be interpreted as the sole cause of the score differences. Each point
 also represents a different domain, schema, data quality, and set of questions, and these factors are not held
@@ -362,7 +365,8 @@ This section evaluates retrieval accuracy and operational efficiency for the 25.
 
 Text-to-SQL retrieval was evaluated using NEM, BERTScore~F1, and ROUGE-L~F1 on text representations of
 the returned and reference rows. NEM measures normalized textual equality, ROUGE-L measures lexical sequence
-overlap, and BERTScore measures semantic similarity. Execution success records whether a query ran without
+overlap, and BERTScore reports raw, unrescaled semantic similarity. These similarities are not probabilities
+and do not establish correctness. Execution success records whether a query ran without
 error within the retry limit; it does not establish that the query retrieved the intended information. Failed
 SQL runs retain zero text-based scores, so the reported means represent end-to-end pipeline performance rather
 than scores conditioned on successful execution. The text-based metrics measure agreement with the reference
@@ -375,9 +379,9 @@ queries executed successfully; on BIRD, 89,8\% did so. Successful execution only
 without error and does not establish that it selected the intended tables, columns, conditions, or aggregations.
 
 The text-based metrics show a similar dataset difference. Spider reached mean scores of 0,645 for NEM,
-0,744 for BERTScore~F1, and 0,705 for ROUGE-L~F1. BIRD reached 0.598, 0,675, and 0,373,
+0,918 for BERTScore~F1, and 0,705 for ROUGE-L~F1. BIRD reached 0.598, 0,861, and 0,373,
 respectively. The reduction from Spider to BIRD was much larger for ROUGE-L than for BERTScore, indicating
-that sequence-level overlap with the reference rows degraded more sharply than embedding-based semantic
+that sequence-level overlap with the reference rows degraded more sharply than raw embedding-based semantic
 similarity. The two metric values are not directly comparable because they use different scoring scales.
 
 \begin{figure}[htb]
@@ -394,7 +398,7 @@ text-based agreement scores, particularly within Qwen~3.5. On Spider, Qwen~3.5 N
 0,292 at 0.8B parameters to 0,719 at 9B; on BIRD it increased from 0,202 to 0,686. Most of this improvement
 occurred between 0.8B and 4B, after which the curve began to flatten. Gemma~4 was the strongest family overall
 and improved consistently with size. Its 26B-A4B variant achieved the highest observed scores: 0,778
-NEM, 0,852 BERTScore~F1, and 0,816 ROUGE-L~F1 on Spider, and 0,745, 0,819, and 0,487 on
+NEM, 0,975 BERTScore~F1, and 0,816 ROUGE-L~F1 on Spider, and 0,745, 0,969, and 0,487 on
 BIRD. Ministral~3 improved more modestly between 8B and 14B and remained below similarly sized Gemma~4 models.
 These results show that model scale improves the reported retrieval metrics, but architecture remains important
 because models of similar nominal size did not achieve equivalent accuracy.
