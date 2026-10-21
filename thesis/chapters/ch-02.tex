@@ -3,7 +3,7 @@
 
 The research into the relationship between data serialization and performance of LLMs has grown from a prompt
 engineering concern, to the important questions a lot of experts are asking. As LLMs are increasingly
-integrated into enterprise pipelines, the way data is structured, be it JSON, XML, CSV, Markdown, has been
+integrated into enterprise pipelines, the way data is structured, be it as JSON, XML, CSV, Markdown, has been
 shown to hold a significant influence over the overall performance of the models (cost, accuracy,
 latency). This is not a mere question of our format preference, the benchmarks such as StrucText-Eval
 \cite{struct-text-eval} has given us insight how such formats influence the overall accuracy of the models.
@@ -64,7 +64,7 @@ designed for data exchange
 between information systems, where self description and compatibility were more important than their
 verbosity. These formats are designed in such a way that each fields carries its own description
 \cite{bray1998xml, bray2017javascript}, through
-repeated key words, which create overhead when working with LLMs. The experiments performed in
+repeated keywords, which create overhead when working with LLMs. The experiments performed in
 \cite{onto-serialization-format}, were
 carried out across $1.000$ Internet of Things telemetry records. They have shown that majority of the tokens used for
 encoding data in the JSON format is used up by field names and punctuation ($60.500$ tokens), while the
@@ -129,7 +129,7 @@ from schemas alone. Their approach profiles columns to collect properties such a
 NULL counts, and value formats, then uses an LLM to turn these statistics into field descriptions.
 Schema linking is performed by generating preliminary SQL under different metadata configurations and
 collecting the referenced fields, with value matching helping to correct misplaced filters. The BIRD
-submission further retrieves few-shot examples, generates three candidate queries, checks and repairs
+submission further retrieves few-shot examples from training set, generates three candidate queries, checks and repairs
 potentially problematic SQL, and selects an answer by agreement between execution results. The paper also
 investigates query-log analysis and SQL-to-text generation for recovering business logic and constructing
 examples, although query logs were unavailable for the held-out test databases. Using GPT-4o without
@@ -189,7 +189,7 @@ that time the queries were more complex, including aggregate functions, ordering
 queries, which were divided into 4 levels of difficulty, based on their complexity. This is important to
 consider because all the question present in the WikiSQL dataset were classified as EASY.
 
-Even though the Spider data set introduced a lot of improvements, it still was not a perfect. All of the data
+Even though the Spider data set introduced a lot of improvements, it still was not perfect. All of the data
 present in the Spider dataset is clean and does not suffer from real life problems, such as integer values being
 stored as string, and other inconsistencies.
 
@@ -213,14 +213,14 @@ agreement, execution reliability, and the resources required to obtain an answer
 \section[Evaluation Metrics]{Evaluation Metrics for Structured Data Extraction}
 \label{sec:evaluation-metrics-background}
 
-Evaluation of structured-data extraction involves several distinct questions: how closely an answer agrees
+When evaluating structured data extraction we are interested in several questions: how closely an answer agrees
 with its reference, whether the retrieval pipeline completes successfully, and how much time and computation
 it requires. Text-based measures capture different aspects of answer agreement, but their scores do not
 necessarily reflect factual correctness \cite{novikova2017we}. Execution and resource measurements therefore
 provide complementary information when comparing Direct Context Inference with Text-to-SQL.
 
 This thesis evaluates reference-answer agreement using Normalized Exact Match (NEM), ROUGE-L F1, and
-BERTScore F1. For brevity, subsequent references to \emph{ROUGE-L} and \emph{BERTScore} denote these F1
+BERTScore F1. For conciseness, subsequent references to \emph{ROUGE-L} and \emph{BERTScore} denote these F1
 measures unless stated otherwise. The following subsections introduce these measures alongside execution
 reliability, token consumption, latency, and context-window feasibility.
 
@@ -299,7 +299,7 @@ evaluation, although the experiments here use the three reference-based measures
 \label{sec:sql-execution-metrics}
 
 SQL evaluation distinguishes the ability to execute a query from agreement with the intended result.
-\emph{Execution success} indicates that a generated query runs without error, including when it returns an
+\emph{Execution success} indicates that a generated query runs without errors, including when it returns an
 empty result. Its mean is the execution-success rate. A query can nevertheless execute successfully while
 using an incorrect join, filter, or aggregation, so this rate describes operational reliability.
 
@@ -310,57 +310,53 @@ all possible data. The execution-accuracy figures cited earlier for Text-to-SQL 
 benchmark notion. In this thesis, execution success is reported alongside text-based agreement with the
 reference result.
 
-For pipelines that correct execution errors, first-attempt success and final success describe different
-levels of reliability. Recovery can be reported as the proportion of initially unsuccessful runs that later
-execute, or as the increase in success rate across all runs; the denominator must be stated. The number of
-retries and their additional model-generation time describe the cost of this recovery. These measures assess
-the correction of detectable execution failures, since a wrong query that runs successfully produces no
-execution error to trigger correction.
+When a pipeline can correct execution errors, we also need to consider whether a query runs on the first
+attempt or only after correction. The first-attempt success rate shows how often no correction is needed,
+while the final success rate also includes runs recovered through retries. Recovery can be reported as the
+share of initially failed runs that later execute successfully, or as the increase in the success rate across
+all runs. It is important to state whether the calculation uses only the initially failed runs or all runs
+as its denominator. The number of retries and the additional model-generation time show the cost of this
+recovery. However, correction based on execution errors cannot detect a query that runs successfully but
+returns the wrong result, since there is no execution error to trigger a retry.
 
-Other benchmark measures address query structure and database efficiency. Spider's \emph{Exact Set Match}
-compares normalized SQL components but can reject structurally different queries with equivalent results
-\cite{yu2018spider}. BIRD's \emph{Valid Efficiency Score} combines result correctness with query-execution
-efficiency relative to the reference \cite{li2023can}. These measures contextualize the benchmark literature;
-the present comparison uses answer agreement, execution success, and separately measured latency.
+Other benchmark measures consider how a query is written and how efficiently it runs. Spider's
+\emph{Exact Set Match} compares normalized SQL components, so queries written differently can fail to match
+even when they return equivalent results \cite{yu2018spider}. BIRD's \emph{Valid Efficiency Score} combines
+result correctness with query-execution efficiency relative to the reference query \cite{li2023can}.
+These measures help explain the benchmark results discussed earlier. In this thesis, we evaluate answer
+agreement and execution success, while measuring latency separately.
+
+The resources needed to obtain an answer extend beyond executing SQL. For both retrieval approaches, we also
+need to consider token consumption, whether the input and generated output fit within the model's context
+window, and the time needed to produce an answer. These are the focus of the following subsection.
 
 \subsection{Operational Efficiency and Context Feasibility}
 \label{sec:operational-metrics}
 
-\textbf{Token consumption.} The serialization studies discussed in Section~\ref{sec:token-efficiency}
-motivate counting the tokens required to encode identical data in different formats. Serialized-payload token
-counts isolate representation overhead, whereas complete input counts also include instructions, questions,
-and chat-template tokens. Output counts describe the generated sequence, including reasoning tokens when
-present. Relative token-count ratios express overhead against an explicit baseline, and comparisons across
-tokenizers show how the same text can occupy different amounts of context. Input and output lengths affect
-different phases of inference; their performance implications also depend on the hardware and serving stack
-\cite{fernandez2025energy}. Token counts indicate workload, while monetary cost additionally depends on
-pricing and energy use requires separate measurement.
+\textbf{Token consumption.} As discussed in Section~\ref{sec:token-efficiency}, different formats require
+different numbers of tokens to represent the same data. Counting only the serialized data shows these format
+differences, while the complete input also includes instructions, question, and chat-template tokens.
+Output counts include the generated answer or query and any reasoning tokens. These counts depend on the
+tokenizer, and their effect on performance also depends on the hardware and serving software
+\cite{fernandez2025energy}. Token usage therefore indicates workload, rather than directly measuring
+monetary cost.
 
-\textbf{Context-window feasibility.} The number of serialized databases that fit within a token budget
-describes payload coverage. A complete request must additionally accommodate prompt overhead and an output
-allowance for generated output and reasoning. A pre-inference context-limit check therefore assesses the
-complete request, while payload-fit counts describe the data alone. Accounting for skipped requests alongside
-answer scores distinguishes end-to-end effectiveness from answer agreement conditional on successful inference.
+\textbf{Context-window feasibility.} Fitting the data within a model's context window is only part of the
+requirement. The request must also leave room for prompt instructions and generated output, including
+reasoning. We therefore need to check the complete request before inference and report how many requests
+are skipped, since answer scores alone do not show how often the approach can be used.
 
-\textbf{Latency.} LLM inference consists of processing the prompt and generating subsequent output tokens.
-Serving research distinguishes these prefill and decoding phases because their computational demands and
-latency requirements differ \cite{zhong2024distserve}. \emph{Time to First Token (TTFT)} measures the
-interval from request submission until the first output token is received. It reflects prompt processing
-and any intervening serving overhead, rather than a pure measurement of prefill computation.
-\emph{Generation time after the first token} covers the remaining model response, including any generated
-reasoning. Their sum gives the model response time for a single attempt. For Text-to-SQL, the answer also
-requires \emph{SQL execution time}. Recording these components explains whether delays arise mainly from
-large inputs, long generations, or database execution.
+\textbf{Latency.} A model first processes the prompt and then generates its response, known as the prefill
+and decoding phases \cite{zhong2024distserve}. \emph{Time to First Token (TTFT)} measures the time from
+submitting a request to receiving the first output token, including prompt processing and serving overhead.
+The remaining generation time covers the rest of the response, including reasoning. Together, these give
+the model response time. Text-to-SQL also requires \emph{SQL execution time}. Measuring these parts
+separately helps explain where delays occur.
 
-When SQL correction requires several attempts, token counts and model times must be accumulated across
-those attempts to describe the work needed for one answer. The latency decomposition then includes
-cumulative first-token waits, subsequent generation, and database execution. Measuring only the final attempt
-would omit the cost of recovery. Chapter~\ref{ch:methodolgy} specifies the measurement boundaries used in
-this thesis, while Chapter~\ref{ch:implementation} describes their implementation. The analysis cohorts are
-defined alongside the results in Chapter~\ref{ch:results}.
+If SQL correction requires retries, we need to count tokens and time across all attempts to include the
+cost of recovery. Chapter~\ref{ch:methodolgy} defines these measurements, and
+Chapter~\ref{ch:implementation} describes their implementation.
 
-When trying to retrieve information from structured data we are faced with two choices: how to represent data
-for direct use by an LLM, and how to retrieve information through generated SQL. Serialization studies
-examine the effects of format on accuracy and token usage, while Text-to-SQL research explores improvements
-in query generation and verification. These findings motivate the comparison developed in the next chapter,
-which evaluates both approaches in terms of retrieval accuracy, token consumption, and latency.
+The studies reviewed in this chapter show how data representation and query generation affect information
+retrieval. The next chapter builds on this work by defining a comparison of Direct Context Inference and
+Text-to-SQL in terms of answer agreement, execution reliability, token consumption, and latency.
