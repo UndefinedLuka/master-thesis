@@ -134,17 +134,23 @@ Rows are sampled independently in each table, so foreign-key relationships are n
 preserved. We therefore execute the unchanged gold SQL queries against the sampled databases to obtain
 reference answers, rather than using answers from the full databases.
 
+The original, unsampled BIRD development split contained \num{0} empty reference results: all \num{1534}
+gold queries returned at least one row on the full databases. Empty results observed after subsampling
+therefore arise from the removal of rows needed to satisfy query filters or joins, rather than from empty
+answers in the original dataset. We expand on the analysis of these sampling-induced empty results and
+their implications for the evaluation in Chapter~\ref{ch:results}.
+
 The sampled databases are materialized as standalone SQLite files written to disk. It guarantees that three
 consumers (the serialization encoders, the reference answer generator, and the Text-to-SQL query executor),
 all operate on exactly the same data.
 
 Reducing the cap from \num{500} to \num{100} rows made more databases fit, but increased the number of empty reference
-results by to \num{649} (\qty{42.31}{\percent}). Increasing it to \num{1000} rows reduced empty results to \num{342}
+results to \num{649} (\qty{42.31}{\percent}). Increasing it to \num{1000} rows reduced empty results to \num{342}
 (\qty{22.29}{\percent}), but increased mean CSV payload size by a factor of \num{1.92}. CSV and TOON then fit only \num{4} of \num{11}
 databases for every tokenizer, compared with \num{6} at \num{500} rows: \texttt{financial} and
 \texttt{thrombosis\_prediction} additionally exceeded the window.
 These measurements support \num{500} rows as a practical compromise between retaining data and context-window
-feasibility, it does not establish an optimal cap.
+feasibility, but do not establish an optimal cap.
 
 \section{Benchmark Execution}
 
