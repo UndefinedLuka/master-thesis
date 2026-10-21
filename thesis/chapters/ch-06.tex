@@ -92,11 +92,9 @@ workload and latency distribution, not only the overall mean.
 
 The principal limitation of Direct Context Inference is that its input grows together with the amount of
 serialized data. Larger inputs require more time to process, increase the risk of exceeding the context
-window, and make it more difficult for the model to locate relevant information. Text-to-SQL avoids these
-limitations by delegating retrieval to the database engine. However, it introduces a different failure mode:
-a generated query may be syntactically valid and execute successfully while selecting incorrect tables,
-columns, conditions, or aggregations. Successful execution is therefore necessary but not sufficient for a
-correct answer.
+window, and make it more difficult for the model to locate relevant information. Text-to-SQL delegates
+retrieval to the database engine, with the error-correction limitations discussed in
+Section~\ref{sec:sql-error-correction}.
 
 The two pipelines also require different model capabilities. Direct Context Inference requires the model to
 locate relevant values and reason over a potentially long raw-data context. Text-to-SQL reduces the amount of
@@ -210,9 +208,8 @@ utilization and overflow frequency. Where supported, a separate reasoning-token 
 output consumption. Latency should be decomposed into TTFT,
 generation time after the first token, SQL execution time, and total end-to-end response time.
 Text-to-SQL systems should additionally track retry counts, cumulative costs across attempts, and query
-timeouts. Execution success should not be treated as evidence of semantic correctness. Local deployments should
-also monitor throughput and hardware utilization, while API-based deployments should track actual expenditure under the
-selected provider's pricing model.
+timeouts. Local deployments should also monitor throughput and hardware utilization, while API-based deployments
+should track actual expenditure under the selected provider's pricing model.
 
 \section{Decision Framework for Structured Data Information Extraction}
 \label{sec:decision-framework}
@@ -269,10 +266,9 @@ Requirements for deterministic and reproducible behaviour may further influence 
 \subsubsection{Quality Requirements}
 
 The required level of answer quality affects both pipeline and model selection. Applications with strict
-correctness requirements may require a more capable model and application-specific answer validation. In such
-settings, it is important to distinguish between a query that executes successfully and an answer that is
-semantically correct. Conversely, applications that tolerate occasional extraction errors may prioritize lower
-latency or resource consumption.
+correctness requirements should validate returned answers against application-specific expectations on
+representative questions and select a model that meets the required accuracy. Applications that tolerate
+occasional extraction errors may prioritize lower latency or resource consumption.
 
 \subsubsection{Operational Workload and Cost Constraints}
 
@@ -323,14 +319,13 @@ Model capability should influence the model selected within a pipeline, but it d
 preference for Text-to-SQL when the data are queryable. Text-to-SQL requires reliable schema interpretation
 and the generation of syntactically valid and semantically correct queries. More capable models generally
 achieved higher reference-agreement scores and reduced the frequency of expensive correction attempts.
-Execution success does not establish semantic correctness. Direct Context Inference places a different demand
-on the model, requiring it to locate and reason over relevant values within a
-potentially long input. A weaker model's difficulty with SQL generation may justify evaluating Direct Context
+Direct Context Inference places a different demand on the model, requiring it to locate and reason over
+relevant values within a potentially long input. A weaker model's difficulty with SQL generation may justify evaluating Direct Context
 Inference when its prompt fits the context budget, but this remains an application-specific decision
 requiring validation rather than a general recommendation.
 
 Applications prioritizing agreement with benchmark reference answers should prefer Text-to-SQL under the
-evaluated conditions. This comparison does not establish semantic correctness for a deployment workload.
+evaluated conditions.
 Generated SQL also improves auditability because the operation can be inspected and re-executed against the
 same database state. This should not be confused with reproducibility, which also depends on the inference
 configuration, model version, database state, and decoding strategy. Both pipelines used deterministic
@@ -347,9 +342,9 @@ can make Direct Context Inference expensive even when each individual prompt fit
 
 The recommendation to prefer Text-to-SQL for queryable structured data and CSV for flat Direct Context
 Inference inputs is strongly supported by the experiments. The findings also strongly support checking
-complete prompt size, avoiding unnecessary verbosity, considering both model family and size, and
-distinguishing SQL execution success from semantic correctness. Recommendations concerning deeply nested data
-and the use of TOON for such structures remain conditional because this scenario was not evaluated directly.
+complete prompt size, avoiding unnecessary verbosity, and considering both model family and size.
+Recommendations concerning deeply nested data and the use of TOON for such structures remain conditional
+because this scenario was not evaluated directly.
 
 \subsection{Decision Tree}
 
@@ -388,9 +383,9 @@ then be needed. These alternatives were not evaluated in this thesis.
 
 The SQL error-correction mechanism recovered 1.357 queries that did not execute successfully on their initial
 attempt: 282 on Spider and 1.075 on BIRD. Database feedback was therefore useful for correcting detectable
-problems, such as invalid syntax, nonexistent tables or columns, and other runtime errors, but successful execution does not guarantee semantic
-correctness. Queries containing incorrect joins, filters, aggregations, or schema-element selections could
-execute without producing an error while still returning the wrong rows.
+problems, such as invalid syntax, nonexistent tables or columns, and other runtime errors. Queries containing
+incorrect joins, filters, aggregations, or schema-element selections can still execute and return the wrong
+rows; because they produce no execution error, they do not trigger correction.
 
 The benefit of correction declined with each attempt. The first retry recovered 1.128 executable queries,
 accounting for 83,1\% of all execution recoveries. The second and third retries recovered only 190 and 39
@@ -417,11 +412,9 @@ semantic similarity that may not always distinguish between a related but factua
 correct one. Raw BERTScore values are unrescaled semantic similarities, not probabilities; a high similarity
 does not establish correctness, and pipeline failures retain zero scores in end-to-end means. Reporting all
 three metrics therefore reduces dependence on the limitations of any individual measure. For Text-to-SQL,
-execution success indicates only that a query is syntactically valid and can run
-against the database; it does not establish that the query selected the correct tables, joins, filters, or
-aggregations. However, the conversion of SQL result rows into a stable textual representation can still
-affect text-based metrics through choices concerning row ordering, formatting, numeric representation, and
-duplicate values. More generally, benchmark metrics measure agreement with a reference answer, but do not
+the conversion of SQL result rows into a stable textual representation can also affect text-based metrics
+through choices concerning row ordering, formatting, numeric representation, and duplicate values.
+More generally, benchmark metrics measure agreement with a reference answer, but do not
 directly evaluate whether an answer is clear, useful, or appropriate for the requirements of a particular user.
 
 The two pipelines also use deliberately different analysis cohorts. Direct Context Inference runs that exceed

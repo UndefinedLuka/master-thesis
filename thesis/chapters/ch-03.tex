@@ -223,14 +223,12 @@ The text-based metrics measure agreement with the reference representation rathe
 the correctness of each retrieved value. Similarity scores may remain high when an answer contains an incorrect
 number, identifier, or entity, while a correct answer expressed differently may score lower.
 
-For Text-to-SQL, we use execution success as defined in Section~\ref{sec:sql-execution-metrics}; it does not
-establish that the query retrieves the intended information. We also implement an error correction loop, which
-will entail the following steps. If a generated SQL query fails
+For Text-to-SQL, we use execution success as defined in Section~\ref{sec:sql-execution-metrics}.
+We also implement an error correction loop, which will entail the following steps. If a generated SQL query fails
 to execute due to a database syntax or runtime error, the error log is fed back to the model, granting it up
 to three retries beyond the initial attempt to self-correct the query. The system logs the exact number of retries
 required to achieve successful execution. If the model fails to produce an executable query after all four
-attempts, it is marked as a definitive failure. The text-based metrics assess agreement with the reference
-answer, rather than independently verifying semantic correctness.
+attempts, it is marked as a definitive failure.
 
 The decision to enforce a strict three-retry cap reflects a user-centric evaluation philosophy. Since
 non-technical end users typically lack the SQL knowledge required to fix broken queries manually, a model
