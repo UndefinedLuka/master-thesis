@@ -102,11 +102,8 @@ The backend always streams its responses (token by token). Streaming allows TTFT
 submission until the first output token arrives. Total model time runs from submission through completion, so it
 includes TTFT and all generation after the first token.
 
-We monitor the token stream for reasoning phase markers. Models in the Qwen~3.5 family emit explicit
-\texttt{<think>...</think>} blocks containing reasoning traces. The closing \texttt{</think>} tag provides a
-reasoning-duration diagnostic, but reasoning time is included in both total model time and output-token counts;
-it is not subtracted from or added to those totals separately. The thinking block is stripped from the visible
-answer so accuracy scoring evaluates only the model's answer text.
+When explicit \texttt{<think>...</think>} blocks are present, they are removed from the recorded answer before
+downstream evaluation. Output-token counts and total model time cover the complete generated response.
 
 \subsection{Serialization}
 

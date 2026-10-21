@@ -211,9 +211,8 @@ therefore distinguish prompt consumption from total generated output, not visibl
 \textbf{System Latency:} Measured model time starts at request submission and ends when the streamed completion
 finishes. It includes both \emph{Time to First Token (TTFT)}, from submission to the first output token, and
 the remaining post-first-token generation interval. The first token can belong to a reasoning trace, and
-subsequent reasoning is included in the generation interval. The recorded reasoning-marker duration is a
-diagnostic subinterval, not a separately added stage. For Text-to-SQL, measured total response latency sums
-model time and SQL execution time across the initial attempt and all correction attempts. This includes the
+subsequent reasoning is included in the generation interval. For Text-to-SQL, measured total response latency
+sums model time and SQL execution time across the initial attempt and all correction attempts. This includes the
 time needed to retrieve the answer after generation. These measurements exclude preprocessing before request
 submission, such as database sampling, reference generation, and serialization preparation.
 
