@@ -6,34 +6,30 @@ distinct information retrieval workflows, Direct Context Inference and Text-to-S
 experiments is to collect empirical data which will be used as base for our final decision framework.
 
 \section{Conceptual Framework}
+\label{sec:pipeline-comparison}
 
-Framework is going to be divided into two pipelines:
+The experiment compares two information-extraction pipelines:
 
 \begin{itemize}
-  \item \textbf{Direct Context Inference:} In this pipeline the entire context of the database is going to be
-    serialized in a specific data format and be provided in context to LLM. The model then proceeds to
-    directly produce the answer based on this data
-  \item \textbf{Text-to-SQL:} In this pipeline we are going to provide SQL schema of the database to LLM and ask
-    it to produce a query which will answer the provided question. The generated query is then executed
-    against real database to retrieve the final answer.
+  \item \textbf{Direct Context Inference:} The model receives task instructions, the complete contents of the
+    experimental database serialized in the selected format, and the natural-language question, in that order.
+    It produces a free-text answer directly from the supplied data.
+  \item \textbf{Text-to-SQL:} The model receives the database schema and the natural-language question and
+    generates an SQL query. The query is executed against the experimental database to retrieve the answer.
 \end{itemize}
 
-In order to collect reliable metrics we are going to subject both pipelines to similar metrics collection. We
-are going to track performance metrics for both pipelines, which will provide us with a clear picture of
-their operational efficiency. For Text-to-SQL, we will also track execution success and query
-execution time. Reference-answer agreement
-for both pipelines will be calculated in the same manner, it will be validated against the reference answers
-which can be found in the chosen datasets. And finally we are going to collect and visualize all the data from the
-experiments so we can propose our decision framework.
+Both pipelines are evaluated at the answer level using the same reference-answer metrics. The direct
+pipeline's free-text response is compared with a textual representation of the reference result. For
+Text-to-SQL, the returned rows are converted to text and compared with the same reference; the generated SQL
+itself is not the object of this comparison. Token consumption and response latency are recorded for both
+pipelines, with execution success and query-execution time additionally recorded for Text-to-SQL.
 
 \subsection{Text-to-SQL Pipeline}
 \label{sec:minimalist-text-to-sql}
 
-The purpose of this thesis is to compare Direct Context Inference and Text-to-SQL under a controlled local
-inference setup, and to examine how serialization format and model scale affect accuracy, token consumption,
-and latency. We therefore use a deliberately minimalist Text-to-SQL architecture: the model receives the
-database schema and question, generates one query, and the database engine executes it. A bounded correction
-loop returns execution errors to the same model, allowing up to three retries beyond the initial generation.
+We use a deliberately minimalist Text-to-SQL architecture under the controlled local inference setup. A
+bounded correction loop returns execution errors to the same model, allowing up to three retries beyond the
+initial generation.
 
 The architectures reviewed in Section~\ref{sec:sota-text-to-sql} introduce additional sources of performance
 variation. Adopting ideas presented in these papers would require evaluating their retrieval quality,
@@ -72,9 +68,8 @@ Utilization of both these datasets we plan to achieve a wide variety of domains 
 Spider data set was selected because it contains a diverse range of databases which span multiple domains.
 This ensures that the models are actually extracting information from the provided data, and not relying on
 the memorized knowledge from the training data. We plan to use all the databases in their entirety without any
-sub-sampling. For direct context inference every question will be accompanied by all tables present in the
-database, while the Text-to-SQL will be provided with SQL database schema. Both pipelines are going to be
-provided with natural language question at the end.
+sub-sampling, following the pipeline and answer-comparison protocol defined in
+Section~\ref{sec:pipeline-comparison}.
 
 Spider dataset has one notable limitation, and that is that data is artificially clean, all data types are
 correct, and columns names are descriptive. This is not something we can expect to encounter in real world.
@@ -86,8 +81,7 @@ real world data, which requires external knowledge and deeper logical deduction 
 Because BIRD databases are too large to fit into context window of LLM in their entirety, we are going to
 sub-sample them. For
 each table $n$ random rows are going to be extracted, to maintain level playing field the same data is going
-to be used for both pipelines. In order to provide the information, necessary for LLMs to answer the
-questions, we are going to utilize the same strategy as for the SPIDER dataset.
+to be used for both pipelines.
 
 \subsection{Structural Integrity}
 While deeply nested relational data would provide closer simulation of complex real world data, constructing
@@ -164,15 +158,10 @@ structural and positional representations introduced in Chapter~\ref{ch:related_
 
 \section{Information Extraction}
 
-Here we are going to present two different approaches for retrieving information from structured data with
-LLMs, Direct Context Inference and Text-to-SQL. While both approaches aim to answer natural language question
-using databases, they operate on fundamentally different mechanisms.
+The pipelines defined in Section~\ref{sec:pipeline-comparison} impose different constraints on information
+extraction. The following considerations guide the experimental design.
 
 \subsubsection{Direct Context Inference}
-
-Direct Context Inference requires the presence of the serialized data in its entirety in the context window
-of the model. Prompt is structured in such a way where we are first explaining the task at hand, providing all
-the required serialized data, and at the end we also ask the question in natural language.
 
 \begin{itemize}
   \item \textbf{Context Length Constraint:} The primary challenge of this approach is context over saturation.
@@ -188,8 +177,6 @@ the required serialized data, and at the end we also ask the question in natural
 
 \subsubsection{Text-to-SQL Inference}
 
-Text-to-SQL decouples data storage from the models. Instead of reading raw data, the LLM is provided with
-relational schema of the database to generate a valid SQL query for information retrieval.
 \begin{itemize}
   \item \textbf{Scalability advantage:} Because a database schema is inherently much smaller than the
     dataset, this approach theoretically enables models to answer questions over databases that are many
@@ -199,14 +186,6 @@ relational schema of the database to generate a valid SQL query for information 
     Consequently, if table or column names are poorly named, or non descriptive, we can expect the models
     ability to produce correct query to degrade.
 \end{itemize}
-
-Because these two paradigms yield fundamentally different outputs (Direct Context Inference generates a
-natural language answer, whereas Text-to-SQL outputs an SQL query), we need a way to compare the results
-between the two.
-Both workflows are evaluated against a reference answer. For Direct Context Inference, the model's raw
-natural language output is compared directly against the answer. For the Text-to-SQL pipeline, the
-model-generated query is executed against the database engine first, and its returned rows are evaluated
-against the reference answer.
 
 \section{Evaluation Metrics}
 
@@ -234,18 +213,15 @@ submission, such as database sampling, reference generation, and serialization p
 
 \subsubsection{Retrieval Accuracy}
 
-Retrieval performance is evaluated against reference answers obtained by executing the gold SQL queries on
-the databases used in the experiment (for BIRD, this means executing the gold query on subsampled database,
-rather than taken from the original full databases). For Direct Context Inference, the model's free-text
-response is compared with a textual representation of the reference result. For Text-to-SQL, the generated
-query is executed, and its result rows are converted to text for comparison with the same reference.
+Reference answers for the comparison defined in Section~\ref{sec:pipeline-comparison} are obtained by
+executing the gold SQL queries on the databases used in the experiment. For BIRD, the queries are executed on
+the subsampled databases rather than the original full databases.
 
 We report Normalized Exact Match (NEM), ROUGE-L, and BERTScore as complementary measures of reference-answer
 agreement, following the definitions in Section~\ref{sec:reference-answer-metrics}.
 The text-based metrics measure agreement with the reference representation rather than independently verifying
 the correctness of each retrieved value. Similarity scores may remain high when an answer contains an incorrect
-number, identifier, or entity, while a correct answer expressed differently may score lower. For consistency,
-the same reference-answer scoring is applied to direct answers and to text representations of executed SQL rows.
+number, identifier, or entity, while a correct answer expressed differently may score lower.
 
 For Text-to-SQL, we use execution success as defined in Section~\ref{sec:sql-execution-metrics}; it does not
 establish that the query retrieves the intended information. We also implement an error correction loop, which
