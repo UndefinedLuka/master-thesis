@@ -221,9 +221,8 @@ provide complementary information when comparing Direct Context Inference with T
 
 This thesis evaluates reference-answer agreement using Normalized Exact Match (NEM), ROUGE-L F1, and
 BERTScore F1. For brevity, subsequent references to \emph{ROUGE-L} and \emph{BERTScore} denote these F1
-measures unless stated otherwise. ROUGE-L uses longest-common-subsequence matching over the complete answer
-token sequences; BERTScore uses contextual token embeddings. The following subsections introduce these
-measures alongside execution reliability, token consumption, latency, and context-window feasibility.
+measures unless stated otherwise. The following subsections introduce these measures alongside execution
+reliability, token consumption, latency, and context-window feasibility.
 
 \subsection{Reference-Answer Agreement}
 \label{sec:reference-answer-metrics}
@@ -245,7 +244,7 @@ Normalized Exact Match is defined as
     0 & \text{otherwise.}
   \end{cases}
 \end{equation}
-The SQuAD normalization used here lowercases the text, removes punctuation and English articles, and
+SQuAD normalization lowercases the text, removes punctuation and English articles, and
 collapses whitespace. Averaging the binary scores gives the proportion of answers that match after these
 transformations.
 
@@ -266,13 +265,11 @@ and let $L$ be their LCS length. For nonempty sequences, precision and recall ar
   F_1 = \frac{2P_{\mathrm{LCS}}R_{\mathrm{LCS}}}{P_{\mathrm{LCS}}+R_{\mathrm{LCS}}}.
 \end{equation}
 The F1 score balances precision and recall, rewarding partial overlap while accounting for both additional
-and missing content. The implementation assigns zero when either token sequence is empty or no tokens match.
+and missing content.
 
-The variant used in this thesis compares the complete token sequences, with Porter stemming to reduce
-inflectional differences. Line breaks do not create separate matching units. Consequently, row ordering can
-affect the score even when two answers contain the same values. ROUGE-L also cannot establish whether a
-matching value belongs to the correct row or column, and substantial overlap can coexist with an incorrect
-number or identifier.
+Because LCS matching preserves relative token order, row ordering can affect the score even when two answers
+contain the same values. ROUGE-L also cannot establish whether a matching value belongs to the correct row
+or column, and substantial overlap can coexist with an incorrect number or identifier.
 
 \subsubsection{BERTScore F1}
 
@@ -284,9 +281,9 @@ when the surface forms differ.
 
 This flexibility complements exact and lexical matching, but similar embeddings do not guarantee that
 numbers, entities, or relationships are correct. The reported scores depend on the embedding model and
-scoring configuration. This thesis uses raw scores with baseline rescaling disabled, as specified in
-Chapter~\ref{ch:implementation}. These values are similarities rather than probabilities of correctness and are
-not constrained to be nonnegative.
+scoring configuration. Raw BERTScore values are similarities rather than probabilities of correctness and
+are not constrained to be nonnegative. Section~\ref{sec:scoring-pass} specifies the scoring configuration
+used in this study.
 
 Together, NEM, ROUGE-L, and BERTScore describe strict agreement, ordered lexical overlap, and contextual
 similarity. Their complementary views help interpret differences between outputs, while their shared

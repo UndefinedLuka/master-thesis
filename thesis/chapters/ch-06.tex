@@ -405,17 +405,12 @@ efficiency by adapting the retry limit according to the error type and the accum
 \section{Threats to Validity and Study Limitations}
 \label{sec:validity-limitations}
 
-The reported accuracy measures should be interpreted as complementary indicators rather than as a complete
-definition of factual correctness. NEM is strict and can penalize a correct answer expressed
-differently from the reference, while ROUGE-L depends on lexical sequence overlap and BERTScore measures
-semantic similarity that may not always distinguish between a related but factually incorrect answer and a
-correct one. Raw BERTScore values are unrescaled semantic similarities, not probabilities; a high similarity
-does not establish correctness, and pipeline failures retain zero scores in end-to-end means. Reporting all
-three metrics therefore reduces dependence on the limitations of any individual measure. For Text-to-SQL,
-the conversion of SQL result rows into a stable textual representation can also affect text-based metrics
-through choices concerning row ordering, formatting, numeric representation, and duplicate values.
-More generally, benchmark metrics measure agreement with a reference answer, but do not
-directly evaluate whether an answer is clear, useful, or appropriate for the requirements of a particular user.
+The metric limitations discussed in Section~\ref{sec:reference-answer-metrics} are particularly relevant to
+the comparison of free-text answers and rendered SQL rows against textual references. Choices concerning
+row ordering, formatting, numeric representation, and duplicate values can affect the reported agreement.
+Using three metrics provides complementary views but does not remove this shared dependence on the textual
+representation. These measures also do not directly evaluate whether an answer is clear, useful, or
+appropriate for the requirements of a particular user.
 
 The two pipelines also use deliberately different analysis cohorts. Direct Context Inference runs that exceed
 the context window receive zero accuracy because the pipeline cannot provide an answer under the evaluated

@@ -141,10 +141,9 @@ efficiency, and the influence of database size.
 \subsection{Retrieval accuracy}
 
 Retrieval accuracy was evaluated using NEM, BERTScore, and ROUGE-L, as defined in
-Section~\ref{sec:reference-answer-metrics}. BERTScore reports raw, unrescaled embedding similarities, and
-ROUGE-L measures longest-subsequence overlap. These BERTScore values are not probabilities: successful answers
-can have high semantic similarity even when they are incorrect, while failed runs retain a score of zero. The
-reported means include all direct-context runs from the ten retained models, including runs assigned a score
+Section~\ref{sec:reference-answer-metrics}. These scores describe reference-answer agreement rather than
+independently verified correctness; BERTScore is reported as raw F1. The reported means include all
+direct-context runs from the ten retained models, including runs assigned a score
 of zero after failing the pre-inference context-limit check. The results therefore represent
 end-to-end effectiveness under the fixed 128K-token limit, rather than accuracy conditional on the model
 having produced an answer. Each Spider format summarizes 10.340 runs, while each BIRD format summarizes
@@ -153,7 +152,7 @@ having produced an answer. Each Spider format summarizes 10.340 runs, while each
 \begin{figure}[htb]
   \centering
   \includegraphics[width=\textwidth]{../code/analysis/figures/direct_accuracy_by_format.pdf}
-  \caption{Mean direct-context retrieval accuracy by serialization format (NEM, raw unrescaled BERTScore F1,
+  \caption{Mean direct-context retrieval accuracy by serialization format (NEM, raw BERTScore F1,
     and ROUGE-L F1). Each bar includes all questions
     and all ten retained models for the named dataset. Failed runs retain zero scores. Whiskers
   show pointwise 95\% confidence intervals.}
@@ -192,7 +191,7 @@ comparisons use the complete benchmark, including context-window failures.
 \begin{figure}[htb]
   \centering
   \includegraphics[width=\textwidth]{../code/analysis/figures/direct_accuracy_by_model_size.pdf}
-  \caption{Mean direct-context retrieval accuracy by model size and family (NEM, raw unrescaled BERTScore F1,
+  \caption{Mean direct-context retrieval accuracy by model size and family (NEM, raw BERTScore F1,
     and ROUGE-L F1). Each point averages all six
     serialization formats and all questions for one model, including zero-scored failed runs. Lines connect
     models within the same family; Qwen~3.5 27B is excluded. Whiskers show pointwise 95\% confidence
@@ -212,8 +211,7 @@ consistently with size and reached 0,095 NEM, 0,311 BERTScore, and 0,113 ROUGE-L
 26B-A4B. Qwen~3.5 improved steadily in NEM and ROUGE-L, but its BERTScore did not increase
 monotonically, and Ministral~3 14B improved over 8B on NEM and ROUGE-L while obtaining a
 lower BERTScore. Model scale was therefore beneficial overall, but parameter count alone did not determine
-performance; model family and metric also affected the observed trend. BERTScore values are raw, unrescaled
-similarities, not probabilities; failed runs retain zero scores in these means. The horizontal axis uses the
+performance; model family and metric also affected the observed trend. The horizontal axis uses the
 nominal sizes encoded in the model names;
 Gemma~4 26B-A4B is positioned at 26B total parameters even though approximately 4B parameters are active per
 token.
@@ -366,12 +364,10 @@ This section evaluates retrieval accuracy and operational efficiency for the 25.
 \subsection{Retrieval accuracy}
 
 Text-to-SQL retrieval was evaluated using NEM, BERTScore, and ROUGE-L on text representations of
-the returned and reference rows, following Section~\ref{sec:reference-answer-metrics}. ROUGE-L and BERTScore
-are similarity measures rather than probabilities of correctness. Execution success records whether a query ran without
+the returned and reference rows. Execution success records whether a query ran without
 error within the retry limit; it does not establish that the query retrieved the intended information. Failed
 SQL runs retain zero text-based scores, so the reported means represent end-to-end pipeline performance rather
-than scores conditioned on successful execution. The text-based metrics measure agreement with the reference
-representation and do not independently verify semantic correctness.
+than scores conditioned on successful execution.
 
 \input{../code/analysis/tables/text_to_sql_retrieval_accuracy}
 
@@ -387,7 +383,7 @@ similarity. The two metric values are not directly comparable because they use d
 \begin{figure}[htb]
   \centering
   \includegraphics[width=\textwidth]{../code/analysis/figures/text_to_sql_accuracy_by_model_size.pdf}
-  \caption{Mean Text-to-SQL retrieval accuracy by model size and family (NEM, raw unrescaled BERTScore F1,
+  \caption{Mean Text-to-SQL retrieval accuracy by model size and family (NEM, raw BERTScore F1,
     and ROUGE-L F1). Failed SQL runs retain zero scores,
     and Qwen~3.5 27B is excluded from the analysis. Gemma~4 26B-A4B is positioned by its total nominal parameter
   count. Whiskers show pointwise 95\% confidence intervals.}

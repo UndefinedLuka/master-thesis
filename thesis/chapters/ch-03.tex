@@ -218,10 +218,7 @@ executing the gold SQL queries on the databases used in the experiment. For BIRD
 the subsampled databases rather than the original full databases.
 
 We report Normalized Exact Match (NEM), ROUGE-L, and BERTScore as complementary measures of reference-answer
-agreement, following the definitions in Section~\ref{sec:reference-answer-metrics}.
-The text-based metrics measure agreement with the reference representation rather than independently verifying
-the correctness of each retrieved value. Similarity scores may remain high when an answer contains an incorrect
-number, identifier, or entity, while a correct answer expressed differently may score lower.
+agreement, following the definitions and interpretive limitations in Section~\ref{sec:reference-answer-metrics}.
 
 For Text-to-SQL, we use execution success as defined in Section~\ref{sec:sql-execution-metrics}.
 We also implement an error correction loop, which will entail the following steps. If a generated SQL query fails
