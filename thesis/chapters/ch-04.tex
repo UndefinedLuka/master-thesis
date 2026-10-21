@@ -161,15 +161,13 @@ fit are recorded with an explicit context exceeded marker and skipped, keeping t
 \subsection{Text-to-SQL}
 
 For the Text-to-SQL pipeline, the model receives the database schema as data definition language statements
-and must produce a
-valid SQLite query. When the generated SQL fails to execute (due to syntax errors, missing columns, or
-runtime exceptions), the error message is appended to the conversation as a user message and the model is
-given another attempt. This error-correction loop runs up to three retry attempts beyond the initial
-generation. All attempts are recorded with their individual timing and token metrics. Reported token counts and
+and must produce a valid SQLite query. The runner implements the correction policy in
+Section~\ref{sec:minimalist-text-to-sql} by appending the failed response and error feedback to the conversation
+as assistant and user messages, respectively. All attempts are recorded with their individual timing and
+token metrics. Reported token counts and
 model time accumulate across all attempts; model time includes TTFT and post-first-token generation on each
 attempt, and total Text-to-SQL response latency also includes query-execution time. These measurements cover the
-response workflow, not preprocessing before request submission. If the model fails to produce a valid query
-after exhausting all retries, the example is marked as a definitive failure.
+response workflow, not preprocessing before request submission.
 
 \subsection{Prompt Design}
 

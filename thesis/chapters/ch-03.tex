@@ -27,9 +27,15 @@ pipelines, with execution success and query-execution time additionally recorded
 \subsection{Text-to-SQL Pipeline}
 \label{sec:minimalist-text-to-sql}
 
-We use a deliberately minimalist Text-to-SQL architecture under the controlled local inference setup. A
-bounded correction loop returns execution errors to the same model, allowing up to three retries beyond the
-initial generation.
+We use a deliberately minimalist Text-to-SQL architecture under the controlled local inference setup. If a
+generated query fails with a syntax or runtime error, or no SQL statement can be extracted from the response,
+the error is returned to the same model to request a corrected query. The loop allows up to three retries
+beyond the initial generation and stops at the first successful execution. If no query executes successfully
+after all four attempts, the run is marked as a definitive failure.
+
+The three-retry cap bounds automated recovery for non-technical end users, who are not expected to repair
+SQL queries manually. Runs that cannot produce an executable query within this budget are treated as
+failures rather than relying on user intervention.
 
 The architectures reviewed in Section~\ref{sec:sota-text-to-sql} introduce additional sources of performance
 variation. Adopting ideas presented in these papers would require evaluating their retrieval quality,
@@ -221,16 +227,8 @@ We report Normalized Exact Match (NEM), ROUGE-L, and BERTScore as complementary 
 agreement, following the definitions and interpretive limitations in Section~\ref{sec:reference-answer-metrics}.
 
 For Text-to-SQL, we use execution success as defined in Section~\ref{sec:sql-execution-metrics}.
-We also implement an error correction loop, which will entail the following steps. If a generated SQL query fails
-to execute due to a database syntax or runtime error, the error log is fed back to the model, granting it up
-to three retries beyond the initial attempt to self-correct the query. The system logs the exact number of retries
-required to achieve successful execution. If the model fails to produce an executable query after all four
-attempts, it is marked as a definitive failure.
-
-The decision to enforce a strict three-retry cap reflects a user-centric evaluation philosophy. Since
-non-technical end users typically lack the SQL knowledge required to fix broken queries manually, a model
-that cannot self-correct within three automated iterations provides zero operational value to the target
-audience.
+We record the number of retries and the final execution outcome under the correction policy defined in
+Section~\ref{sec:minimalist-text-to-sql}.
 
 \subsection{Confidence Intervals and Effect Sizes}
 \label{sec:confidence-intervals}

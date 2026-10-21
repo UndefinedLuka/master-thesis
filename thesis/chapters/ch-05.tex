@@ -356,9 +356,6 @@ payload approaches or exceeds the available context.
 
 \section{Text-to-SQL}
 
-In the Text-to-SQL pipeline, the model receives the database schema and generates an SQL query instead of
-reading serialized table contents directly. The query is executed against the same database used to construct
-the reference answer, and execution errors can be returned to the model for up to three correction attempts.
 This section evaluates retrieval accuracy and operational efficiency for the 25.680 retained Text-to-SQL runs.
 
 \subsection{Retrieval accuracy}
@@ -471,11 +468,8 @@ mean-latency reductions of approximately 54\% and 69\%.
 
 \subsection{Error correction performance}
 
-When a generated query fails to execute, the pipeline returns the database error to the model and requests a
-corrected query. Up to three retries are allowed after the initial generation, giving each run a maximum of
-four attempts. This mechanism can respond to detectable failures such as invalid syntax, nonexistent tables or
-columns, and responses from which no SQL statement can be extracted. Table~\ref{tab:text-to-sql-error-correction}
-reports execution-success counts by attempt.
+Under the three-retry policy defined in Section~\ref{sec:minimalist-text-to-sql},
+Table~\ref{tab:text-to-sql-error-correction} reports execution-success counts by attempt.
 
 \input{../code/analysis/tables/text_to_sql_error_correction}
 
