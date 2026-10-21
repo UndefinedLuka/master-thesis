@@ -32,6 +32,7 @@ from visualizations.config import (
     LATEX_ROW_END,
     OUTCOME_LABELS,
 )
+from visualizations.latex_numbers import num
 
 DEFAULT_DATASETS = DATASET_ORDER
 EXPECTED_RETAINED_MODEL_COUNT = 10
@@ -420,5 +421,4 @@ def _nonnegative_int(value: object) -> int:
 
 
 def _format_count(value: int) -> str:
-    return f"{value:,}"
-
+    return num(value)

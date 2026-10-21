@@ -15,6 +15,7 @@ from visualizations.config import (
     SERIALIZATION_FORMAT_ORDER,
 )
 from visualizations.direct_efficiency_data import DirectEfficiencyAnalysis
+from visualizations.plot_numbers import number_formatter, quantity, save_pgf_figure, tight_layout
 from visualizations.uncertainty import interval_marks
 
 if TYPE_CHECKING:
@@ -44,8 +45,6 @@ def plot_direct_latency(
 
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
-    from matplotlib.ticker import StrMethodFormatter
-
     datasets = [value for value in DATASET_ORDER if value in set(summary["dataset"])]
     formats = [
         value for value in SERIALIZATION_FORMAT_ORDER if value in set(summary["format"])
@@ -92,7 +91,7 @@ def plot_direct_latency(
                 position,
                 (float(panel.loc[formats[position], "average_total_latency_s_high"])
                  if "average_total_latency_s_high" in panel else total) + maximum * 0.025,
-                f"{total:.2f}s",
+                quantity(total, "\\second", 2),
                 ha="center",
                 va="bottom",
                 fontsize=8.5,
@@ -104,7 +103,7 @@ def plot_direct_latency(
         axis.spines["right"].set_visible(False)
         axis.set_title(DATASET_LABELS.get(dataset, dataset), fontweight="bold")
         axis.set_ylabel("Average latency (seconds)")
-        axis.yaxis.set_major_formatter(StrMethodFormatter("{x:,.0f}"))
+        axis.yaxis.set_major_formatter(number_formatter())
         axis.set_ylim(top=maximum * 1.15)
         if index == len(datasets) - 1:
             axis.set_xticks(
@@ -124,7 +123,7 @@ def plot_direct_latency(
         ncol=2,
         frameon=False,
     )
-    figure.tight_layout(rect=(0.03, 0, 1.0, 0.95))
+    tight_layout(figure, rect=(0.03, 0, 1.0, 0.95))
     return figure, axes
 
 
@@ -139,6 +138,6 @@ def generate_direct_latency_figure(
 
     import matplotlib.pyplot as plt
 
-    figure.savefig(output_path, dpi=300, bbox_inches="tight", facecolor="white")
+    save_pgf_figure(figure, output_path)
     plt.close(figure)
     return output_path

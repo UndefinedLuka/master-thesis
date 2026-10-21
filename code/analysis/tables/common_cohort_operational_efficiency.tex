@@ -10,24 +10,24 @@
     \toprule
     Dataset & Method & Input tokens & Output tokens & TTFT (s) & Generation (s) & SQL (s) & Total (s) \\
     \midrule
-    Spider & Text-to-SQL & 555 & 40.9 & 0.067 & 0.207 & 0.005 & 0.279 \\
-     & Direct / CSV & 4,487 & 63.0 & 0.633 & 0.326 & 0.000 & 0.959 \\
-     & Direct / TOON & 4,885 & 75.1 & 0.693 & 0.394 & 0.000 & 1.087 \\
-     & Direct / Markdown & 5,765 & 72.8 & 0.870 & 0.379 & 0.000 & 1.249 \\
-     & Direct / YAML & 10,006 & 90.5 & 2.064 & 0.503 & 0.000 & 2.567 \\
-     & Direct / JSON & 13,274 & 84.4 & 3.197 & 0.505 & 0.000 & 3.702 \\
-     & Direct / XML & 17,612 & 98.1 & 5.673 & 0.693 & 0.000 & 6.366 \\
+    Spider & Text-to-SQL & \num{555} & \num{40.9} & \num{0.067} & \num{0.207} & \num{0.005} & \num{0.279} \\
+     & Direct / CSV & \num{4487} & \num{63.0} & \num{0.633} & \num{0.326} & \num{0.000} & \num{0.959} \\
+     & Direct / TOON & \num{4885} & \num{75.1} & \num{0.693} & \num{0.394} & \num{0.000} & \num{1.087} \\
+     & Direct / Markdown & \num{5765} & \num{72.8} & \num{0.870} & \num{0.379} & \num{0.000} & \num{1.249} \\
+     & Direct / YAML & \num{10006} & \num{90.5} & \num{2.064} & \num{0.503} & \num{0.000} & \num{2.567} \\
+     & Direct / JSON & \num{13274} & \num{84.4} & \num{3.197} & \num{0.505} & \num{0.000} & \num{3.702} \\
+     & Direct / XML & \num{17612} & \num{98.1} & \num{5.673} & \num{0.693} & \num{0.000} & \num{6.366} \\
     \midrule
-    BIRD & Text-to-SQL & 755 & 63.2 & 0.090 & 0.312 & 0.006 & 0.409 \\
-     & Direct / CSV & 31,754 & 198.7 & 6.316 & 1.570 & 0.000 & 7.887 \\
-     & Direct / TOON & 32,808 & 219.7 & 6.519 & 1.729 & 0.000 & 8.248 \\
-     & Direct / Markdown & 34,376 & 218.9 & 6.911 & 1.952 & 0.000 & 8.863 \\
-     & Direct / YAML & 53,360 & 260.9 & 14.640 & 2.606 & 0.000 & 17.245 \\
-     & Direct / JSON & 76,239 & 226.0 & 28.361 & 2.863 & 0.000 & 31.224 \\
-     & Direct / XML & 97,193 & 261.2 & 46.877 & 3.986 & 0.000 & 50.863 \\
+    BIRD & Text-to-SQL & \num{755} & \num{63.2} & \num{0.090} & \num{0.312} & \num{0.006} & \num{0.409} \\
+     & Direct / CSV & \num{31754} & \num{198.7} & \num{6.316} & \num{1.570} & \num{0.000} & \num{7.887} \\
+     & Direct / TOON & \num{32808} & \num{219.7} & \num{6.519} & \num{1.729} & \num{0.000} & \num{8.248} \\
+     & Direct / Markdown & \num{34376} & \num{218.9} & \num{6.911} & \num{1.952} & \num{0.000} & \num{8.863} \\
+     & Direct / YAML & \num{53360} & \num{260.9} & \num{14.640} & \num{2.606} & \num{0.000} & \num{17.245} \\
+     & Direct / JSON & \num{76239} & \num{226.0} & \num{28.361} & \num{2.863} & \num{0.000} & \num{31.224} \\
+     & Direct / XML & \num{97193} & \num{261.2} & \num{46.877} & \num{3.986} & \num{0.000} & \num{50.863} \\
     \bottomrule
   \end{tabular}%
   }
   \vspace{0.4em}
-  \parbox{\linewidth}{\scriptsize \textit{Note:} Spider: 561 questions, 18 databases; BIRD: 121 questions, 2 databases; all 10 retained models. Every question completed with every model in all displayed methods. Completion does not imply correctness. Text-to-SQL token and timing totals include all correction attempts; TTFT sums the first-token waits across attempts, and generation excludes these waits. Direct formats are alternative runs, not a six-run pipeline.}
+  \parbox{\linewidth}{\scriptsize \textit{Note:} Spider: \num{561} questions, \num{18} databases; BIRD: \num{121} questions, \num{2} databases; all \num{10} retained models. Every question completed with every model in all displayed methods. Completion does not imply correctness. Text-to-SQL token and timing totals include all correction attempts; TTFT sums the first-token waits across attempts, and generation excludes these waits. Direct formats are alternative runs, not a six-run pipeline.}
 \end{table}

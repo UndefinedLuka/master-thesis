@@ -11,9 +11,9 @@ All experiments are executed on the FRIDA \cite{ulfri_rdc} high-performance comp
 Research Data
 Centre at the Faculty of Computer and Information Science, University of Ljubljana. FRIDA is
 managed by the Slurm workload scheduler, which provides GPU allocation and walltime-based job
-preemption. The primary compute target is a single NVIDIA H100 GPU with 80~GB of high-bandwidth memory, which
-provides sufficient capacity to hold even the largest quantized model (27~billion parameters) entirely in GPU
-memory while maintaining a 128K-token key--value (KV) cache.
+preemption. The primary compute target is a single NVIDIA H100 GPU with \qty{80}{\giga\byte} of high-bandwidth memory, which
+provides sufficient capacity to hold even the largest quantized model (\num{27} billion parameters) entirely in GPU
+memory while maintaining a \num{128}K-token key--value (KV) cache.
 
 \subsection{Container Environment}
 
@@ -30,29 +30,29 @@ We evaluate three families of open-weight instruction-tuned language models, cho
 range while remaining recent enough to reflect current architectural advances:
 
 \begin{itemize}
-  \item \textbf{Ministral~3} \cite{liu2026ministral} - available at 3B, 8B, and 14B parameters.
+  \item \textbf{Ministral~3} \cite{liu2026ministral} - available at \num{3}B, \num{8}B, and \num{14}B parameters.
     This family uses a sliding-window attention mechanism and is optimized for low-latency deployment.
-  \item \textbf{Qwen~3.5} \cite{yang2025qwen3} - available at 0.8B, 2B, 4B, 9B, and 27B
+  \item \textbf{Qwen~3.5} \cite{yang2025qwen3} - available at \num{0.8}B, \num{2}B, \num{4}B, \num{9}B, and \num{27}B
     parameters. Qwen~3.5 models feature hybrid thinking capabilities with explicit reasoning traces enclosed
     in \texttt{<think>} blocks.
   \item \textbf{Gemma~4} \cite{gemmateam2026gemma4technicalreport} - a recently released family of lightweight open
     models designed for efficient on-device and server-side deployment.
 \end{itemize}
 
-Together, these three families give us thirteen distinct model sizes ranging from sub-1B to 27B parameters,
+Together, these three families give us thirteen distinct model sizes ranging from sub-\num{1}B to \num{27}B parameters,
 enabling fine-grained analysis of the relationship between model scale and information extraction accuracy.
 
 \subsection{Quantization Strategy}
 
 All models are served in the GGUF format \cite{llamacpp} using the \textbf{Q4\_K\_M} quantization
 scheme. Q4\_K\_M belongs to the k-quant family introduced in the \texttt{llama.cpp} \cite{llamacpp}
-ecosystem, which applies mixed-precision quantization: most weight tensors are stored at 4-bit precision,
-while attention key/value projection matrices and the output head retain higher precision (6-bit).
+ecosystem, which applies mixed-precision quantization: most weight tensors are stored at \num{4}-bit precision,
+while attention key/value projection matrices and the output head retain higher precision (\num{6}-bit).
 
 We choose Q4\_K\_M for three reasons. First, it offers the best empirically documented trade-off between
-perplexity degradation and memory savings, typically within 0,5 perplexity points of the full-precision
-baseline. Second, it enables us to fit models up to 27B parameters on a single 80~GB GPU with room for a full
-128K-token KV cache. Third, applying the same quantization scheme uniformly across all models ensures that
+perplexity degradation and memory savings, typically within \num{0.5} perplexity points of the full-precision
+baseline. Second, it enables us to fit models up to \num{27}B parameters on a single \qty{80}{\giga\byte} GPU with room for a full
+\num{128}K-token KV cache. Third, applying the same quantization scheme uniformly across all models ensures that
 architecture and parameter count remain the only variables under test.
 
 \subsection{Inference Configuration}
@@ -60,10 +60,10 @@ architecture and parameter count remain the only variables under test.
 The following parameters are held constant across all models and experiments:
 
 \begin{itemize}
-  \item \textbf{Context window:} 131.072 tokens (128K).
+  \item \textbf{Context window:} \num{131072} tokens (\num{128}K).
   \item \textbf{GPU offload:} all model layers reside on the GPU (no CPU fallback is used).
-  \item \textbf{Temperature:} 0,0 (greedy decoding), ensuring deterministic and reproducible outputs across runs.
-  \item \textbf{Maximum output tokens:} 2.048.
+  \item \textbf{Temperature:} \num{0.0} (greedy decoding), ensuring deterministic and reproducible outputs across runs.
+  \item \textbf{Maximum output tokens:} \num{2048}.
   \item \textbf{KV-cache reset:} the KV cache is fully cleared between consecutive questions,
     preventing any information leakage or prefix-caching effects that could distort timing measurements.
 \end{itemize}
@@ -121,17 +121,17 @@ independently and concatenated for the final output, which is used in the later 
 The Spider dataset is obtained from its official distribution
 page\footnote{\url{https://yale-lily.github.io/spider}} maintained by the Yale LILY lab. We use the complete
 dataset without modification: all database tables retain their full row sets, since most of the Spider's databases are
-small enough to fit within the 128K context window when serialized in any of the six formats.
+small enough to fit within the \num{128}K context window when serialized in any of the six formats.
 
 \subsection{BIRD}
 
 The BIRD dataset is downloaded from its official benchmark
 site\footnote{\url{https://bird-bench.github.io/}}. Unlike Spider, BIRD's databases contain real-world data
 with tables spanning tens of thousands of rows, far exceeding the context capacity of the evaluated models.
-We therefore subsample each table to a maximum of $500$ rows using deterministic random sampling.
+We therefore subsample each table to a maximum of \num{500} rows using deterministic random sampling.
 Tables with fewer rows are retained in full. The cap balances two competing requirements: retaining
 enough data for the reference queries to return informative results and keeping serialized databases small
-enough for Direct Context Inference within the 128K-token window.
+enough for Direct Context Inference within the \num{128}K-token window.
 
 Rows are sampled independently in each table, so foreign-key relationships are not guaranteed to be
 preserved. We therefore execute the unchanged gold SQL queries against the sampled databases to obtain
@@ -141,12 +141,12 @@ The sampled databases are materialized as standalone SQLite files written to dis
 consumers (the serialization encoders, the reference answer generator, and the Text-to-SQL query executor),
 all operate on exactly the same data.
 
-Reducing the cap from 500 to 100 rows made more databases fit, but increased the number of empty reference
-results by to 649 (42.31\%). Increasing it to 1.000 rows reduced empty results to 342
-(22,29\%), but increased mean CSV payload size by a factor of $1,92$. CSV and TOON then fit only 4 of 11
-databases for every tokenizer, compared with 6 at 500 rows: \texttt{financial} and
+Reducing the cap from \num{500} to \num{100} rows made more databases fit, but increased the number of empty reference
+results by to \num{649} (\qty{42.31}{\percent}). Increasing it to \num{1000} rows reduced empty results to \num{342}
+(\qty{22.29}{\percent}), but increased mean CSV payload size by a factor of \num{1.92}. CSV and TOON then fit only \num{4} of \num{11}
+databases for every tokenizer, compared with \num{6} at \num{500} rows: \texttt{financial} and
 \texttt{thrombosis\_prediction} additionally exceeded the window.
-These measurements support 500 rows as a practical compromise between retaining data and context-window
+These measurements support \num{500} rows as a practical compromise between retaining data and context-window
 feasibility, it does not establish an optimal cap.
 
 \section{Benchmark Execution}

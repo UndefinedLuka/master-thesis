@@ -11,6 +11,7 @@ from visualizations.config import (
     TEXT_TO_SQL_TOKEN_FIGURE_FILENAME,
     TOKENIZER_FAMILY_COLORS,
 )
+from visualizations.plot_numbers import number_formatter, save_pgf_figure, tight_layout
 from visualizations.text_to_sql_data import TextToSqlAnalysis, text_to_sql_model_label
 from visualizations.uncertainty import interval_marks
 
@@ -36,8 +37,6 @@ def plot_text_to_sql_token_usage(
 
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
-    from matplotlib.ticker import StrMethodFormatter
-
     figure, axes_array = plt.subplots(
         nrows=len(DATASET_ORDER),
         ncols=len(TOKEN_METRICS),
@@ -67,14 +66,14 @@ def plot_text_to_sql_token_usage(
             axis.spines["right"].set_visible(False)
             axis.set_title(title, fontweight="bold")
             axis.set_ylabel(DATASET_LABELS[dataset] if column_index == 0 else "")
-            axis.yaxis.set_major_formatter(StrMethodFormatter("{x:,.0f}"))
+            axis.yaxis.set_major_formatter(number_formatter())
             axis.set_xticks(range(len(rows)), labels, rotation=45, ha="right", fontsize=7.5)
             maximum = max(values)
             if f"{metric}_high" in rows:
                 maximum = max(maximum, float(rows[f"{metric}_high"].max()))
             axis.set_ylim(top=maximum * 1.15)
 
-    figure.tight_layout(rect=(0.03, 0, 1.0, 1.0))
+    tight_layout(figure, rect=(0.03, 0, 1.0, 1.0))
     return figure, axes
 
 
@@ -89,7 +88,7 @@ def generate_text_to_sql_token_figure(
 
     import matplotlib.pyplot as plt
 
-    figure.savefig(output_path, dpi=300, bbox_inches="tight", facecolor="white")
+    save_pgf_figure(figure, output_path)
     plt.close(figure)
     return output_path
 

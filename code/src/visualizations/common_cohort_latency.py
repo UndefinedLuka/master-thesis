@@ -19,6 +19,7 @@ from visualizations.config import (
     COMMON_COHORT_SQL_METHOD,
     TEXT_TO_SQL_LATENCY_PHASE_COLORS,
 )
+from visualizations.plot_numbers import number_formatter, quantity, tight_layout
 from visualizations.uncertainty import interval_marks
 
 if TYPE_CHECKING:
@@ -65,7 +66,7 @@ def plot_common_cohort_latency(analysis: CommonCohortAnalysis) -> Figure:
                 (float(panel.loc[method, "average_total_latency_s_high"])
                  if "average_total_latency_s_high" in panel else total) + maximum * 0.02,
                 position,
-                f"{total:.3f} s",
+                quantity(total, "\\second", 3),
                 va="center",
                 fontsize=8.5,
                 fontweight="bold" if method == COMMON_COHORT_SQL_METHOD else "normal",
@@ -77,6 +78,7 @@ def plot_common_cohort_latency(analysis: CommonCohortAnalysis) -> Figure:
         axis.set_xlim(0, maximum * 1.44)
         axis.set_title(panel_title(analysis, dataset), fontsize=11, fontweight="bold", pad=14)
         axis.set_xlabel("Mean total latency (seconds)", fontsize=10)
+        axis.xaxis.set_major_formatter(number_formatter())
         style_axis(axis)
     handles, labels = axes[0, 0].get_legend_handles_labels()
     figure.legend(
@@ -88,7 +90,7 @@ def plot_common_cohort_latency(analysis: CommonCohortAnalysis) -> Figure:
         frameon=False,
         fontsize=9,
     )
-    figure.tight_layout(rect=(0, 0, 1, 0.93), w_pad=2.5)
+    tight_layout(figure, rect=(0, 0, 1, 0.93), w_pad=2.5)
     return figure
 
 

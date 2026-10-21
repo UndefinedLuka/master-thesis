@@ -14,6 +14,7 @@ from visualizations.config import (
     TOKENIZER_FAMILY_ORDER,
 )
 from visualizations.direct_accuracy_data import model_size_label, parse_model_family_size
+from visualizations.plot_numbers import number
 from visualizations.text_to_sql_data import text_to_sql_model_label
 
 if TYPE_CHECKING:
@@ -66,7 +67,8 @@ def plot_common_cohort_latency_by_model(analysis: CommonCohortAnalysis) -> Figur
                     continue
                 color = "white" if abs(np.log2(value)) > limit * 0.55 else "#18212B"
                 axis.text(
-                    col, row, f"{value:.1f}×", ha="center", va="center", fontsize=8.5, color=color
+                    col, row, number(value, 1) + r"\ensuremath{\times}",
+                    ha="center", va="center", fontsize=8.5, color=color
                 )
         labels = [
             text_to_sql_model_label(
@@ -100,7 +102,10 @@ def plot_common_cohort_latency_by_model(analysis: CommonCohortAnalysis) -> Figur
     color_axis = figure.add_axes((0.91, 0.23, 0.016, 0.55))
     colorbar = figure.colorbar(image, cax=color_axis)
     ticks = [float(value) for value in (-4, -2, 0, 2, 4, 6, 8) if -limit <= value <= limit]
-    colorbar.set_ticks(ticks, labels=[f"{2**value:g}×" for value in ticks])
+    colorbar.set_ticks(
+        ticks,
+        labels=[number(2**value) + r"\ensuremath{\times}" for value in ticks],
+    )
     colorbar.set_label("Direct / SQL mean latency (log colour scale)", fontsize=9)
     colorbar.ax.tick_params(labelsize=8)
     return figure

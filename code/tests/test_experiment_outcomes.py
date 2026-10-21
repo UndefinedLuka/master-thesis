@@ -229,9 +229,11 @@ def test_render_outcome_table_includes_totals_and_writes_file(tmp_path: Path) ->
         coverage_validated=False,
     )
 
-    assert r"Successful without a recorded error & 3 & 4 & 7 \\" in latex
-    assert r"\textbf{All successful runs} & 4 & 6 & 10 \\" in latex
-    assert r"\textbf{All failed runs} & 5 & 7 & 12 \\" in latex
-    assert r"\textbf{Total runs} & 9 & 13 & 22 \\" in latex
+    assert (
+        r"Successful without a recorded error & \num{3} & \num{4} & \num{7} \\" in latex
+    )
+    assert r"\textbf{All successful runs} & \num{4} & \num{6} & \num{10} \\" in latex
+    assert r"\textbf{All failed runs} & \num{5} & \num{7} & \num{12} \\" in latex
+    assert r"\textbf{Total runs} & \num{9} & \num{13} & \num{22} \\" in latex
     assert "Complete coverage validated." in latex
     assert "Coverage validation skipped." in output.read_text(encoding="utf-8")

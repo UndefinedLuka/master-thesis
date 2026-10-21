@@ -21,6 +21,7 @@ from visualizations.config import (
     COMMON_COHORT_TOKENS_FIGURE_FILENAME,
     FORMAT_COLORS,
 )
+from visualizations.plot_numbers import number, number_formatter, tight_layout
 from visualizations.uncertainty import interval_marks
 
 if TYPE_CHECKING:
@@ -52,7 +53,7 @@ def plot_common_cohort_token_usage(analysis: CommonCohortAnalysis) -> Figure:
             upper = [bound if np.isfinite(bound) else value
                      for bound, value in zip(upper, values, strict=True)]
             for position, method, value in zip(positions, methods, values, strict=True):
-                label = f"{value:,.0f}" if row_index == 0 else f"{value:,.1f}"
+                label = number(value, 0 if row_index == 0 else 1)
                 end = upper[position]
                 x = end * 1.08 if row_index == 0 else end + max(upper) * 0.025
                 axis.text(
@@ -72,7 +73,9 @@ def plot_common_cohort_token_usage(analysis: CommonCohortAnalysis) -> Figure:
                 axis.set_xlim(max(1, min(values) / 2), max(upper) * 5.5)
                 axis.xaxis.set_major_formatter(
                     FuncFormatter(
-                        lambda value, _: f"{value / 1000:g}k" if value >= 1000 else f"{value:g}"
+                        lambda value, _: number(value / 1000) + r"\,k"
+                        if value >= 1000
+                        else number(value)
                     )
                 )
                 axis.xaxis.set_minor_formatter(NullFormatter())
@@ -82,9 +85,10 @@ def plot_common_cohort_token_usage(analysis: CommonCohortAnalysis) -> Figure:
                 )
             else:
                 axis.set_xlim(0, max(upper) * 1.25)
+                axis.xaxis.set_major_formatter(number_formatter())
                 axis.set_xlabel("Mean output tokens (linear scale)", fontsize=10)
             style_axis(axis)
-    figure.tight_layout(rect=(0, 0, 1, 1), w_pad=2.5, h_pad=2.2)
+    tight_layout(figure, rect=(0, 0, 1, 1), w_pad=2.5, h_pad=2.2)
     return figure
 
 

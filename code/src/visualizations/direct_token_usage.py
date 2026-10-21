@@ -16,6 +16,7 @@ from visualizations.config import (
     SERIALIZATION_FORMAT_ORDER,
 )
 from visualizations.direct_efficiency_data import DirectEfficiencyAnalysis
+from visualizations.plot_numbers import number_formatter, save_pgf_figure, tight_layout
 from visualizations.uncertainty import interval_marks
 
 if TYPE_CHECKING:
@@ -44,8 +45,6 @@ def plot_direct_token_usage(
 
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
-    from matplotlib.ticker import StrMethodFormatter
-
     datasets = [value for value in DATASET_ORDER if value in set(summary["dataset"])]
     formats = [
         value for value in SERIALIZATION_FORMAT_ORDER if value in set(summary["format"])
@@ -79,7 +78,7 @@ def plot_direct_token_usage(
             axis.spines["top"].set_visible(False)
             axis.spines["right"].set_visible(False)
             axis.set_title(title, fontweight="bold")
-            axis.yaxis.set_major_formatter(StrMethodFormatter("{x:,.0f}"))
+            axis.yaxis.set_major_formatter(number_formatter())
             if column_index == 0:
                 axis.set_ylabel(DATASET_LABELS.get(dataset, dataset))
             if row_index == len(datasets) - 1:
@@ -94,7 +93,7 @@ def plot_direct_token_usage(
                 maximum = max(maximum, float(panel[f"{metric}_high"].max()))
             axis.set_ylim(top=maximum * 1.18)
 
-    figure.tight_layout(rect=(0.03, 0, 1.0, 1.0))
+    tight_layout(figure, rect=(0.03, 0, 1.0, 1.0))
     return figure, axes
 
 
@@ -109,6 +108,6 @@ def generate_direct_token_usage_figure(
 
     import matplotlib.pyplot as plt
 
-    figure.savefig(output_path, dpi=300, bbox_inches="tight", facecolor="white")
+    save_pgf_figure(figure, output_path)
     plt.close(figure)
     return output_path

@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import math
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -18,6 +17,7 @@ from visualizations.config import (
     TOKENIZER_FAMILY_LABELS,
     TOKENIZER_FAMILY_ORDER,
 )
+from visualizations.plot_numbers import number, number_formatter, save_pgf_figure, tight_layout
 from visualizations.text_to_sql_data import TextToSqlAnalysis
 from visualizations.uncertainty import interval_marks
 
@@ -77,6 +77,7 @@ def plot_text_to_sql_accuracy(
             axis.set_xscale("log")
             axis.set_xticks(all_sizes, [_format_size(value) for value in all_sizes])
             axis.minorticks_off()
+            axis.yaxis.set_major_formatter(number_formatter())
             axis.grid(axis="both", color="#D0D0D0", linewidth=0.8)
             axis.set_axisbelow(True)
             axis.spines["top"].set_visible(False)
@@ -112,7 +113,7 @@ def plot_text_to_sql_accuracy(
         ncol=len(handles),
         frameon=False,
     )
-    figure.tight_layout(rect=(0.03, 0, 1.0, 0.94))
+    tight_layout(figure, rect=(0.03, 0, 1.0, 0.94))
     return figure, axes
 
 
@@ -127,7 +128,7 @@ def generate_text_to_sql_accuracy_figure(
 
     import matplotlib.pyplot as plt
 
-    figure.savefig(output_path, dpi=300, bbox_inches="tight", facecolor="white")
+    save_pgf_figure(figure, output_path)
     plt.close(figure)
     return output_path
 
@@ -141,6 +142,4 @@ def _score_limits(values: pd.Series) -> tuple[float, float]:
 
 
 def _format_size(size: float) -> str:
-    if math.isclose(size, round(size)):
-        return str(int(round(size)))
-    return f"{size:g}"
+    return number(size)

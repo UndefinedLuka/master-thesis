@@ -13,6 +13,13 @@ from visualizations.config import (
     TEXT_TO_SQL_LATENCY_PHASE_LABELS,
     TOKENIZER_FAMILY_COLORS,
 )
+from visualizations.plot_numbers import (
+    number,
+    number_formatter,
+    quantity,
+    save_pgf_figure,
+    tight_layout,
+)
 from visualizations.text_to_sql_data import TextToSqlAnalysis, text_to_sql_model_label
 from visualizations.uncertainty import interval_marks
 
@@ -67,6 +74,7 @@ def plot_text_to_sql_latency(
             )
             bottoms = [left + value for left, value in zip(bottoms, values, strict=True)]
         maximum = max(rows["average_total_latency_s"])
+        axis.yaxis.set_major_formatter(number_formatter())
         interval_marks(axis, positions, rows, "average_total_latency_s")
         if "average_total_latency_s_high" in rows:
             maximum = max(maximum, float(rows["average_total_latency_s_high"].max()))
@@ -76,11 +84,12 @@ def plot_text_to_sql_latency(
             rows["average_retries"],
             strict=True,
         ):
+            latency_label = quantity(total, r"\second", 2)
             axis.text(
                 position,
                 (float(rows.iloc[position]["average_total_latency_s_high"])
                  if "average_total_latency_s_high" in rows else float(total)) + maximum * 0.025,
-                f"{float(total):.2f}s\n{float(retries):.2f} retries",
+                f"{latency_label}\n{number(retries, 2)} retries",
                 ha="center",
                 va="bottom",
                 fontsize=7.5,
@@ -107,7 +116,7 @@ def plot_text_to_sql_latency(
         ncol=3,
         frameon=False,
     )
-    figure.tight_layout(rect=(0.03, 0, 1.0, 0.94))
+    tight_layout(figure, rect=(0.03, 0, 1.0, 0.94))
     return figure, axes
 
 
@@ -122,7 +131,7 @@ def generate_text_to_sql_latency_figure(
 
     import matplotlib.pyplot as plt
 
-    figure.savefig(output_path, dpi=300, bbox_inches="tight", facecolor="white")
+    save_pgf_figure(figure, output_path)
     plt.close(figure)
     return output_path
 

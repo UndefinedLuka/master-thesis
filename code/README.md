@@ -128,6 +128,12 @@ The `visualizations` package exposes one orchestrator command for all results-ch
 uv run --extra visualizations thesis-visualize-all
 ```
 
+Publication numbers use **siunitx v3**, with decimal commas and thousands dots.
+Tables emit siunitx commands with canonical decimal-dot inputs; PDF figures use
+Matplotlib's PGF backend and the shared `../thesis/style/number_formatting.tex`
+configuration. Generating figures requires `pdflatex`, `pgf`, and `siunitx` in the
+local LaTeX installation. Numeric source data retain their machine-readable form.
+
 The command loads the scored benchmark tree and detailed serialization-token CSV once, validates
 both complete experiment matrices, and invokes the independent table/figure generators. It writes
 `analysis/tables/experiment_outcomes.tex`,

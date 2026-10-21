@@ -18,6 +18,7 @@ from visualizations.config import (
     TOKENIZER_FAMILY_LABELS,
     TOKENIZER_FAMILY_ORDER,
 )
+from visualizations.plot_numbers import number, number_formatter, save_pgf_figure, tight_layout
 from visualizations.serialization_data import present_order, require_columns, sort_summary
 from visualizations.uncertainty import (
     BOOTSTRAP_DRAWS,
@@ -167,10 +168,12 @@ def plot_tokenizer_comparison(summary: pd.DataFrame) -> Figure:
         axis.spines["top"].set_visible(False)
         axis.spines["right"].set_visible(False)
         axis.set_title(
-            f"{DATASET_LABELS.get(dataset, dataset)} ({database_count} databases per format)",
+            f"{DATASET_LABELS.get(dataset, dataset)} "
+            f"({number(database_count, 0)} databases per format)",
             fontsize=13,
             fontweight="bold",
         )
+        axis.yaxis.set_major_formatter(number_formatter())
 
     axes[-1, 0].set_xticks(
         x_positions,
@@ -188,7 +191,7 @@ def plot_tokenizer_comparison(summary: pd.DataFrame) -> Figure:
         ncol=max(1, len(families)),
         frameon=False,
     )
-    figure.tight_layout(rect=(0.04, 0, 1.0, 0.94))
+    tight_layout(figure, rect=(0.04, 0, 1.0, 0.94))
     return figure
 
 
@@ -200,6 +203,6 @@ def generate_tokenizer_comparison_figure(report: pd.DataFrame, output_dir: Path)
 
     import matplotlib.pyplot as plt
 
-    figure.savefig(output_path, dpi=300, bbox_inches="tight", facecolor="white")
+    save_pgf_figure(figure, output_path)
     plt.close(figure)
     return output_path

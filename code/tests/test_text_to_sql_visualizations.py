@@ -263,10 +263,14 @@ def test_text_to_sql_figures_show_metrics_tokens_latency_and_retries(tmp_path: P
         "Average output tokens",
     ]
     assert all(len(axis.containers) == 3 for axis in latency_axes)
+    for axis in latency_axes:
+        formatter = axis.yaxis.get_major_formatter()
+        assert formatter(0.5, 0) == r"\num{0.5}"
+        assert formatter(1.5, 1) == r"\num{1.5}"
     assert [text.get_text() for text in latency_figure.legends[0].get_texts()][0] == (
         "Cumulative TTFT"
     )
-    assert any("1.00 retries" in text.get_text() for text in latency_axes[0].texts)
+    assert any(r"\num{1.00} retries" in text.get_text() for text in latency_axes[0].texts)
 
     figures_dir = tmp_path / "figures"
     accuracy_path = generate_text_to_sql_accuracy_figure(analysis, figures_dir)

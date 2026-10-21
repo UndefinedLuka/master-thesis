@@ -61,7 +61,7 @@ def render_text_to_sql_retrieval_table(
                 r"report F1; BERTScore is raw (unrescaled). Text-similarity means include "
                 r"zero-scored failed SQL runs. Executed is the share of generated "
                 r"queries that ran successfully within the retry limit. Brackets show "
-                r"pointwise 95\% "
+                r"pointwise \qty{95}{\percent} "
                 r"database-bootstrap confidence intervals.}"
             ),
             r"\end{table}",

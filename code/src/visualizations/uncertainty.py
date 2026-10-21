@@ -11,6 +11,8 @@ from functools import lru_cache
 import numpy as np
 import pandas as pd
 
+from visualizations.latex_numbers import num, percent
+
 BOOTSTRAP_DRAWS = 10_000
 BOOTSTRAP_SEED = 20261006
 
@@ -181,10 +183,17 @@ def table_estimate(row, metric: str, decimals=2, *, scale=1.0, suffix="") -> str
     """Two-line LaTeX cell, keeping intervals below their estimates to limit width."""
     if hasattr(row, "_asdict"):
         row = row._asdict()
-    value = f"{row[metric] * scale:,.{decimals}f}{suffix}"
+    formatter = percent if suffix == r"\%" else num
+    value = formatter(row[metric] * scale, decimals)
+    if suffix and suffix != r"\%":
+        value += suffix
     if f"{metric}_low" not in row:
         return value
     scaled = {f"{metric}_low": row[f"{metric}_low"] * scale,
               f"{metric}_high": row[f"{metric}_high"] * scale}
+    if not np.isfinite([scaled[f"{metric}_low"], scaled[f"{metric}_high"]]).all():
+        return (r"\shortstack[r]{" + value + r"\\{\scriptsize [not estimable]}}")
+    low = formatter(scaled[f"{metric}_low"], decimals)
+    high = formatter(scaled[f"{metric}_high"], decimals)
     return (r"\shortstack[r]{" + value + r"\\{\scriptsize "
-            + ci_text(scaled, metric, decimals) + "}}")
+            + f"[{low}; {high}]" + "}}")

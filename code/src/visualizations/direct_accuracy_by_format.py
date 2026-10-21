@@ -20,6 +20,7 @@ from visualizations.config import (
     SERIALIZATION_FORMAT_ORDER,
 )
 from visualizations.direct_accuracy_data import calculate_format_accuracy
+from visualizations.plot_numbers import number_formatter, save_pgf_figure, tight_layout
 from visualizations.uncertainty import interval_marks
 
 if TYPE_CHECKING:
@@ -96,6 +97,7 @@ def plot_direct_accuracy_by_format(
             axis.spines["top"].set_visible(False)
             axis.spines["right"].set_visible(False)
             axis.set_title(METRIC_TITLES.get(metric, metric), fontweight="bold")
+            axis.yaxis.set_major_formatter(number_formatter())
             if column_index == 0:
                 axis.set_ylabel(f"{DATASET_LABELS.get(dataset, dataset)}\nMean score")
             if row_index == len(datasets) - 1:
@@ -114,7 +116,7 @@ def plot_direct_accuracy_by_format(
                 high = max(high, float(all_metric["mean_score_high"].max()) * 1.08)
             axis.set_ylim(low, high)
 
-    figure.tight_layout(rect=(0.03, 0, 1.0, 1.0))
+    tight_layout(figure, rect=(0.03, 0, 1.0, 1.0))
     return figure, axes
 
 
@@ -136,7 +138,7 @@ def generate_direct_accuracy_by_format_figure(
 
     import matplotlib.pyplot as plt
 
-    figure.savefig(output_path, dpi=300, bbox_inches="tight", facecolor="white")
+    save_pgf_figure(figure, output_path)
     plt.close(figure)
     return output_path
 

@@ -191,6 +191,13 @@ def test_format_and_model_size_figures_have_dataset_metric_grid(tmp_path: Path) 
     assert len(size_axes) == 2
     assert all(len(row) == 3 for row in size_axes)
     assert all(axis.get_xscale() == "log" for row in size_axes for axis in row)
+    for row in size_axes:
+        for axis in row:
+            assert all(
+                tick.get_text().startswith(r"\num{") for tick in axis.get_xticklabels()
+            )
+            # Automatic locators may choose fractional steps below two decimal places.
+            assert axis.yaxis.get_major_formatter()(0.025, 0) == r"\num{0.025}"
     assert [text.get_text() for text in size_figure.legends[0].get_texts()] == [
         "Qwen 3.5",
         "Ministral 3",

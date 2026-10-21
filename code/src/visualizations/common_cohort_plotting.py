@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 
 from visualizations.common_cohort_data import CommonCohortAnalysis
 from visualizations.config import COMMON_COHORT_METHOD_ORDER, DATASET_LABELS, DATASET_ORDER
+from visualizations.plot_numbers import number, save_pgf_figure
 
 if TYPE_CHECKING:
     from matplotlib.axes import Axes
@@ -25,8 +26,8 @@ def cohort_methods(analysis: CommonCohortAnalysis, dataset: str) -> list[str]:
 def panel_title(analysis: CommonCohortAnalysis, dataset: str) -> str:
     return (
         f"{DATASET_LABELS[dataset]}"
-        f"  ·  {analysis.question_counts[dataset]:,} questions"
-        f"  ·  {analysis.model_count} models"
+        f"  ·  {number(analysis.question_counts[dataset], 0)} questions"
+        f"  ·  {number(analysis.model_count, 0)} models"
     )
 
 
@@ -43,6 +44,6 @@ def save_figure(figure: Figure, output_dir: Path, filename: str) -> Path:
 
     path = output_dir / filename
     path.parent.mkdir(parents=True, exist_ok=True)
-    figure.savefig(path, dpi=300, bbox_inches="tight", facecolor="white")
+    save_pgf_figure(figure, path)
     plt.close(figure)
     return path

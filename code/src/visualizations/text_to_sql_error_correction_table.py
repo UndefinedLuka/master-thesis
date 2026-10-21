@@ -13,6 +13,7 @@ from visualizations.config import (
     TEXT_TO_SQL_RETRY_TABLE_FILENAME,
     TEXT_TO_SQL_RETRY_TABLE_LABEL,
 )
+from visualizations.latex_numbers import num, percent
 from visualizations.text_to_sql_retry_data import TextToSqlRetryAnalysis
 
 
@@ -35,10 +36,10 @@ def render_error_correction_table(
                     (
                         DATASET_LABELS[dataset] if index == 0 else "",
                         RETRY_OUTCOME_LABELS[outcome],
-                        f"{int(row['run_count']):,}",
-                        f"{float(row['run_percentage']):.2f}\\%",
-                        f"{float(row['total_retry_generation_s']):,.1f}",
-                        f"{float(row['average_retry_generation_s']):.2f}",
+                        num(int(row["run_count"])),
+                        percent(float(row["run_percentage"]), 2),
+                        num(float(row["total_retry_generation_s"]), 1),
+                        num(float(row["average_retry_generation_s"]), 2),
                     )
                 )
                 + LATEX_ROW_END

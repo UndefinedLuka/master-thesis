@@ -28,6 +28,7 @@ from visualizations.config import (
     SERIALIZATION_FORMAT_ORDER,
 )
 from visualizations.direct_accuracy_data import prepare_direct_accuracy
+from visualizations.plot_numbers import number, number_formatter, save_pgf_figure, tight_layout
 from visualizations.serialization_data import require_columns
 from visualizations.uncertainty import BOOTSTRAP_DRAWS, BOOTSTRAP_SEED
 
@@ -238,6 +239,7 @@ def plot_database_size_accuracy_metric(
             )
         axis.set_xscale("log")
         axis.set_ylim(*y_limits)
+        axis.yaxis.set_major_formatter(number_formatter())
         axis.grid(axis="both", color="#D0D0D0", linewidth=0.8)
         axis.set_axisbelow(True)
         axis.spines["top"].set_visible(False)
@@ -275,7 +277,7 @@ def plot_database_size_accuracy_metric(
             if len(x) >= 3 and valid.mean() >= 0.95:
                 draws = xy[valid] / np.sqrt(xx[valid] * yy[valid])
                 lower, upper = np.quantile(draws, [0.025, 0.975])
-                interval = f"[{lower:.2f}, {upper:.2f}]"
+                interval = f"[{number(lower, 2)}; {number(upper, 2)}]"
             valid_trend = xx > 0
             if len(x) >= 3 and valid_trend.mean() >= 0.95:
                 grid = np.linspace(x.min(), x.max(), 100)
@@ -289,7 +291,7 @@ def plot_database_size_accuracy_metric(
             axis.text(
                 0.97,
                 0.89 - correlation_index * 0.065,
-                f"{DATASET_LABELS[dataset]}: {correlation:.2f} {interval}",
+                f"{DATASET_LABELS[dataset]}: {number(correlation, 2)} {interval}",
                 transform=axis.transAxes,
                 ha="right",
                 va="top",
@@ -328,7 +330,7 @@ def plot_database_size_accuracy_metric(
         ncol=len(handles),
         frameon=False,
     )
-    figure.tight_layout(rect=(0.03, 0, 1.0, 0.96))
+    tight_layout(figure, rect=(0.03, 0, 1.0, 0.96))
     return figure, axes
 
 
@@ -355,7 +357,7 @@ def generate_database_size_accuracy_figures(
 
         import matplotlib.pyplot as plt
 
-        figure.savefig(output_path, dpi=300, bbox_inches="tight", facecolor="white")
+        save_pgf_figure(figure, output_path)
         plt.close(figure)
         outputs.append(output_path)
     return outputs
@@ -416,7 +418,7 @@ def _score_limits(values: pd.Series) -> tuple[float, float]:
 
 def _compact_tick(value: float, _position: float) -> str:
     if value >= 1_000_000:
-        return f"{value / 1_000_000:g}M"
+        return number(value / 1_000_000) + r"\,M"
     if value >= 1_000:
-        return f"{value / 1_000:g}k"
-    return f"{value:g}"
+        return number(value / 1_000) + r"\,k"
+    return number(value)

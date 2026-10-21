@@ -32,6 +32,26 @@ The thesis document is written in LaTeX. You will need a LaTeX distribution (lik
   latexmk -pdf thesis_template.tex
   ```
 
+### Number formatting
+
+The thesis and generated figures share `thesis/style/number_formatting.tex`, which
+configures **siunitx v3** to print decimal commas and thousands dots
+(for example, `\num{1234.56}` renders as **1.234,56**). Install `siunitx` with your
+LaTeX distribution if it is not already available.
+
+- Enter numeric quantities with ungrouped, decimal-dot input: `\num{1034}`,
+  `\num{0.598}`, `\qty{95}{\percent}`, or `\qty{1.25}{\second}`.
+- Use `\numrange{1.04}{1.12}` or `\qtyrange{5}{6}{\percent}` for ranges.
+  Separate bracketed confidence-interval endpoints with a semicolon, so decimal
+  commas cannot be confused with the endpoint separator.
+- Keep model/version identifiers, code literals, URLs, and automatic section,
+  reference, and bibliography numbering in their original form. For a displayed
+  year, use `\num[group-digits=none]{2026}` to suppress thousands grouping.
+
+The table generators emit siunitx commands, and the figure generators render their
+numbers through LaTeX's PGF backend using the same configuration. To regenerate
+both, run `uv run --extra visualizations thesis-visualize-all` from `code/`.
+
 ## Repository Structure
 
 - **/code**: Contains the Python implementation of the LLM benchmarking framework, data processing scripts, and raw benchmark results.

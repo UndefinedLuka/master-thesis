@@ -19,6 +19,7 @@ from visualizations.config import (
     TOKENIZER_FAMILY_LABELS,
     TOKENIZER_FAMILY_ORDER,
 )
+from visualizations.latex_numbers import num, percent
 from visualizations.serialization_data import present_order, require_columns, sort_summary
 from visualizations.uncertainty import mean_intervals, table_estimate
 
@@ -127,7 +128,7 @@ def render_serialization_efficiency_table(
         caption = (
             "Serialization efficiency by dataset and format. Token use reports the mean "
             "serialized-payload token count and its within-dataset ratio to CSV. "
-            f"Context fit reports payloads at or below {context_window_tokens:,} tokens."
+            f"Context fit reports payloads at or below {num(context_window_tokens)} tokens."
         )
 
     families = present_order(
@@ -156,15 +157,17 @@ def render_serialization_efficiency_table(
                     continue
                 fit_row = family_rows.iloc[0]
                 cells.append(
-                    f"{int(fit_row['fitting_databases'])}/{int(fit_row['total_databases'])} "
-                    f"({float(fit_row['fit_percentage']):.1f}\\%)"
+                    f"{num(int(fit_row['fitting_databases']))}/"
+                    f"{num(int(fit_row['total_databases']))} "
+                    f"({percent(float(fit_row['fit_percentage']), 1)})"
                 )
             rows.append("    " + " & ".join(cells) + LATEX_ROW_END)
         if dataset != datasets[-1]:
             rows.append(r"    \midrule")
 
     validation_note = (
-        "The complete set of 31 databases, six formats, and three tokenizer families was validated."
+        f"The complete set of {num(31)} databases, six formats, and three tokenizer "
+        "families was validated."
         if coverage_validated
         else "Coverage validation was skipped."
     )
@@ -173,7 +176,8 @@ def render_serialization_efficiency_table(
         "representative tokenizer families. Context-fit cells show fitting databases/total "
         "databases (percentage) for each tokenizer family. Only the serialized database payload "
         "is counted; instructions, questions, chat-template tokens, and output-token headroom "
-        "are excluded. Brackets show pointwise 95\\% database-bootstrap confidence intervals; "
+        f"are excluded. Brackets show pointwise {percent(95)} database-bootstrap "
+        "confidence intervals; "
         f"ratios use CSV as the reference. {validation_note}"
     )
     family_headers = [TOKENIZER_FAMILY_LABELS.get(family, family) for family in families]

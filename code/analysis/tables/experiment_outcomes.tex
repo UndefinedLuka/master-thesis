@@ -2,24 +2,25 @@
 % Retained runs: 179760; excluded-model runs: 17976.
 \begin{table}[htbp]
   \centering
-  \caption{Successful and failed experiment runs by dataset after excluding Qwen~3.5 27B. Each run is
-  assigned to exactly one terminal outcome.}
+  \caption{Successful and failed experiment runs by dataset after excluding Qwen~3.5 27B. Each run is assigned to exactly one terminal outcome.}
   \label{tab:experiment-outcomes}
   \begin{tabular}{@{}lrrr@{}}
     \toprule
     Outcome & Spider & BIRD & Total \\
     \midrule
-    Successful without a recorded error & 63,097 & 45,731 & 108,828 \\
-    Successful after SQL error correction & 282 & 1,075 & 1,357 \\
-    \textbf{All successful runs} & 63,379 & 46,806 & 110,185 \\
+    Successful without a recorded error & \num{63097} & \num{45731} & \num{108828} \\
+    Successful after SQL error correction & \num{282} & \num{1075} & \num{1357} \\
+    \textbf{All successful runs} & \num{63379} & \num{46806} & \num{110185} \\
     \midrule
-    Failed: context window exceeded & 8,520 & 59,016 & 67,536 \\
-    Failed: SQL execution error after retry limit & 471 & 1,513 & 1,984 \\
-    Failed: no SQL statement extracted & 10 & 45 & 55 \\
-    Failed: other error & 0 & 0 & 0 \\
-    \textbf{All failed runs} & 9,001 & 60,574 & 69,575 \\
+    Failed: context window exceeded & \num{8520} & \num{59016} & \num{67536} \\
+    Failed: SQL execution error after retry limit & \num{471} & \num{1513} & \num{1984} \\
+    Failed: no SQL statement extracted & \num{10} & \num{45} & \num{55} \\
+    Failed: model or backend generation error & \num{0} & \num{0} & \num{0} \\
+    Failed: empty or malformed direct output & \num{0} & \num{0} & \num{0} \\
+    Failed: other error & \num{0} & \num{0} & \num{0} \\
+    \textbf{All failed runs} & \num{9001} & \num{60574} & \num{69575} \\
     \midrule
-    \textbf{Total runs} & 72,380 & 107,380 & 179,760 \\
+    \textbf{Total runs} & \num{72380} & \num{107380} & \num{179760} \\
     \bottomrule
   \end{tabular}
   \vspace{0.4em}

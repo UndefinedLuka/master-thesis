@@ -14,6 +14,7 @@ from visualizations.config import (
     SERIALIZATION_FORMAT_ORDER,
 )
 from visualizations.direct_efficiency_data import DirectEfficiencyAnalysis
+from visualizations.latex_numbers import num, percent
 from visualizations.uncertainty import table_estimate
 
 
@@ -72,17 +73,17 @@ def render_direct_operational_table(
 
     cohort_parts = [
         f"{DATASET_LABELS.get(dataset, dataset)}: "
-        f"{analysis.question_counts[dataset]:,} questions across "
-        f"{analysis.database_counts[dataset]} databases"
+        f"{num(analysis.question_counts[dataset])} questions across "
+        f"{num(analysis.database_counts[dataset])} databases"
         for dataset in datasets
     ]
     note = (
         "The matched cohort includes "
         + "; ".join(cohort_parts)
-        + f", with all {analysis.model_count} retained models and all displayed formats. "
+        + f", with all {num(analysis.model_count)} retained models and all displayed formats. "
         "Generation time is measured from the first output token to completion; total latency "
         "is measured from request submission to completion. Brackets show pointwise "
-        "95\\% database-bootstrap confidence intervals. BIRD intervals describe only "
+        f"{percent(95)} database-bootstrap confidence intervals. BIRD intervals describe only "
         "the two observed databases."
     )
     return "\n".join(

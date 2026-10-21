@@ -65,7 +65,7 @@ def render_text_to_sql_operational_table(
                 r"times are accumulated across the initial generation and all correction "
                 r"attempts. TTFT is the sum of first-token waits across attempts; Generation "
                 r"is the remaining model time. Total also includes SQL execution. Brackets "
-                r"show pointwise 95\% database-bootstrap confidence intervals.}"
+                r"show pointwise \qty{95}{\percent} database-bootstrap confidence intervals.}"
             ),
             r"\end{table}",
             "",

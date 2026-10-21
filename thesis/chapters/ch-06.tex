@@ -47,10 +47,10 @@ Chapter~\ref{ch:results}. Compact formats also allowed more databases to fit wit
 
 No serialization format was uniformly best across both datasets and all retrieval metrics. On Spider, TOON
 achieved the highest NEM, while CSV achieved the highest BERTScore and ROUGE-L. Raw BERTScore means
-were 0,8154 for CSV and 0,8148 for TOON, compared with 0,717--0,720 for the other formats; NEM and ROUGE-L
+were \num{0.8154} for CSV and \num{0.8148} for TOON, compared with \numrange{0.717}{0.720} for the other formats; NEM and ROUGE-L
 differences remained smaller. On BIRD, CSV achieved the highest score for all three metrics, with TOON
-following closely. For BERTScore, CSV's mean was 0,424 versus 0,169 for XML, a ratio of about 2,5; the
-CSV-to-XML ratio was about 2 for NEM and ROUGE-L. The greater separation between formats on BIRD can largely
+following closely. For BERTScore, CSV's mean was \num{0.424} versus \num{0.169} for XML, a ratio of about \num{2.5}; the
+CSV-to-XML ratio was about \num{2} for NEM and ROUGE-L. The greater separation between formats on BIRD can largely
 be attributed to its larger and more realistic
 databases, schemas, and questions. Verbose representations produced larger serialized payloads and more
 context-window failures, which reduced their end-to-end accuracy. Therefore, compactness affects not only
@@ -77,8 +77,8 @@ Despite requiring the additional step of executing the generated query, Text-to-
 average latency than every evaluated Direct Context Inference format on both datasets. The separate
 pipeline-level operational analyses use different cohorts, but the matched comparison in
 Section~\ref{sec:common-cohort-comparison} confirms that this advantage persists on identical questions and
-models. On the shared cohort of 561 Spider and 121 BIRD questions, even CSV required $3,44\times$ and
-$19,30\times$ the Text-to-SQL mean latency, respectively. The advantage held for every retained model
+models. On the shared cohort of \num{561} Spider and \num{121} BIRD questions, even CSV required $\num{3.44}\times$ and
+$\num{19.30}\times$ the Text-to-SQL mean latency, respectively. The advantage held for every retained model
 and serialization format, so it cannot be explained solely by unequal workload composition or a few
 model-specific outliers. SQL execution contributed only a small proportion of total response time; avoiding
 the much larger raw-data prompt outweighed the additional query-execution step under these conditions.
@@ -87,7 +87,7 @@ This matched result is conditional on all models successfully completing every m
 being correct. It therefore establishes an operational advantage on a shared feasible workload rather than
 across the complete benchmarks. In particular, from BIRD dataset only two databases were used. Lower mean
 latency also does not imply lower latency for every individual run: Text-to-SQL was faster than CSV in
-60,7\% of matched Spider model--question pairs. Pipeline selection should consequently consider the expected
+\qty{60.7}{\percent} of matched Spider model--question pairs. Pipeline selection should consequently consider the expected
 workload and latency distribution, not only the overall mean.
 
 The principal limitation of Direct Context Inference is that its input grows together with the amount of
@@ -124,7 +124,7 @@ models. Model family must therefore be considered alongside parameter count when
 
 For Direct Context Inference, accuracy generally increased with model size when averaged across the six
 serialization formats. Text-to-SQL also benefited substantially from model scaling, particularly among the
-smaller Qwen~3.5 models. Much of this improvement occurred between 0.8B and 4B parameters, after which the
+smaller Qwen~3.5 models. Much of this improvement occurred between \num{0.8}B and \num{4}B parameters, after which the
 increase began to flatten. The magnitude of the improvement and the point at which diminishing returns
 appeared consequently depended on the model family, dataset, and evaluation metric.
 
@@ -132,14 +132,14 @@ Data characteristics also had a considerable influence on both pipelines. As dis
 Chapter~\ref{ch:methodolgy}, Spider contains comparatively clean data with descriptive schema elements,
 whereas BIRD contains more realistic and less sanitized data. BIRD also produced larger serialized databases
 and larger schema prompts under the evaluated setup. These differences were accompanied by lower performance.
-In the Text-to-SQL pipeline, query-execution success decreased from 95,3\% on Spider to 89,8\% on BIRD, a
-difference of 5,5 percentage points. This difference is consistent with BIRD
+In the Text-to-SQL pipeline, query-execution success decreased from \qty{95.3}{\percent} on Spider to \qty{89.8}{\percent} on BIRD, a
+difference of \num{5.5} percentage points. This difference is consistent with BIRD
 presenting a more difficult task, although the experiment does not isolate the individual contribution of
 schema size, data quality, domain, or question complexity.
 
 Across the complete database sets, the Direct Context Inference results show a negative relationship between
 effective database size and accuracy for each metric and format. For raw BERTScore, Pearson correlations
-ranged from approximately \(-0,85\) to \(-0,86\) on Spider and \(-0,60\) to \(-0,84\) on BIRD. Effective
+ranged from approximately \num{-0.85} to \num{-0.86} on Spider and \num{-0.60} to \num{-0.84} on BIRD. Effective
 database size is therefore associated with Direct Context Inference performance, although the relationship is
 not proof that size alone causes lower accuracy. Each database also differs in its domain, schema, data quality,
 and questions, while context-window failures introduce structural zero scores. Among databases with positive
@@ -164,7 +164,7 @@ consumption were comparatively modest, indicating that serialization primarily a
 processing the input rather than the length of the generated answer.
 
 Text-to-SQL displayed a different latency profile. Most of its response time was spent on model generation,
-including any correction attempts, while SQL execution represented less than 2\% of average total latency on
+including any correction attempts, while SQL execution represented less than \qty{2}{\percent} of average total latency on
 both datasets. Delegating retrieval to the database engine therefore introduced little additional latency
 under the evaluated conditions. This balance may change for substantially larger databases or more
 computationally demanding queries. An inefficient query could require considerably more time to execute or
@@ -173,11 +173,11 @@ production-scale databases, this remains a scalability risk rather than an obser
 
 Correction attempts increased both token consumption and response time. Each retry added database feedback
 and the preceding conversation to the prompt, causing later attempts to process progressively more input.
-Attempts after the initial generation added 1.850,4 seconds of model-generation time on Spider and 7.234,3
-seconds on BIRD, corresponding to 2,52 hours across both datasets. Averaged across all runs, retries added
-0,179 seconds on Spider and 0,472 seconds on BIRD. Among runs that entered the correction loop, the mean
-additional generation time was 2,43 seconds and 2,75 seconds, respectively. Complete failures were
-responsible for 95,2\% of the retry-generation time on Spider and 89,4\% on BIRD because they exhausted all
+Attempts after the initial generation added \qty{1850.4}{\second} of model-generation time on Spider and \qty{7234.3}{\second}
+on BIRD, corresponding to \qty{2.52}{\hour} across both datasets. Averaged across all runs, retries added
+\qty{0.179}{\second} on Spider and \qty{0.472}{\second} on BIRD. Among runs that entered the correction loop, the mean
+additional generation time was \qty{2.43}{\second} and \qty{2.75}{\second}, respectively. Complete failures were
+responsible for \qty{95.2}{\percent} of the retry-generation time on Spider and \qty{89.4}{\percent} on BIRD because they exhausted all
 available attempts without producing an executable query. The number of tokens introduced specifically by
 retries was not measured separately, so their token overhead can only be described qualitatively.
 
@@ -191,7 +191,7 @@ this potential advantage remains to be confirmed empirically.
 For paid API usage, the substantially larger prompts required by Direct Context Inference would generally
 translate into higher input-token charges. Figure~\ref{fig:common-cohort-token-usage} supports this
 interpretation without confounding token consumption with different question cohorts: CSV used
-$8,08\times$ as many input tokens as Text-to-SQL on Spider and $42,06\times$ on BIRD. Mean output
+$\num{8.08}\times$ as many input tokens as Text-to-SQL on Spider and $\num{42.06}\times$ on BIRD. Mean output
 consumption also favoured Text-to-SQL on the shared cohort, although the relative difference was smaller
 and varied by model and correction frequency. Input and output tokens should therefore be considered
 separately; output counts include reasoning traces, which were not counted separately in this experiment. Token
@@ -291,13 +291,13 @@ input tokens, and produced lower average latency than Direct Context Inference. 
 that Text-to-SQL was superior for every individual question or deployment environment, but they provide
 strong support for treating it as the default for queryable structured data. A per-database comparison of
 mean scores across the same questions and ten retained models supports this preference across the observed
-size range: Text-to-SQL exceeded every direct-context format in NEM on all 31 databases, in BERTScore on
-29 of 31, and in ROUGE-L on 30 of 31. The BERTScore exceptions were Spider's \texttt{poker\_player} and
+size range: Text-to-SQL exceeded every direct-context format in NEM on all \num{31} databases, in BERTScore on
+\num{29} of \num{31}, and in ROUGE-L on \num{30} of \num{31}. The BERTScore exceptions were Spider's \texttt{poker\_player} and
 BIRD's \texttt{thrombosis\_prediction}; the ROUGE-L exception was BIRD's \texttt{toxicology}. These are
 comparisons of database-level means, not evidence that one method is better on every question. On the
 successful shared cohort defined in Section~\ref{sec:common-cohort-comparison}, it used fewer mean input
-tokens than every direct-context format on all 20 represented databases, and had lower mean latency than
-every format on 15 out of 20. Thus, the preference does not imply superiority on every measure at every
+tokens than every direct-context format on all \num{20} represented databases, and had lower mean latency than
+every format on \num{15} out of \num{20}. Thus, the preference does not imply superiority on every measure at every
 database size, latency requires deployment-specific validation.
 
 When Direct Context Inference is selected for flat tabular data, CSV should be the preferred default. It
@@ -381,20 +381,20 @@ then be needed. These alternatives were not evaluated in this thesis.
 \section{SQL Error Correction: Benefits and Limitations}
 \label{sec:sql-error-correction}
 
-The SQL error-correction mechanism recovered 1.357 queries that did not execute successfully on their initial
-attempt: 282 on Spider and 1.075 on BIRD. Database feedback was therefore useful for correcting detectable
+The SQL error-correction mechanism recovered \num{1357} queries that did not execute successfully on their initial
+attempt: \num{282} on Spider and \num{1075} on BIRD. Database feedback was therefore useful for correcting detectable
 problems, such as invalid syntax, nonexistent tables or columns, and other runtime errors. Queries containing
 incorrect joins, filters, aggregations, or schema-element selections can still execute and return the wrong
 rows; because they produce no execution error, they do not trigger correction.
 
-The benefit of correction declined with each attempt. The first retry recovered 1.128 executable queries,
-accounting for 83,1\% of all execution recoveries. The second and third retries recovered only 190 and 39
+The benefit of correction declined with each attempt. The first retry recovered \num{1128} executable queries,
+accounting for \qty{83.1}{\percent} of all execution recoveries. The second and third retries recovered only \num{190} and \num{39}
 additional executable queries, respectively. Later attempts also became
 more expensive per run because their prompts contained the preceding conversation and database error
 feedback. The exact token overhead of each retry stage was not recorded separately, but all retries increased
 accumulated token consumption and generation time.
 
-Runs that ultimately failed accounted for 95,2\% of retry-generation time on Spider and 89,4\% on BIRD. This
+Runs that ultimately failed accounted for \qty{95.2}{\percent} of retry-generation time on Spider and \qty{89.4}{\percent} on BIRD. This
 indicates that much of the correction cost was spent on queries that remained non-executable after every
 available attempt. Consequently, allowing one retry provides the strongest balance between recovery and
 operational efficiency and should be the default when latency or cost is important. Up to three retries may
@@ -414,7 +414,7 @@ appropriate for the requirements of a particular user.
 
 The two pipelines also use deliberately different analysis cohorts. Direct Context Inference runs that exceed
 the context window receive zero accuracy because the pipeline cannot provide an answer under the evaluated
-128K-token configuration. These zero scores are therefore necessary to represent end-to-end feasibility rather
+\num{128}K-token configuration. These zero scores are therefore necessary to represent end-to-end feasibility rather
 than accuracy conditional on successful inference. Such failures are excluded from the operational-efficiency
 analysis because no model inference takes place and no meaningful timing or token measurements are available.
 The strict complete-case cohort ensures that all serialization formats are compared using the same questions
@@ -430,7 +430,7 @@ directly, whereas retry-specific SQL execution time was not retained separately.
 should consequently be interpreted as model-generation overhead rather than complete end-to-end retry latency.
 
 The fixed inference configuration improves consistency across experiments but limits the scope of the findings.
-All evaluated models used Q4\_K\_M quantization, greedy decoding, a 128K-token context window, full GPU
+All evaluated models used Q4\_K\_M quantization, greedy decoding, a \num{128}K-token context window, full GPU
 offload, KV-cache resets, and minimal zero-shot prompts. Uniform quantization prevents quantization level from
 becoming an additional variable between models, and deterministic decoding improves reproducibility. However,
 the experiment does not establish whether the same results would occur with full-precision models, alternative
@@ -455,7 +455,7 @@ data and do not establish query equivalence or correctness on the original datab
 Finally, the findings are limited to the Spider and BIRD development splits, the six evaluated serialization
 formats, local open-weight models, SQLite, and the dedicated H100-based experimental environment. Spider
 contains comparatively clean data and descriptive schemas, while BIRD provides more realistic data but was
-deterministically subsampled to at most $500$ rows per table. This sampling supports a fair internal comparison
+deterministically subsampled to at most \num{500} rows per table. This sampling supports a fair internal comparison
 because the serializers, reference-answer generator, and SQL executor all use the same materialized databases.
 It nevertheless prevents direct conclusions about the original full-scale BIRD databases, production-scale query
 execution, or workloads with substantially larger tables. Deeply nested and non-relational data were not

@@ -233,19 +233,19 @@ Section~\ref{sec:minimalist-text-to-sql}.
 \subsection{Confidence Intervals and Effect Sizes}
 \label{sec:confidence-intervals}
 
-Alongside the reported metrics, we plan to include 95\% confidence intervals and effect sizes. These
+Alongside the reported metrics, we plan to include \qty{95}{\percent} confidence intervals and effect sizes. These
 will help us understand the uncertainty in the results and the size of the observed differences between
 serialization formats, models, and extraction methods. This will provide a clearer picture of the
 trade offs between accuracy, latency, and token consumption.
 
-We will use a database-level bootstrap with 10,000 repetitions. Within each
+We will use a database-level bootstrap with \num{10000} repetitions. Within each
 dataset and analysis cohort, each repetition will sample the original number of databases with replacement
 and equal probability. All included questions and configurations from each sampled database will be retained,
 preserving dependence among observations from the same database. Means will be recomputed over the retained
 observations, giving each observation equal weight.
 
-Pointwise 95\% confidence intervals will be calculated using the percentile
-method: the lower and upper bounds will be set at 2.5th and 97.5th percentiles of the bootstrap estimates.
+Pointwise \qty{95}{\percent} confidence intervals will be calculated using the percentile
+method: the lower and upper bounds will be set at \num{2.5}th and \num{97.5}th percentiles of the bootstrap estimates.
 
 Tokenizer comparisons will instead use the median of database-wise paired token-count ratios within each
 dataset and format.
@@ -255,7 +255,7 @@ databases. The corresponding effect-size statistic will be recomputed in each bo
 its confidence interval will be calculated using the same percentile method.
 
 For the exploratory database-size analysis, Pearson's $r$ is computed across database-level mean accuracy and
-the base-10 logarithm of each database-format's mean serialized token count. Each database contributes one
+the base-\num{10} logarithm of each database-format's mean serialized token count. Each database contributes one
 unweighted observation.
 
 \section{LLM Selection}

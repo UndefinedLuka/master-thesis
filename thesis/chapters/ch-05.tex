@@ -7,7 +7,7 @@ experiment coverage and serialization efficiency, and then evaluate Direct Conte
 in terms of retrieval accuracy and operational efficiency. We also examine the influence of model and database
 size and evaluate the effectiveness and cost of SQL error correction.
 
-Figures and tables report pointwise 95\% confidence intervals using the database-level bootstrap
+Figures and tables report pointwise \qty{95}{\percent} confidence intervals using the database-level bootstrap
 described in Section~\ref{sec:confidence-intervals}. Error bars describe uncertainty in the reported
 estimates. Paired effect sizes and their intervals are reported in the accompanying text as
 differences or ratios relative to an explicit reference. Exact experiment counts remain descriptive.
@@ -34,25 +34,25 @@ reported in this chapter therefore cover the remaining ten models.
     \toprule
     Outcome & Spider & BIRD & Total \\
     \midrule
-    Successful without a recorded error & 63,097 & 45,731 & 108,828 \\
-    Successful after SQL error correction & 282 & 1,075 & 1,357 \\
-    \textbf{All successful runs} & 63,379 & 46,806 & 110,185 \\
+    Successful without a recorded error & \num{63097} & \num{45731} & \num{108828} \\
+    Successful after SQL error correction & \num{282} & \num{1075} & \num{1357} \\
+    \textbf{All successful runs} & \num{63379} & \num{46806} & \num{110185} \\
     \midrule
-    Failed: context window exceeded & 8,520 & 59,016 & 67,536 \\
-    Failed: SQL execution error after retry limit & 471 & 1,513 & 1,984 \\
-    Failed: no SQL statement extracted & 10 & 45 & 55 \\
-    Failed: other error & 0 & 0 & 0 \\
-    \textbf{All failed runs} & 9,001 & 60,574 & 69,575 \\
+    Failed: context window exceeded & \num{8520} & \num{59016} & \num{67536} \\
+    Failed: SQL execution error after retry limit & \num{471} & \num{1513} & \num{1984} \\
+    Failed: no SQL statement extracted & \num{10} & \num{45} & \num{55} \\
+    Failed: other error & \num{0} & \num{0} & \num{0} \\
+    \textbf{All failed runs} & \num{9001} & \num{60574} & \num{69575} \\
     \midrule
-    \textbf{Total runs} & 72,380 & 107,380 & 179,760 \\
+    \textbf{Total runs} & \num{72380} & \num{107380} & \num{179760} \\
     \bottomrule
   \end{tabular}
   \vspace{0.4em}
 \end{table}
 
-We evaluated the development splits of Spider and BIRD. Spider contains 1.034 questions associated with 20
-databases, while BIRD contains 1.534 questions associated
-with 11 databases. This gives a total of 2.568 questions across 31 databases.
+We evaluated the development splits of Spider and BIRD. Spider contains \num{1034} questions associated with \num{20}
+databases, while BIRD contains \num{1534} questions associated
+with \num{11} databases. This gives a total of \num{2568} questions across \num{31} databases.
 
 For every model and question, the direct-context pipeline was evaluated with six serialization formats: JSON,
 XML, YAML, CSV, Markdown, and TOON. The same questions were also evaluated with the Text-to-SQL pipeline,
@@ -66,10 +66,10 @@ the answer was correct. We distinguish runs that completed without a recorded er
 that succeeded after SQL error correction. Failed runs are grouped into context-window overflow, an SQL
 execution error that remained after the retry limit, failure to extract an SQL statement, and any other recorded error.
 
-Of the 179.760 retained runs, 110.185 (61,3\%) produced an answer and 69.575 (38,7\%) failed. The success
-rate was 87,6\% for Spider and 43,6\% for BIRD. Context-window overflow accounted for 67.536 failures
-(97,1\% of all failed runs), while 1.984 runs ended with an SQL execution error after the retry limit and 55
-failed because no SQL statement could be extracted. The SQL correction loop recovered a further 1.357 runs
+Of the \num{179760} retained runs, \num{110185} (\qty{61.3}{\percent}) produced an answer and \num{69575} (\qty{38.7}{\percent}) failed. The success
+rate was \qty{87.6}{\percent} for Spider and \qty{43.6}{\percent} for BIRD. Context-window overflow accounted for \num{67536} failures
+(\qty{97.1}{\percent} of all failed runs), while \num{1984} runs ended with an SQL execution error after the retry limit and \num{55}
+failed because no SQL statement could be extracted. The SQL correction loop recovered a further \num{1357} runs
 that had failed on an earlier attempt; no model-generation, malformed-direct-output, or other terminal errors
 were recorded.
 
@@ -79,7 +79,7 @@ This section examines only the tokens required to represent the database content
 questions, chat-template tokens, and output-token headroom are excluded, allowing us to isolate the overhead
 introduced by each serialization format. Token counts were measured for every database with one representative
 tokenizer from each of the Qwen~3.5, Ministral~3, and Gemma~4 families. The resulting data therefore contain
-558 measurements: 31 databases, six formats, and three tokenizer families.
+\num{558} measurements: \num{31} databases, six formats, and three tokenizer families.
 
 \input{../code/analysis/tables/serialization_efficiency}
 
@@ -87,20 +87,20 @@ Table~\ref{tab:serialization-efficiency} reports the arithmetic mean across all 
 families within each dataset. The relative value is calculated separately for Spider and BIRD, using
 CSV as the baseline. Brackets report confidence intervals for the means and paired
 ratios. CSV required the fewest tokens in both datasets.
-TOON was close to this baseline, requiring only $1,04\times$ as many tokens for Spider and $1,03\times$ for
-BIRD, while Markdown required $1,22\times$ and $1,09\times$, respectively. The more verbose hierarchical
-formats had substantially greater overhead. Compared with CSV, XML required $3,24\times$ as many tokens for
-Spider and $2,40\times$ for BIRD; JSON required $2,46\times$ and $1,68\times$, and YAML required
-$1,90\times$ and $1,49\times$.
+TOON was close to this baseline, requiring only \num{1.04}$\times$ as many tokens for Spider and \num{1.03}$\times$ for
+BIRD, while Markdown required \num{1.22}$\times$ and \num{1.09}$\times$, respectively. The more verbose hierarchical
+formats had substantially greater overhead. Compared with CSV, XML required \num{3.24}$\times$ as many tokens for
+Spider and \num{2.40}$\times$ for BIRD; JSON required \num{2.46}$\times$ and \num{1.68}$\times$, and YAML required
+\num{1.90}$\times$ and \num{1.49}$\times$.
 
 Mean token counts describe overall serialization overhead, but database sizes vary substantially and a small
 number of very large databases can strongly influence the arithmetic mean. The mean also does not show how
 many individual databases can be processed within the fixed context window.
 The same table therefore counts
-database payloads containing no more than 131.072 tokens for each tokenizer family. For Spider, CSV and TOON
-both fit 19 of 20 databases, while the other formats fit 18. The distinction was larger for BIRD: CSV and TOON
-fit 6 of 11 databases for every tokenizer family, whereas XML fit only 2. JSON fit 3 databases with the
-Qwen~3.5 and Gemma~4 tokenizers and 4 with Ministral~3. These counts include only the serialized payload, so a
+database payloads containing no more than \num{131072} tokens for each tokenizer family. For Spider, CSV and TOON
+both fit \num{19} of \num{20} databases, while the other formats fit \num{18}. The distinction was larger for BIRD: CSV and TOON
+fit \num{6} of \num{11} databases for every tokenizer family, whereas XML fit only \num{2}. JSON fit \num{3} databases with the
+Qwen~3.5 and Gemma~4 tokenizers and \num{4} with Ministral~3. These counts include only the serialized payload, so a
 complete prompt close to the limit may still exceed the available context after instructions, the question,
 and output headroom are added.
 
@@ -109,7 +109,7 @@ and output headroom are added.
   \includegraphics[width=\textwidth]{../code/analysis/figures/tokenizer_family_comparison.pdf}
   \caption{Tokenizer-family overhead for identical serialized database payloads. For each database and
     serialization format, zero percent denotes the tokenizer family producing the fewest tokens. Points show
-  the median paired overhead and whiskers show pointwise 95\% confidence intervals.}
+  the median paired overhead and whiskers show pointwise \qty{95}{\percent} confidence intervals.}
   \label{fig:tokenizer-family-comparison}
 \end{figure}
 
@@ -122,14 +122,14 @@ uniformly best across all formats.
 Qwen~3.5 was the most efficient for CSV and was close to the best for TOON and YAML, while Ministral~3 was
 usually the most efficient for JSON and Markdown and also performed well for XML. Gemma~4 was the most
 efficient for Spider TOON, but it incurred the largest median overhead for Spider JSON. Across all paired
-measurements, the median excess was 0,23\% for Ministral~3, 2,15\% for Qwen~3.5, and 4,81\% for Gemma~4,
+measurements, the median excess was \qty{0.23}{\percent} for Ministral~3, \qty{2.15}{\percent} for Qwen~3.5, and \qty{4.81}{\percent} for Gemma~4,
 showing that format choice had a much larger effect on token use than tokenizer-family choice in this
 experiment.
 
 Using Qwen~3.5 as a fixed reference, the median paired CSV token-count ratio for Ministral~3
-was 1,056 on Spider (95\% interval: 1,054--1,063) and 1,050 on BIRD (1,036--1,069).
-For JSON, the corresponding ratios were 0,912 (0,897--0,925) and 0,916 (0,907--0,956).
-Thus, Ministral~3 used about 5--6\% more tokens for CSV but about 8--9\% fewer for JSON,
+was \num{1.056} on Spider (\qty{95}{\percent} interval: \numrange{1.054}{1.063}) and \num{1.050} on BIRD (\numrange{1.036}{1.069}).
+For JSON, the corresponding ratios were \num{0.912} (\numrange{0.897}{0.925}) and \num{0.916} (\numrange{0.907}{0.956}).
+Thus, Ministral~3 used about \qtyrange{5}{6}{\percent} more tokens for CSV but about \qtyrange{8}{9}{\percent} fewer for JSON,
 illustrating that the tokenizer advantage depended on the format.
 
 \section{Direct Context Inference}
@@ -145,9 +145,9 @@ Section~\ref{sec:reference-answer-metrics}. These scores describe reference-answ
 independently verified correctness; BERTScore is reported as raw F1. The reported means include all
 direct-context runs from the ten retained models, including runs assigned a score
 of zero after failing the pre-inference context-limit check. The results therefore represent
-end-to-end effectiveness under the fixed 128K-token limit, rather than accuracy conditional on the model
-having produced an answer. Each Spider format summarizes 10.340 runs, while each BIRD format summarizes
-15.340 runs.
+end-to-end effectiveness under the fixed \num{128}K-token limit, rather than accuracy conditional on the model
+having produced an answer. Each Spider format summarizes \num{10340} runs, while each BIRD format summarizes
+\num{15340} runs.
 
 \begin{figure}[htb]
   \centering
@@ -155,37 +155,37 @@ having produced an answer. Each Spider format summarizes 10.340 runs, while each
   \caption{Mean direct-context retrieval accuracy by serialization format (NEM, raw BERTScore F1,
     and ROUGE-L F1). Each bar includes all questions
     and all ten retained models for the named dataset. Failed runs retain zero scores. Whiskers
-  show pointwise 95\% confidence intervals.}
+  show pointwise \qty{95}{\percent} confidence intervals.}
   \label{fig:direct-accuracy-by-format}
 \end{figure}
 
 Figure~\ref{fig:direct-accuracy-by-format} compares the six serialization formats. On Spider, TOON achieved
-the highest NEM (0,178), CSV the highest BERTScore (0,815), and CSV the highest ROUGE-L (0,340).
-The raw BERTScore means separate compact CSV and TOON (0,8154 and 0,8148) from the other formats, which
-range from 0,717 for XML to 0,720 for Markdown; CSV exceeds XML by 0,098. NEM and ROUGE-L are more
-closely grouped, with best-to-worst differences of 0,014 and 0,032, respectively. Thus, no format is
+the highest NEM (\num{0.178}), CSV the highest BERTScore (\num{0.815}), and CSV the highest ROUGE-L (\num{0.340}).
+The raw BERTScore means separate compact CSV and TOON (\num{0.8154} and \num{0.8148}) from the other formats, which
+range from \num{0.717} for XML to \num{0.720} for Markdown; CSV exceeds XML by \num{0.098}. NEM and ROUGE-L are more
+closely grouped, with best-to-worst differences of \num{0.014} and \num{0.032}, respectively. Thus, no format is
 uniformly best on Spider, but CSV and TOON remain among the strongest across the three metrics.
 
 The paired intervals show the uncertainty behind this ordering. On Spider, TOON exceeded CSV
-by 0,23 percentage points in NEM, with a 95\% interval from $-0,81$ to
-1,29 percentage points. XML was 1,10 percentage points below CSV, with an interval from
-$-2,67$ to 0,68. Both intervals include zero, so the observed ordering does not establish a
+by \num{0.23} percentage points in NEM, with a \qty{95}{\percent} interval from \num{-0.81} to
+\num{1.29} percentage points. XML was \num{1.10} percentage points below CSV, with an interval from
+\num{-2.67} to \num{0.68}. Both intervals include zero, so the observed ordering does not establish a
 clear accuracy advantage for these comparisons.
 
 The separation between formats was clearer on BIRD. CSV achieved the highest values for NEM,
-BERTScore, and ROUGE-L (0,090, 0,424, and 0,109), with TOON close behind (0,087, 0,424, and
-0,106). XML produced the lowest values (0,041, 0,169, and 0,052). The CSV-to-XML ratio is about 2,5 for
-BERTScore and about 2 for NEM and ROUGE-L. This ordering is consistent with the context-fit results in
+BERTScore, and ROUGE-L (\num{0.090}, \num{0.424}, and \num{0.109}), with TOON close behind (\num{0.087}, \num{0.424}, and
+\num{0.106}). XML produced the lowest values (\num{0.041}, \num{0.169}, and \num{0.052}). The CSV-to-XML ratio is about \num{2.5} for
+BERTScore and about \num{2} for NEM and ROUGE-L. This ordering is consistent with the context-fit results in
 Table~\ref{tab:serialization-efficiency}:
 compact formats allowed more BIRD databases to enter the model context, whereas verbose formats produced more
 zero-scored context failures. The observed difference therefore reflects both the model's ability to interpret
 a format and the format's ability to represent the database within the available context.
 
-On BIRD, the XML--CSV NEM difference was $-4,96$ percentage points
-(95\% interval: $-9,49$ to $-1,46$), whereas the TOON--CSV difference was $-0,32$
-percentage points ($-0,79$ to 0,19). The comparison with Text-to-SQL shows a much
-larger pipeline difference: relative to direct CSV, NEM increased by 46,96
-percentage points on Spider (42,25 to 51,98) and 50,78 on BIRD (40,72 to 61,24). These paired
+On BIRD, the XML--CSV NEM difference was \num{-4.96} percentage points
+(\qty{95}{\percent} interval: \numrange{-9.49}{-1.46}), whereas the TOON--CSV difference was \num{-0.32}
+percentage points (\numrange{-0.79}{0.19}). The comparison with Text-to-SQL shows a much
+larger pipeline difference: relative to direct CSV, NEM increased by \num{46.96}
+percentage points on Spider (\numrange{42.25}{51.98}) and \num{50.78} on BIRD (\numrange{40.72}{61.24}). These paired
 comparisons use the complete benchmark, including context-window failures.
 
 \begin{figure}[htb]
@@ -194,33 +194,33 @@ comparisons use the complete benchmark, including context-window failures.
   \caption{Mean direct-context retrieval accuracy by model size and family (NEM, raw BERTScore F1,
     and ROUGE-L F1). Each point averages all six
     serialization formats and all questions for one model, including zero-scored failed runs. Lines connect
-    models within the same family; Qwen~3.5 27B is excluded. Whiskers show pointwise 95\% confidence
+    models within the same family; Qwen~3.5 27B is excluded. Whiskers show pointwise \qty{95}{\percent} confidence
   intervals.}
   \label{fig:direct-accuracy-by-model-size}
 \end{figure}
 
 Figure~\ref{fig:direct-accuracy-by-model-size} examines the influence of model size. Each point averages one
-model's scores across all six formats and all questions, corresponding to 6.204 Spider runs or 9.204 BIRD
+model's scores across all six formats and all questions, corresponding to \num{6204} Spider runs or \num{9204} BIRD
 runs. On Spider, accuracy generally increased with model size in every family. Gemma~4 showed the clearest
-trend: from E2B to 26B-A4B, NEM increased from 0,138 to 0,294, BERTScore from 0,756 to
-0,777, and ROUGE-L from 0,302 to 0,478. Qwen~3.5 also improved substantially between 0.8B and 9B, while
+trend: from E2B to 26B-A4B, NEM increased from \num{0.138} to \num{0.294}, BERTScore from \num{0.756} to
+\num{0.777}, and ROUGE-L from \num{0.302} to \num{0.478}. Qwen~3.5 also improved substantially between 0.8B and 9B, while
 the improvement from Ministral~3 8B to 14B was smaller.
 
 The same general relationship was present on BIRD, but at considerably lower score levels. Gemma~4 improved
-consistently with size and reached 0,095 NEM, 0,311 BERTScore, and 0,113 ROUGE-L at
+consistently with size and reached \num{0.095} NEM, \num{0.311} BERTScore, and \num{0.113} ROUGE-L at
 26B-A4B. Qwen~3.5 improved steadily in NEM and ROUGE-L, but its BERTScore did not increase
 monotonically, and Ministral~3 14B improved over 8B on NEM and ROUGE-L while obtaining a
 lower BERTScore. Model scale was therefore beneficial overall, but parameter count alone did not determine
 performance; model family and metric also affected the observed trend. The horizontal axis uses the
 nominal sizes encoded in the model names;
-Gemma~4 26B-A4B is positioned at 26B total parameters even though approximately 4B parameters are active per
+Gemma~4 26B-A4B is positioned at \num{26}B total parameters even though approximately \num{4}B parameters are active per
 token.
 
 Relative to the smallest retained model in each family, the NEM gain on
-Spider was 15,62 percentage points for Gemma~4 26B-A4B (95\% interval: 10,62--21,61),
-13,70 for Qwen~3.5 9B (9,05--19,36), and 1,55 for Ministral~3 14B (0,14--2,91).
-The corresponding BIRD gains were 5,61 (1,69--10,63), 5,38 (1,79--9,86), and 0,71
-($-0,26$ to 1,93) percentage points. The smaller Ministral gain on BIRD remains uncertain.
+Spider was \num{15.62} percentage points for Gemma~4 26B-A4B (\qty{95}{\percent} interval: \numrange{10.62}{21.61}),
+\num{13.70} for Qwen~3.5 9B (\numrange{9.05}{19.36}), and \num{1.55} for Ministral~3 14B (\numrange{0.14}{2.91}).
+The corresponding BIRD gains were \num{5.61} (\numrange{1.69}{10.63}), \num{5.38} (\numrange{1.79}{9.86}), and \num{0.71}
+(\num{-0.26} to \num{1.93}) percentage points. The smaller Ministral gain on BIRD remains uncertain.
 
 \subsection{Operational efficiency}
 
@@ -238,7 +238,7 @@ Unlike the retrieval-accuracy analysis, this comparison cannot include context-w
 runs never reached model inference and consequently have no meaningful timing or token measurements. We
 therefore use a common complete-case cohort to keep the workload identical across formats: within each
 dataset, a question is retained only if all ten models produced an answer in all six serialization formats.
-This leaves 852 Spider questions from 18 databases and 303 BIRD questions from 2 databases, corresponding to 69.300
+This leaves \num{852} Spider questions from \num{18} databases and \num{303} BIRD questions from \num{2} databases, corresponding to \num{69300}
 model--question--format observations. Every format is consequently evaluated on exactly the same questions and
 models within each dataset. The BIRD efficiency results therefore apply only to the two databases represented
 in this strict common cohort.
@@ -247,8 +247,8 @@ in this strict common cohort.
   \centering
   \includegraphics[width=\textwidth]{../code/analysis/figures/direct_token_usage_by_format.pdf}
   \caption{Mean input and output token use for Direct Context Inference by serialization format. Means use a
-    common complete-case cohort within each dataset: 852 Spider questions and 303 BIRD questions, evaluated with
-    all ten retained models and all six formats. Whiskers show pointwise 95\% confidence intervals.
+    common complete-case cohort within each dataset: \num{852} Spider questions and \num{303} BIRD questions, evaluated with
+    all ten retained models and all six formats. Whiskers show pointwise \qty{95}{\percent} confidence intervals.
   BIRD intervals describe only the two observed databases.}
   \label{fig:direct-token-usage-by-format}
 \end{figure}
@@ -256,22 +256,22 @@ in this strict common cohort.
 Table~\ref{tab:direct-operational-efficiency} reports all five mean measurements.
 Figure~\ref{fig:direct-token-usage-by-format}
 visualizes input and output token use. Input-token consumption followed the expected ordering from serialization
-verbosity. On Spider, CSV required an average of 5.366 input tokens, followed by TOON with 5.758 and Markdown
-with 6.779. XML required 20.186 tokens, 3,76 times the CSV value, while JSON required 15.296. The same pattern
-was stronger in absolute terms on BIRD: CSV required 31.756 input tokens, compared with 97.190 for XML and
-76.239 for JSON.
+verbosity. On Spider, CSV required an average of \num{5366} input tokens, followed by TOON with \num{5758} and Markdown
+with \num{6779}. XML required \num{20186} tokens, \num{3.76} times the CSV value, while JSON required \num{15296}. The same pattern
+was stronger in absolute terms on BIRD: CSV required \num{31756} input tokens, compared with \num{97190} for XML and
+\num{76239} for JSON.
 
 Output-token differences were much smaller than input-token differences and did not follow the same strict
-ordering. Spider responses ranged from 81,2 tokens for CSV to 119,6 for YAML, while BIRD responses ranged from
-219,6 for TOON to 260,5 for YAML. This indicates that the serialization format primarily changes the cost of
+ordering. Spider responses ranged from \num{81.2} tokens for CSV to \num{119.6} for YAML, while BIRD responses ranged from
+\num{219.6} for TOON to \num{260.5} for YAML. This indicates that the serialization format primarily changes the cost of
 providing database context; its effect on answer length is comparatively limited. Because output length also
 depends on the model's chosen wording and reasoning trace, these differences should not be interpreted as a
 direct measure of answer quality.
 
-The paired XML-to-CSV mean input-token ratio was 3,76 on Spider (95\% interval: 2,84--4,38)
-and 3,06 on BIRD (2,94--3,20). TOON was closer to CSV, with ratios of 1,07 (1,04--1,12)
-and 1,03 (1,02--1,04). For output tokens, YAML-to-CSV ratios were 1,47 (1,30--1,57)
-and 1,17 (1,15--1,21), respectively. The BIRD intervals describe only the two-database cohort.
+The paired XML-to-CSV mean input-token ratio was \num{3.76} on Spider (\qty{95}{\percent} interval: \numrange{2.84}{4.38})
+and \num{3.06} on BIRD (\numrange{2.94}{3.20}). TOON was closer to CSV, with ratios of \num{1.07} (\numrange{1.04}{1.12})
+and \num{1.03} (\numrange{1.02}{1.04}). For output tokens, YAML-to-CSV ratios were \num{1.47} (\numrange{1.30}{1.57})
+and \num{1.17} (\numrange{1.15}{1.21}), respectively. The BIRD intervals describe only the two-database cohort.
 
 \begin{figure}[htb]
   \centering
@@ -279,24 +279,24 @@ and 1,17 (1,15--1,21), respectively. The BIRD intervals describe only the two-da
   \caption{Mean Direct Context Inference latency by serialization format. Each bar separates TTFT
     from generation after the first token; the complete stack is the total response latency. Means use the
     same common complete-case cohort as Table~\ref{tab:direct-operational-efficiency}. Whiskers show
-    pointwise 95\% intervals for total latency.
+    pointwise \qty{95}{\percent} intervals for total latency.
   BIRD intervals describe only the two observed databases.}
   \label{fig:direct-latency-by-format}
 \end{figure}
 
 Figure~\ref{fig:direct-latency-by-format} decomposes total response latency into TTFT and generation after the
 first token. The latency ordering closely followed input-token consumption. For Spider, average total latency
-increased from 1,25 seconds with CSV to 1,37 seconds with TOON, 1,61 seconds with Markdown, 3,16 seconds with
-YAML, 4,44 seconds with JSON, and 7,42 seconds with XML. BIRD showed the same ordering at a larger scale:
-CSV, TOON, and Markdown completed in 8,02, 8,27, and 8,95 seconds on average, whereas YAML required 17,15
-seconds, JSON 31,20 seconds, and XML 50,88 seconds. The paired XML-to-CSV mean-latency ratio
-was 5,91 on Spider (95\% interval: 2,24--8,31) and 6,34 on BIRD (6,22--6,47).
-TOON-to-CSV ratios were 1,09 (1,04--1,16) and 1,03 (1,028--1,033), respectively.
+increased from \qty{1.25}{\second} with CSV to \qty{1.37}{\second} with TOON, \qty{1.61}{\second} with Markdown, \qty{3.16}{\second} with
+YAML, \qty{4.44}{\second} with JSON, and \qty{7.42}{\second} with XML. BIRD showed the same ordering at a larger scale:
+CSV, TOON, and Markdown completed in \qty{8.02}{\second}, \qty{8.27}{\second}, and \qty{8.95}{\second} on average, whereas YAML required \qty{17.15}{\second},
+JSON \qty{31.20}{\second}, and XML \qty{50.88}{\second}. The paired XML-to-CSV mean-latency ratio
+was \num{5.91} on Spider (\qty{95}{\percent} interval: \numrange{2.24}{8.31}) and \num{6.34} on BIRD (\numrange{6.22}{6.47}).
+TOON-to-CSV ratios were \num{1.09} (\numrange{1.04}{1.16}) and \num{1.03} (\numrange{1.028}{1.033}), respectively.
 
-Most of this increase occurred before the first output token. TTFT ranged from 0,78 seconds for Spider CSV to
-6,45 seconds for Spider XML, and from 6,32 seconds for BIRD CSV to 46,87 seconds for BIRD XML. In contrast,
-the post-first-token generation interval ranged from 0,48 to 0,97 seconds on Spider and from 1,70 to 4,00
-seconds on BIRD. The dominant operational cost of verbose formats was therefore processing the larger input
+Most of this increase occurred before the first output token. TTFT ranged from \qty{0.78}{\second} for Spider CSV to
+\qty{6.45}{\second} for Spider XML, and from \qty{6.32}{\second} for BIRD CSV to \qty{46.87}{\second} for BIRD XML. In contrast,
+the post-first-token generation interval ranged from \qtyrange{0.48}{0.97}{\second} on Spider and from \qtyrange{1.70}{4.00}{\second}
+on BIRD. The dominant operational cost of verbose formats was therefore processing the larger input
 context, not generating the final answer. CSV and TOON offered nearly identical latency, while Markdown
 introduced a modest increase and the three hierarchical formats---particularly JSON and XML---incurred a much
 larger delay.
@@ -308,9 +308,9 @@ larger delay.
   \includegraphics[width=\textwidth]{../code/analysis/figures/direct_accuracy_by_database_size_nem.pdf}
   \caption{Mean Direct Context NEM by effective database size and serialization format. Each
     point represents one database, with point area indicating its number of benchmark questions; separate trend
-    lines are fitted for Spider and BIRD. Shading shows pointwise 95\% bootstrap intervals for the
-    fitted mean trend; annotations report Pearson's $r$ and its 95\% interval. Database size is
-    shown on a logarithmic token scale. A correlation interval is unavailable when more than 5\%
+    lines are fitted for Spider and BIRD. Shading shows pointwise \qty{95}{\percent} bootstrap intervals for the
+    fitted mean trend; annotations report Pearson's $r$ and its \qty{95}{\percent} interval. Database size is
+    shown on a logarithmic token scale. A correlation interval is unavailable when more than \qty{5}{\percent}
   of bootstrap samples have constant scores.}
   \label{fig:direct-accuracy-by-database-size-nem}
 \end{figure}
@@ -324,7 +324,7 @@ length of textual values. It refers to full Spider databases and to the determin
 used throughout the experiment.
 
 The analysis produces one candidate figure for each retrieval metric: NEM, BERTScore,
-and ROUGE-L. Each figure contains six panels, one for every serialization format, and places all 31 Spider
+and ROUGE-L. Each figure contains six panels, one for every serialization format, and places all \num{31} Spider
 and BIRD databases on the same logarithmic size axis within each panel. A point reports the mean end-to-end
 score for one database and format across all associated questions and all ten retained models; its area
 indicates the number of associated benchmark questions. Spider and BIRD are distinguished by colour and fitted
@@ -356,7 +356,7 @@ payload approaches or exceeds the available context.
 
 \section{Text-to-SQL}
 
-This section evaluates retrieval accuracy and operational efficiency for the 25.680 retained Text-to-SQL runs.
+This section evaluates retrieval accuracy and operational efficiency for the \num{25680} retained Text-to-SQL runs.
 
 \subsection{Retrieval accuracy}
 
@@ -368,11 +368,11 @@ than scores conditioned on successful execution.
 
 \input{../code/analysis/tables/text_to_sql_retrieval_accuracy}
 
-Table~\ref{tab:text-to-sql-retrieval-accuracy} summarizes the dataset-level results. On Spider, 95,3\% of
-queries executed successfully; on BIRD, 89,8\% did so.
+Table~\ref{tab:text-to-sql-retrieval-accuracy} summarizes the dataset-level results. On Spider, \qty{95.3}{\percent} of
+queries executed successfully; on BIRD, \qty{89.8}{\percent} did so.
 
-The text-based metrics show a similar dataset difference. Spider reached mean scores of 0,645 for NEM,
-0,918 for BERTScore, and 0,705 for ROUGE-L. BIRD reached 0.598, 0,861, and 0,373,
+The text-based metrics show a similar dataset difference. Spider reached mean scores of \num{0.645} for NEM,
+\num{0.918} for BERTScore, and \num{0.705} for ROUGE-L. BIRD reached \num{0.598}, \num{0.861}, and \num{0.373},
 respectively. The reduction from Spider to BIRD was much larger for ROUGE-L than for BERTScore, indicating
 that sequence-level overlap with the reference rows degraded more sharply than raw embedding-based semantic
 similarity. The two metric values are not directly comparable because they use different scoring scales.
@@ -383,25 +383,25 @@ similarity. The two metric values are not directly comparable because they use d
   \caption{Mean Text-to-SQL retrieval accuracy by model size and family (NEM, raw BERTScore F1,
     and ROUGE-L F1). Failed SQL runs retain zero scores,
     and Qwen~3.5 27B is excluded from the analysis. Gemma~4 26B-A4B is positioned by its total nominal parameter
-  count. Whiskers show pointwise 95\% confidence intervals.}
+  count. Whiskers show pointwise \qty{95}{\percent} confidence intervals.}
   \label{fig:text-to-sql-accuracy-by-model-size}
 \end{figure}
 
 Figure~\ref{fig:text-to-sql-accuracy-by-model-size} shows a strong relationship between model size and
 text-based agreement scores, particularly within Qwen~3.5. On Spider, Qwen~3.5 NEM increased from
-0,292 at 0.8B parameters to 0,719 at 9B; on BIRD it increased from 0,202 to 0,686. Most of this improvement
-occurred between 0.8B and 4B, after which the curve began to flatten. Gemma~4 was the strongest family overall
-and improved consistently with size. Its 26B-A4B variant achieved the highest observed scores: 0,778
-NEM, 0,975 BERTScore, and 0,816 ROUGE-L on Spider, and 0,745, 0,969, and 0,487 on
+\num{0.292} at \num{0.8}B parameters to \num{0.719} at \num{9}B; on BIRD it increased from \num{0.202} to \num{0.686}. Most of this improvement
+occurred between \num{0.8}B and \num{4}B, after which the curve began to flatten. Gemma~4 was the strongest family overall
+and improved consistently with size. Its 26B-A4B variant achieved the highest observed scores: \num{0.778}
+NEM, \num{0.975} BERTScore, and \num{0.816} ROUGE-L on Spider, and \num{0.745}, \num{0.969}, and \num{0.487} on
 BIRD. Ministral~3 improved more modestly between 8B and 14B and remained below similarly sized Gemma~4 models.
 These results show that model scale improves the reported retrieval metrics, but architecture remains important
 because models of similar nominal size did not achieve equivalent accuracy.
 
-The paired Qwen~3.5 9B-minus-0.8B NEM gain was 42,65 percentage points
-on Spider (95\% interval: 36,76--47,85) and 48,44 on BIRD (43,50--54,13).
-For Gemma~4 26B-A4B relative to E2B, the gains were 8,61 (4,36--13,02) and 10,69
-(5,66--16,73) percentage points. Ministral~3 14B relative to 8B showed smaller gains of
-2,51 ($-0,42$ to 5,80) and 1,56 ($-0,73$ to 4,01) percentage points; both intervals include zero.
+The paired Qwen~3.5 9B-minus-0.8B NEM gain was \num{42.65} percentage points
+on Spider (\qty{95}{\percent} interval: \numrange{36.76}{47.85}) and \num{48.44} on BIRD (\numrange{43.50}{54.13}).
+For Gemma~4 26B-A4B relative to E2B, the gains were \num{8.61} (\numrange{4.36}{13.02}) and \num{10.69}
+(\numrange{5.66}{16.73}) percentage points. Ministral~3 14B relative to 8B showed smaller gains of
+\num{2.51} (\num{-0.42} to \num{5.80}) and \num{1.56} (\num{-0.73} to \num{4.01}) percentage points; both intervals include zero.
 
 \subsection{Operational efficiency}
 
@@ -414,32 +414,32 @@ that exhausted the retry limit.
 
 \input{../code/analysis/tables/text_to_sql_operational_efficiency}
 
-Table~\ref{tab:text-to-sql-operational-efficiency} reports dataset-level means. Spider required 802 input and
-108,1 output tokens per run, compared with 1.893 input and 219,5 output tokens for BIRD. The larger BIRD values
-reflect both more complex schemas and more correction attempts: the mean retry count was 0,39, compared with
-0,17 on Spider. Average total latency was consequently 1,06 seconds for BIRD and 0,54 seconds for Spider. SQL
-execution itself required only 0,008-0,010 seconds on average, less than 2\% of total latency in either dataset;
+Table~\ref{tab:text-to-sql-operational-efficiency} reports dataset-level means. Spider required \num{802} input and
+\num{108.1} output tokens per run, compared with \num{1893} input and \num{219.5} output tokens for BIRD. The larger BIRD values
+reflect both more complex schemas and more correction attempts: the mean retry count was \num{0.39}, compared with
+\num{0.17} on Spider. Average total latency was consequently \qty{1.06}{\second} for BIRD and \qty{0.54}{\second} for Spider. SQL
+execution itself required only \qtyrange{0.008}{0.010}{\second} on average, less than \qty{2}{\percent} of total latency in either dataset;
 the main cost remained model inference and repeated generation.
 
 \begin{figure}[htb]
   \centering
   \includegraphics[width=\textwidth]{../code/analysis/figures/text_to_sql_token_usage.pdf}
   \caption{Mean accumulated input and output tokens for Text-to-SQL by model and dataset. Counts include the
-    initial SQL generation and every correction attempt. Whiskers show pointwise 95\% confidence
+    initial SQL generation and every correction attempt. Whiskers show pointwise \qty{95}{\percent} confidence
   intervals.}
   \label{fig:text-to-sql-token-usage}
 \end{figure}
 
 Figure~\ref{fig:text-to-sql-token-usage} shows that token consumption varied more by model than by dataset
-alone. The smallest Qwen~3.5 models were clear outliers. On BIRD, Qwen~3.5 0.8B used an average of 5.155 input
-and 1.205 output tokens, while Qwen~3.5 2B used 2.789 and 325. In contrast, most models of 4B or more used
-approximately 1.200-1.700 input tokens and 67-109 output tokens. The same pattern appeared on Spider at a
+alone. The smallest Qwen~3.5 models were clear outliers. On BIRD, Qwen~3.5 0.8B used an average of \num{5155} input
+and \num{1205} output tokens, while Qwen~3.5 2B used \num{2789} and \num{325}. In contrast, most models of \num{4}B or more used
+approximately \numrange{1200}{1700} input tokens and \numrange{67}{109} output tokens. The same pattern appeared on Spider at a
 smaller scale. These differences do not result only from tokenizer choice: the smallest Qwen models generated
 longer responses and triggered substantially more correction attempts.
 
-For Qwen~3.5 2B relative to 0.8B, the paired mean input-token ratio was 0,60 on Spider
-(95\% interval: 0,49--0,72) and 0,54 on BIRD (0,47--0,61). The output-token ratios
-were 0,40 (0,19--0,66) and 0,27 (0,20--0,36), respectively. These effects quantify the
+For Qwen~3.5 2B relative to 0.8B, the paired mean input-token ratio was \num{0.60} on Spider
+(\qty{95}{\percent} interval: \numrange{0.49}{0.72}) and \num{0.54} on BIRD (\numrange{0.47}{0.61}). The output-token ratios
+were \num{0.40} (\numrange{0.19}{0.66}) and \num{0.27} (\numrange{0.20}{0.36}), respectively. These effects quantify the
 reduction in accumulated token use despite the increase in model size.
 
 \begin{figure}[htb]
@@ -448,23 +448,23 @@ reduction in accumulated token use despite the increase in model size.
   \caption{Mean Text-to-SQL response latency and correction retries by model and dataset. Each stack includes
     cumulative first-token waits, generation after the first token, and SQL execution across all attempts. Labels
     report total latency and the mean number of retries beyond the initial attempt. Whiskers show
-  pointwise 95\% intervals for total latency.}
+  pointwise \qty{95}{\percent} intervals for total latency.}
   \label{fig:text-to-sql-latency}
 \end{figure}
 
 Figure~\ref{fig:text-to-sql-latency} shows how retry frequency affected model-level latency. Qwen~3.5 0.8B
-averaged 0,97 retries and 1,65
-seconds on Spider, and 1,81 retries and 4,09 seconds on BIRD. Qwen~3.5 2B reduced these values to 0,50 retries
-and 0,75 seconds on Spider and 0,91 retries and 1,25 seconds on BIRD. Models of 4B or more generally required
-far fewer retries and completed in approximately 0,29--0,50 seconds on Spider and 0,53--0,89 seconds on BIRD.
+averaged \num{0.97} retries and \qty{1.65}{\second}
+on Spider, and \num{1.81} retries and \qty{4.09}{\second} on BIRD. Qwen~3.5 2B reduced these values to \num{0.50} retries
+and \qty{0.75}{\second} on Spider and \num{0.91} retries and \qty{1.25}{\second} on BIRD. Models of \num{4}B or more generally required
+far fewer retries and completed in approximately \qtyrange{0.29}{0.50}{\second} on Spider and \qtyrange{0.53}{0.89}{\second} on BIRD.
 The fastest models were not necessarily the smallest: stronger models often offset their larger parameter
 counts by producing valid SQL on the first attempt and generating fewer tokens. Operational efficiency in the
 Text-to-SQL pipeline was therefore determined by both per-token inference speed and query-generation
 reliability.
 
-The paired mean-latency ratio for Qwen~3.5 2B relative to 0.8B was 0,46 on Spider
-(95\% interval: 0,21--0,75) and 0,31 on BIRD (0,22--0,41), corresponding to observed
-mean-latency reductions of approximately 54\% and 69\%.
+The paired mean-latency ratio for Qwen~3.5 2B relative to 0.8B was \num{0.46} on Spider
+(\qty{95}{\percent} interval: \numrange{0.21}{0.75}) and \num{0.31} on BIRD (\numrange{0.22}{0.41}), corresponding to observed
+mean-latency reductions of approximately \qty{54}{\percent} and \qty{69}{\percent}.
 
 \subsection{Error correction performance}
 
@@ -473,29 +473,29 @@ Table~\ref{tab:text-to-sql-error-correction} reports execution-success counts by
 
 \input{../code/analysis/tables/text_to_sql_error_correction}
 
-Most queries executed without correction. On Spider, 9.577 of 10.340 runs (92,62\%) succeeded on the first
-attempt. A further 250 executed on the second attempt, 30 on the third, and 2 on the fourth. The retry
-mechanism therefore recovered executable queries in 282 Spider runs. The remaining 481 runs (4,65\%) failed
+Most queries executed without correction. On Spider, \num{9577} of \num{10340} runs (\qty{92.62}{\percent}) succeeded on the first
+attempt. A further \num{250} executed on the second attempt, \num{30} on the third, and \num{2} on the fourth. The retry
+mechanism therefore recovered executable queries in \num{282} Spider runs. The remaining \num{481} runs (\qty{4.65}{\percent}) failed
 completely after all available attempts.
 
-BIRD required correction more frequently. Of 15.340 runs, 12.707 (82,84\%) executed on the first attempt.
-The second, third, and fourth attempts recovered execution for 878, 160, and 37 runs, respectively. In total,
-retries recovered 1.075 executable queries, while 1.558 runs (10,16\%) remained complete failures. Considering
-only runs that either recovered after a retry or ultimately failed, the mechanism recovered execution in 37,0\% of
-Spider cases and 40,8\% of BIRD cases.
+BIRD required correction more frequently. Of \num{15340} runs, \num{12707} (\qty{82.84}{\percent}) executed on the first attempt.
+The second, third, and fourth attempts recovered execution for \num{878}, \num{160}, and \num{37} runs, respectively. In total,
+retries recovered \num{1075} executable queries, while \num{1558} runs (\qty{10.16}{\percent}) remained complete failures. Considering
+only runs that either recovered after a retry or ultimately failed, the mechanism recovered execution in \qty{37.0}{\percent} of
+Spider cases and \qty{40.8}{\percent} of BIRD cases.
 
-Relative to stopping after the first attempt, retries increased execution success by 2,73
-percentage points on Spider (95\% interval: 1,79--3,59) and 7,01 on BIRD (5,77--8,44).
+Relative to stopping after the first attempt, retries increased execution success by \num{2.73}
+percentage points on Spider (\qty{95}{\percent} interval: \numrange{1.79}{3.59}) and \num{7.01} on BIRD (\numrange{5.77}{8.44}).
 These paired execution-success gains are measured across all runs.
 
-Retries also introduced a measurable operational cost. Attempts after the first added 1.850,4 seconds
-(30,8 minutes) of model-generation time on Spider and 7.234,3 seconds (120,6 minutes) on BIRD, or 2,52 hours
-across both datasets. Averaged across every run, this corresponds to 0,179 additional seconds for Spider and
-0,472 seconds for BIRD. Among runs that actually entered the correction loop, the mean additional generation
-time was 2,43 seconds for Spider and 2,75 seconds for BIRD.
+Retries also introduced a measurable operational cost. Attempts after the first added \qty{1850.4}{\second}
+(\qty{30.8}{\minute}) of model-generation time on Spider and \qty{7234.3}{\second} (\qty{120.6}{\minute}) on BIRD, or \qty{2.52}{\hour}
+across both datasets. Averaged across every run, this corresponds to \num{0.179} additional seconds for Spider and
+\qty{0.472}{\second} for BIRD. Among runs that actually entered the correction loop, the mean additional generation
+time was \qty{2.43}{\second} for Spider and \qty{2.75}{\second} for BIRD.
 
-The 95\% interval for mean additional generation time across all runs was 0,078--0,277
-seconds on Spider and 0,349--0,618 seconds on BIRD.
+The \qty{95}{\percent} interval for mean additional generation time across all runs was \qtyrange{0.078}{0.277}{\second}
+on Spider and \qtyrange{0.349}{0.618}{\second} on BIRD.
 
 \begin{figure}[htb]
   \centering
@@ -507,17 +507,17 @@ seconds on Spider and 0,349--0,618 seconds on BIRD.
   \label{fig:text-to-sql-error-correction}
 \end{figure}
 
-Figure~\ref{fig:text-to-sql-error-correction} shows where this cost arose. The first retry added 658,9 seconds
-of aggregate model time on Spider and 2.725,1 seconds on BIRD. The second added 594,0 and 2.287,6 seconds, and
-the third added 597,6 and 2.221,6 seconds. Although progressively fewer runs reached each stage, later
+Figure~\ref{fig:text-to-sql-error-correction} shows where this cost arose. The first retry added \qty{658.9}{\second}
+of aggregate model time on Spider and \qty{2725.1}{\second} on BIRD. The second added \qty{594.0}{\second} and \qty{2287.6}{\second}, and
+the third added \qty{597.6}{\second} and \qty{2221.6}{\second}. Although progressively fewer runs reached each stage, later
 attempts were longer on average because their prompts included the original exchange and preceding error
-feedback. Complete failures accounted for 95,2\% of all retry-generation time on Spider and 89,4\% on BIRD,
+feedback. Complete failures accounted for \qty{95.2}{\percent} of all retry-generation time on Spider and \qty{89.4}{\percent} on BIRD,
 because these runs necessarily consumed every permitted attempt without producing an executable query.
 
 The reported overhead is the exact additional model-generation time recorded for attempts two through four.
 Per-attempt SQL execution times were not persisted separately, so the small amount of database execution time
 caused specifically by retries cannot be isolated and is excluded from this calculation. The aggregate
-Text-to-SQL measurements show that SQL execution represented less than 2\% of total latency, but the retry-time
+Text-to-SQL measurements show that SQL execution represented less than \qty{2}{\percent} of total latency, but the retry-time
 values should nevertheless be interpreted as model-generation overhead rather than complete end-to-end retry
 latency.
 
@@ -528,8 +528,8 @@ To compare operational efficiency without differences in workload, we retain onl
 all ten models in all six direct-context formats and Text-to-SQL. Completion requires an answer without a
 pipeline error and, for Text-to-SQL, successful query execution (it does not require a correct answer).
 Successful SQL corrections remain included with their accumulated token usage and timing. The shared cohort
-contains 561 Spider questions from 18 databases and 121 BIRD questions from 2 databases
-(\texttt{student\_club} and \texttt{toxicology}), representing 54,3\% and 7,9\% of the development
+contains \num{561} Spider questions from \num{18} databases and \num{121} BIRD questions from \num{2} databases
+(\texttt{student\_club} and \texttt{toxicology}), representing \qty{54.3}{\percent} and \qty{7.9}{\percent} of the development
 splits. Every method uses identical questions, models, and database contents: full Spider databases and the
 same materialized sampled BIRD databases.
 
@@ -538,53 +538,53 @@ same materialized sampled BIRD databases.
   \includegraphics[width=0.95\textwidth]{../code/analysis/figures/common_cohort_latency.pdf}
   \caption{Mean latency on the shared cohort, including all SQL correction attempts. Bars separate
     first-token waits, subsequent generation, and SQL execution. Panels use different horizontal
-    scales. Whiskers show pointwise 95\% intervals for mean total latency. BIRD intervals describe
+    scales. Whiskers show pointwise \qty{95}{\percent} intervals for mean total latency. BIRD intervals describe
   only the two observed databases.}
   \label{fig:common-cohort-latency}
 \end{figure}
 
 Figure~\ref{fig:common-cohort-latency} confirms the mean-latency advantage of Text-to-SQL on the matched
-workload. It required 0,279 seconds on Spider and 0,409 seconds on BIRD, compared with 0,959 and 7,887
-seconds for CSV, the fastest direct format. CSV therefore required $3,44\times$ and $19,30\times$
-the SQL mean latency, while XML required $22,82\times$ and $124,48\times$. Most direct-context
-latency occurred before the first token; SQL execution contributed less than 2\% of Text-to-SQL latency.
+workload. It required \qty{0.279}{\second} on Spider and \qty{0.409}{\second} on BIRD, compared with \qty{0.959}{\second} and \qty{7.887}{\second}
+for CSV, the fastest direct format. CSV therefore required \num{3.44}$\times$ and \num{19.30}$\times$
+the SQL mean latency, while XML required \num{22.82}$\times$ and \num{124.48}$\times$. Most direct-context
+latency occurred before the first token; SQL execution contributed less than \qty{2}{\percent} of Text-to-SQL latency.
 The mean advantage held for every model and format, but not every individual run: Text-to-SQL was faster
-than CSV in 60,7\% of matched Spider pairs and all matched BIRD pairs.
+than CSV in \qty{60.7}{\percent} of matched Spider pairs and all matched BIRD pairs.
 
-The paired 95\% interval for the CSV-to-SQL mean-latency ratio was 1,46--6,03 on Spider and
-18,36--20,38 on BIRD. The wider Spider interval reflects variation across databases. The BIRD
+The paired \qty{95}{\percent} interval for the CSV-to-SQL mean-latency ratio was \numrange{1.46}{6.03} on Spider and
+\numrange{18.36}{20.38} on BIRD. The wider Spider interval reflects variation across databases. The BIRD
 interval is conditional on the two observed databases and should not be interpreted as reliable
 uncertainty for a broader workload.
 
-For XML relative to Text-to-SQL, the paired mean-latency ratios of 22,82 and 124,48 had
-95\% intervals of 3,43--52,09 and 114,34--136,04 for Spider and BIRD, respectively.
+For XML relative to Text-to-SQL, the paired mean-latency ratios of \num{22.82} and \num{124.48} had
+\qty{95}{\percent} intervals of \numrange{3.43}{52.09} and \numrange{114.34}{136.04} for Spider and BIRD, respectively.
 
 \begin{figure}[htb]
   \centering
   \includegraphics[width=0.9\textwidth]{../code/analysis/figures/common_cohort_token_usage.pdf}
   \caption{Mean token consumption on the shared cohort. SQL counts include all correction attempts;
-    output counts include reasoning tokens. Whiskers show pointwise 95\% confidence
+    output counts include reasoning tokens. Whiskers show pointwise \qty{95}{\percent} confidence
     intervals. BIRD intervals describe only the two
   observed databases.}
   \label{fig:common-cohort-token-usage}
 \end{figure}
 
 Figure~\ref{fig:common-cohort-token-usage} shows a corresponding token-use advantage. Text-to-SQL used
-555 input tokens on Spider and 755 on BIRD, compared with 4.487 and 31.754 for CSV
-($8,08\times$ and $42,06\times$ as many). XML required $31,72\times$ and $128,73\times$
-the SQL input counts. Mean output consumption also favoured Text-to-SQL: 40,9 versus 63,0--98,1 tokens
-on Spider and 63,2 versus 198,7--261,2 on BIRD. Compact formats reduce direct-context costs, but do not
+\num{555} input tokens on Spider and \num{755} on BIRD, compared with \num{4487} and \num{31754} for CSV
+(\num{8.08}$\times$ and \num{42.06}$\times$ as many). XML required \num{31.72}$\times$ and \num{128.73}$\times$
+the SQL input counts. Mean output consumption also favoured Text-to-SQL: \num{40.9} versus \numrange{63.0}{98.1} tokens
+on Spider and \num{63.2} versus \numrange{198.7}{261.2} on BIRD. Compact formats reduce direct-context costs, but do not
 remove the overhead of supplying database contents rather than only the schema.
 
-The paired 95\% intervals for the CSV-to-SQL input-token ratios were 2,81--16,34 on Spider
-and 35,88--51,98 on BIRD; for XML they were 8,76--70,78 and 105,41--166,16.
-CSV-to-SQL mean output-token ratios were 1,54 (1,17--1,96) and 3,14 (2,61--3,72),
-while XML-to-SQL ratios were 2,40 (1,74--3,00) and 4,13 (3,67--4,63).
+The paired \qty{95}{\percent} intervals for the CSV-to-SQL input-token ratios were \numrange{2.81}{16.34} on Spider
+and \numrange{35.88}{51.98} on BIRD; for XML they were \numrange{8.76}{70.78} and \numrange{105.41}{166.16}.
+CSV-to-SQL mean output-token ratios were \num{1.54} (\numrange{1.17}{1.96}) and \num{3.14} (\numrange{2.61}{3.72}),
+while XML-to-SQL ratios were \num{2.40} (\numrange{1.74}{3.00}) and \num{4.13} (\numrange{3.67}{4.63}).
 As with latency, the BIRD intervals are restricted to the two observed databases.
 
 \section{Summary}
 
-This chapter presented results from 179.760 retained runs across Spider and BIRD, ten models, six
+This chapter presented results from \num{179760} retained runs across Spider and BIRD, ten models, six
 serialization formats, and the Text-to-SQL pipeline. Serialization had a substantial effect on context use:
 CSV required the fewest tokens, TOON remained close to it, and XML was consistently the most verbose. These
 differences directly affected context-window coverage and response latency, while tokenizer-family choice had
@@ -600,7 +600,7 @@ prompt.
 Text-to-SQL achieved substantially higher scores for text-based agreement with the reference while using a
 much smaller schema-based input, and its scores generally improved with model size. Query execution itself
 contributed little to total latency; model generation and correction retries accounted for most of the cost. The retry
-mechanism recovered 1.357 otherwise non-executable queries, while failed correction sequences added most of
+mechanism recovered \num{1357} otherwise non-executable queries, while failed correction sequences added most of
 the retry overhead. Overall, the results demonstrate
 that format selection is central to Direct Context Inference, while model capability and reliable SQL generation are the main factors
 for Text-to-SQL.

@@ -13,6 +13,13 @@ from visualizations.config import (
     RETRY_OUTCOME_ORDER,
     TEXT_TO_SQL_RETRY_FIGURE_FILENAME,
 )
+from visualizations.plot_numbers import (
+    number,
+    number_formatter,
+    quantity,
+    save_pgf_figure,
+    tight_layout,
+)
 from visualizations.text_to_sql_retry_data import TextToSqlRetryAnalysis
 
 if TYPE_CHECKING:
@@ -28,8 +35,6 @@ def plot_error_correction_performance(
 
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
-    from matplotlib.ticker import StrMethodFormatter
-
     figure, axes_array = plt.subplots(
         nrows=1,
         ncols=2,
@@ -54,7 +59,7 @@ def plot_error_correction_performance(
             color=DATASET_COLORS[dataset],
             label=DATASET_LABELS[dataset],
         )
-        outcome_axis.bar_label(bars, labels=[f"{value:,}" for value in values], fontsize=8)
+        outcome_axis.bar_label(bars, labels=[number(value, 0) for value in values], fontsize=8)
     outcome_axis.set_xticks(
         x_positions,
         [RETRY_OUTCOME_LABELS[outcome] for outcome in RETRY_OUTCOME_ORDER],
@@ -63,7 +68,7 @@ def plot_error_correction_performance(
     )
     outcome_axis.set_title("Terminal query-execution outcome", fontweight="bold")
     outcome_axis.set_ylabel("Runs")
-    outcome_axis.yaxis.set_major_formatter(StrMethodFormatter("{x:,.0f}"))
+    outcome_axis.yaxis.set_major_formatter(number_formatter())
     outcome_axis.legend(title="Dataset", frameon=False)
 
     overhead_axis = axes[1]
@@ -84,13 +89,13 @@ def plot_error_correction_performance(
         )
         overhead_axis.bar_label(
             bars,
-            labels=[f"{value / 60:.1f} min" for value in values],
+            labels=[quantity(value / 60, "\\minute", 1) for value in values],
             fontsize=8,
         )
     overhead_axis.set_xticks(retry_positions, ["Retry 1", "Retry 2", "Retry 3"])
     overhead_axis.set_title("Additional model time by retry stage", fontweight="bold")
     overhead_axis.set_ylabel("Aggregate generation time (seconds)")
-    overhead_axis.yaxis.set_major_formatter(StrMethodFormatter("{x:,.0f}"))
+    overhead_axis.yaxis.set_major_formatter(number_formatter())
 
     for axis in axes:
         axis.grid(axis="y", color="#D0D0D0", linewidth=0.8)
@@ -98,7 +103,7 @@ def plot_error_correction_performance(
         axis.spines["top"].set_visible(False)
         axis.spines["right"].set_visible(False)
 
-    figure.tight_layout(rect=(0.03, 0, 1.0, 1.0))
+    tight_layout(figure, rect=(0.03, 0, 1.0, 1.0))
     return figure, axes
 
 
@@ -113,6 +118,6 @@ def generate_error_correction_figure(
 
     import matplotlib.pyplot as plt
 
-    figure.savefig(output_path, dpi=300, bbox_inches="tight", facecolor="white")
+    save_pgf_figure(figure, output_path)
     plt.close(figure)
     return output_path

@@ -44,7 +44,7 @@ the following three categories.
 These differences in representation matter both for how data is organized, and for how accurately
 models interpret it. Results point to most common formats (CSV and JSON) performing the best over different
 models. For example, Llama-3.1-405B in \cite{struct-text-eval} achieves the highest accuracies for CSV and
-JSON (respectively, $96,6\%$ and $82,0\%$), while all the other formats record a significant drop off in
+JSON (respectively, \qty{96.6}{\percent} and \qty{82.0}{\percent}), while all the other formats record a significant drop off in
 accuracy. These results point that LLM's understanding of the structured data remains tied to patterns
 present in the training data rather than true grasp of the data structure.
 
@@ -66,9 +66,9 @@ verbosity. These formats are designed in such a way that each fields carries its
 \cite{bray1998xml, bray2017javascript}, through
 repeated keywords, which create overhead when working with LLMs. The experiments performed in
 \cite{onto-serialization-format}, were
-carried out across $1.000$ Internet of Things telemetry records. They have shown that majority of the tokens used for
-encoding data in the JSON format is used up by field names and punctuation ($60.500$ tokens), while the
-actual semantic values take up only $14.274$ tokens, out of $79.774$ tokens. This overhead proves to be
+carried out across \num{1000} Internet of Things telemetry records. They have shown that majority of the tokens used for
+encoding data in the JSON format is used up by field names and punctuation (\num{60500} tokens), while the
+actual semantic values take up only \num{14274} tokens, out of \num{79774} tokens. This overhead proves to be
 problematic, as most pricing is done based on the input and output tokens used, with this higher token
 usage directly translating to higher operational costs for the users. Also in the same experiment it was shown
 that reduction in tokens used directly correlates to lower latency, when using the custom ONTO format
@@ -78,8 +78,8 @@ In order to address these inefficiencies, there have been multiple efforts aimed
 \cite{onto-serialization-format} and TOON \cite{toon-format-2025}. Both formats are
 oriented at fixing the problem of repeated schema for each record, they fix this by declaring all the fields
 only once at the top of the record, and values are arranged in pipe delimited rows with indentation based
-hierarchy. Both of these models claim to use significantly less tokens (TOON $39,9\%$ fewer tokens compared
-to JSON \cite{toon-format-2025}, and ONTO $46-51\%$ compared to JSON\cite{onto-serialization-format}) while
+hierarchy. Both of these models claim to use significantly less tokens (TOON \qty{39.9}{\percent} fewer tokens compared
+to JSON \cite{toon-format-2025}, and ONTO \qtyrange{46}{51}{\percent} compared to JSON\cite{onto-serialization-format}) while
 stating they have minimal impact on the accuracy.
 
 Compact formats reduce the amount of text supplied to the model, but direct-context inference still
@@ -133,7 +133,7 @@ submission further retrieves few-shot examples from training set, generates thre
 potentially problematic SQL, and selects an answer by agreement between execution results. The paper also
 investigates query-log analysis and SQL-to-text generation for recovering business logic and constructing
 examples, although query logs were unavailable for the held-out test databases. Using GPT-4o without
-task-specific fine-tuning, the authors report $77,14\%$ execution accuracy on BIRD-Test \cite{li2023can} with
+task-specific fine-tuning, the authors report \qty{77.14}{\percent} execution accuracy on BIRD-Test \cite{li2023can} with
 question-specific hints. This demonstrates how database understanding and orchestration can improve results
 beyond the capabilities of a schema-only prompt.
 
@@ -144,7 +144,7 @@ generators then produce
 candidates: a reinforcement learning trained SQL reasoner using a data schema, and an
 in-context-learning generator using a compact Markdown schema. Syntax repair and semantic revision refine
 these candidates. Queries with identical execution results are grouped, and a reinforcement learning trained
-selector compares representatives in a pairwise tournament. The paper reports $81,67\%$ execution accuracy
+selector compares representatives in a pairwise tournament. The paper reports \qty{81.67}{\percent} execution accuracy
 on BIRD-Test. This architecture explicitly trades additional generation, refinement, and selection work for
 higher accuracy, rather than relying on a single model response.
 
@@ -158,8 +158,8 @@ A deterministic tool-chain checks syntax, suspicious logical patterns, and quali
 feedback for LLM revision. Selection uses agreement between execution results as a confidence signal:
 strong consensus permits direct selection, while uncertain cases receive deeper execution-guided comparison.
 These checks target particular error patterns; they do not constitute a general proof of semantic correctness.
-Using open-weight mixture-of-experts models with approximately 30 billion total and 3 billion active parameters,
-without fine-tuning, the paper reports $75,07\%$ execution accuracy on BIRD-Test. Thus, sophisticated
+Using open-weight mixture-of-experts models with approximately \num{30} billion total and \num{3} billion active parameters,
+without fine-tuning, the paper reports \qty{75.07}{\percent} execution accuracy on BIRD-Test. Thus, sophisticated
 orchestration is relevant to open-weight models as well as proprietary ones.
 
 The broader DeepEye system \cite{li2026deepeye} extends this query-generation workflow to analytical tasks
@@ -173,20 +173,20 @@ The resulting workflows produce outputs such as dashboards and reports.
 \section{Overview of Evaluation Datasets}
 
 There has been a lot of effort in the last years to curate datasets which can be utilized for testing
-(and training) models on task of SQL generation. First notable datasets came to the scene in 2017, WikiSQL
-\cite{zhong2017seq2sql}, researchers have annotated data based on Wikipedia, it cover $24.241$ database
+(and training) models on task of SQL generation. First notable datasets came to the scene in \num[group-digits=none]{2017}, WikiSQL
+\cite{zhong2017seq2sql}, researchers have annotated data based on Wikipedia, it cover \num{24241} database
 tables, and has more than
-$80.000$ pairs of natural language questions and corresponding query.
+\num{80000} pairs of natural language questions and corresponding query.
 
 WikiSQL has a problem, it only involves one table per question and only supports simple SQL operations, which
 is not representative of expectations we have of these system when deployed in real world. In order to
 overcome these challenges the Spider \cite{yu2018spider} dataset was introduced, which is one of the most
 complex Text-to-SQL
-datasets. Same as WikiSQL it is multi domain, it covers more than $100$ domains with over $200$ databases,
-where each database has $5,1$ tables on average. One more feature is that the tables appearing in the test
+datasets. Same as WikiSQL it is multi domain, it covers more than \num{100} domains with over \num{200} databases,
+where each database has \num{5.1} tables on average. One more feature is that the tables appearing in the test
 set are distinct from the ones that appear on the train set. Compared to the datasets which were present at
 that time the queries were more complex, including aggregate functions, ordering of the results, and nested
-queries, which were divided into 4 levels of difficulty, based on their complexity. This is important to
+queries, which were divided into \num{4} levels of difficulty, based on their complexity. This is important to
 consider because all the question present in the WikiSQL dataset were classified as EASY.
 
 Even though the Spider data set introduced a lot of improvements, it still was not perfect. All of the data
@@ -201,10 +201,10 @@ The newest addition to these benchmarks is Spider 2.0 \cite{lei2025spider}, it i
 pulled from enterprise environments like Google Analytic and Salesforce. It pulls the real world tasks from
 these environments, and moves away from small and unrealistically clean datasets present in the original
 Spider dataset. Besides moving away from tidy data it also introduces another challenge in form of massive
-cloud schemas which are averaging over $800$ columns, intricate nested structures, and distinct dialects like
+cloud schemas which are averaging over \num{800} columns, intricate nested structures, and distinct dialects like
 BigQuery and Snowflake that require knowledge of external documentation. The change in size and complexity
 moves this task from simple one shot examples into multi step agentic workflows where queries stretch more
-than 100 lines.
+than \num{100} lines.
 
 Benchmarks define the tasks on which systems are evaluated, while metrics determine which aspects of their
 outputs count as successful. Comparing the two retrieval approaches requires considering reference-answer
@@ -240,8 +240,8 @@ Normalized Exact Match is defined as
 \begin{equation}
   \operatorname{NEM}(c,r) =
   \begin{cases}
-    1 & \text{if } n(c) = n(r), \\
-    0 & \text{otherwise.}
+    \num{1} & \text{if } n(c) = n(r), \\
+    \num{0} & \text{otherwise.}
   \end{cases}
 \end{equation}
 SQuAD normalization lowercases the text, removes punctuation and English articles, and
@@ -262,7 +262,7 @@ and let $L$ be their LCS length. For nonempty sequences, precision and recall ar
 \begin{equation}
   P_{\mathrm{LCS}} = \frac{L}{|C|}, \qquad
   R_{\mathrm{LCS}} = \frac{L}{|R|}, \qquad
-  F_1 = \frac{2P_{\mathrm{LCS}}R_{\mathrm{LCS}}}{P_{\mathrm{LCS}}+R_{\mathrm{LCS}}}.
+  F_1 = \frac{\num{2}P_{\mathrm{LCS}}R_{\mathrm{LCS}}}{P_{\mathrm{LCS}}+R_{\mathrm{LCS}}}.
 \end{equation}
 The F1 score balances precision and recall, rewarding partial overlap while accounting for both additional
 and missing content.

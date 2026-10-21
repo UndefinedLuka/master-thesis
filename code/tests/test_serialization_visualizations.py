@@ -237,10 +237,10 @@ def test_rendered_table_contains_relative_and_fit_values() -> None:
     )
 
     assert r"Ratio to CSV" in latex
-    assert r"1.00$\times$" in latex
+    assert r"\num{1.00}$\times$" in latex
     assert r"\label{tab:serialization-efficiency}" in latex
-    assert "at or below 250 tokens" in latex
-    assert r"1/2 (50.0\%)" in latex
+    assert r"at or below \num{250} tokens" in latex
+    assert r"\num{1}/\num{2} (\qty{50.0}{\percent})" in latex
     assert "Coverage validation was skipped." in latex
 
 

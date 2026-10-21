@@ -13,6 +13,7 @@ from visualizations.config import (
     DATASET_ORDER,
     LATEX_ROW_END,
 )
+from visualizations.latex_numbers import num
 
 
 def render_common_cohort_table(analysis: CommonCohortAnalysis) -> str:
@@ -28,12 +29,12 @@ def render_common_cohort_table(analysis: CommonCohortAnalysis) -> str:
                     (
                         DATASET_LABELS[dataset] if index == 0 else "",
                         COMMON_COHORT_METHOD_LABELS[row.method],
-                        f"{row.average_input_tokens:,.0f}",
-                        f"{row.average_output_tokens:,.1f}",
-                        f"{row.average_ttft_s:.3f}",
-                        f"{row.average_generation_time_s:.3f}",
-                        f"{row.average_sql_execution_time_s:.3f}",
-                        f"{row.average_total_latency_s:.3f}",
+                        num(row.average_input_tokens, 0),
+                        num(row.average_output_tokens, 1),
+                        num(row.average_ttft_s, 3),
+                        num(row.average_generation_time_s, 3),
+                        num(row.average_sql_execution_time_s, 3),
+                        num(row.average_total_latency_s, 3),
                     )
                 )
                 + LATEX_ROW_END
@@ -41,8 +42,8 @@ def render_common_cohort_table(analysis: CommonCohortAnalysis) -> str:
         if dataset != datasets[-1]:
             rows.append(r"    \midrule")
     cohort = "; ".join(
-        f"{DATASET_LABELS[dataset]}: {analysis.question_counts[dataset]:,} questions, "
-        f"{analysis.database_counts[dataset]} databases"
+        f"{DATASET_LABELS[dataset]}: {num(analysis.question_counts[dataset])} questions, "
+        f"{num(analysis.database_counts[dataset])} databases"
         for dataset in datasets
     )
     return "\n".join(
@@ -67,7 +68,7 @@ def render_common_cohort_table(analysis: CommonCohortAnalysis) -> str:
             r"  }",
             r"  \vspace{0.4em}",
             r"  \parbox{\linewidth}{\scriptsize \textit{Note:} "
-            + f"{cohort}; all {analysis.model_count} retained models. "
+            + f"{cohort}; all {num(analysis.model_count)} retained models. "
             + "Every question completed with every model in all displayed methods. "
             + "Completion does not imply correctness. Text-to-SQL token and timing totals "
             + "include all correction attempts; TTFT sums the first-token waits across attempts, "
