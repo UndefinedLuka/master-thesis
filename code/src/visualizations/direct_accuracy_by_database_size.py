@@ -1,6 +1,6 @@
 """Compare direct-context accuracy with database size in metric-specific figures.
 
-Three figures are produced: Normalized Exact Match, BERTScore F1, and ROUGE-L F1. Each
+Three figures are produced: NEM, BERTScore, and ROUGE-L. Each
 figure contains one panel per serialization format, and every panel shows both Spider and BIRD
 databases on the same logarithmic size axis.
 """

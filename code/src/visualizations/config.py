@@ -71,8 +71,8 @@ TOKENIZER_FAMILY_COLORS: dict[str, str] = {
 
 METRIC_TITLES: dict[str, str] = {
     "normalized_exact_match": "NEM",
-    "rouge_l_f": "ROUGE-L F1",
-    "bertscore_f": "BERTScore F1",
+    "rouge_l_f": "ROUGE-L",
+    "bertscore_f": "BERTScore",
 }
 DIRECT_ACCURACY_METRIC_ORDER: tuple[str, ...] = (
     "normalized_exact_match",

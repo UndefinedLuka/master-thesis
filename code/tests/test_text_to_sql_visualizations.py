@@ -176,8 +176,8 @@ def test_text_to_sql_tables_report_accuracy_execution_and_operations(tmp_path: P
     operational = render_text_to_sql_operational_table(analysis)
 
     assert "NEM" in retrieval
-    assert "BERTScore F1" in retrieval
-    assert "ROUGE-L F1" in retrieval
+    assert "BERTScore & ROUGE-L" in retrieval
+    assert "BERTScore and ROUGE-L report F1; BERTScore is raw (unrescaled)." in retrieval
     assert "Executed" in retrieval
     assert "Correct result" not in retrieval
     assert "Input tokens" in operational
@@ -255,8 +255,8 @@ def test_text_to_sql_figures_show_metrics_tokens_latency_and_retries(tmp_path: P
     assert all(len(row) == 3 for row in accuracy_axes)
     assert [axis.get_title() for axis in accuracy_axes[0]] == [
         "NEM",
-        "BERTScore F1",
-        "ROUGE-L F1",
+        "BERTScore",
+        "ROUGE-L",
     ]
     assert [axis.get_title() for axis in token_axes[0]] == [
         "Average input tokens",

@@ -140,13 +140,12 @@ efficiency, and the influence of database size.
 
 \subsection{Retrieval accuracy}
 
-Retrieval accuracy was evaluated using NEM, BERTScore~F1, and ROUGE-L~F1. NEM
-measures whether the generated and reference answers are equal after text normalization,
-BERTScore reports raw, unrescaled embedding similarities, and ROUGE-L measures their longest-subsequence
-overlap. These BERTScore values are not probabilities: successful answers can have high semantic similarity
-even when they are incorrect, while failed runs retain a score of zero. The reported means include all
-direct-context runs from the ten retained models, including runs assigned a score of zero because the
-serialized database exceeded the context window. The results therefore represent
+Retrieval accuracy was evaluated using NEM, BERTScore, and ROUGE-L, as defined in
+Section~\ref{sec:reference-answer-metrics}. BERTScore reports raw, unrescaled embedding similarities, and
+ROUGE-L measures longest-subsequence overlap. These BERTScore values are not probabilities: successful answers
+can have high semantic similarity even when they are incorrect, while failed runs retain a score of zero. The
+reported means include all direct-context runs from the ten retained models, including runs assigned a score
+of zero after failing the pre-inference context-limit check. The results therefore represent
 end-to-end effectiveness under the fixed 128K-token limit, rather than accuracy conditional on the model
 having produced an answer. Each Spider format summarizes 10.340 runs, while each BIRD format summarizes
 15.340 runs.
@@ -154,14 +153,15 @@ having produced an answer. Each Spider format summarizes 10.340 runs, while each
 \begin{figure}[htb]
   \centering
   \includegraphics[width=\textwidth]{../code/analysis/figures/direct_accuracy_by_format.pdf}
-  \caption{Mean direct-context retrieval accuracy by serialization format. Each bar includes all questions
+  \caption{Mean direct-context retrieval accuracy by serialization format (NEM, raw unrescaled BERTScore F1,
+    and ROUGE-L F1). Each bar includes all questions
     and all ten retained models for the named dataset. Failed runs retain zero scores. Whiskers
   show pointwise 95\% confidence intervals.}
   \label{fig:direct-accuracy-by-format}
 \end{figure}
 
 Figure~\ref{fig:direct-accuracy-by-format} compares the six serialization formats. On Spider, TOON achieved
-the highest NEM (0,178), CSV the highest BERTScore~F1 (0,815), and CSV the highest ROUGE-L~F1 (0,340).
+the highest NEM (0,178), CSV the highest BERTScore (0,815), and CSV the highest ROUGE-L (0,340).
 The raw BERTScore means separate compact CSV and TOON (0,8154 and 0,8148) from the other formats, which
 range from 0,717 for XML to 0,720 for Markdown; CSV exceeds XML by 0,098. NEM and ROUGE-L are more
 closely grouped, with best-to-worst differences of 0,014 and 0,032, respectively. Thus, no format is
@@ -174,7 +174,7 @@ $-2,67$ to 0,68. Both intervals include zero, so the observed ordering does not 
 clear accuracy advantage for these comparisons.
 
 The separation between formats was clearer on BIRD. CSV achieved the highest values for NEM,
-BERTScore~F1, and ROUGE-L~F1 (0,090, 0,424, and 0,109), with TOON close behind (0,087, 0,424, and
+BERTScore, and ROUGE-L (0,090, 0,424, and 0,109), with TOON close behind (0,087, 0,424, and
 0,106). XML produced the lowest values (0,041, 0,169, and 0,052). The CSV-to-XML ratio is about 2,5 for
 BERTScore and about 2 for NEM and ROUGE-L. This ordering is consistent with the context-fit results in
 Table~\ref{tab:serialization-efficiency}:
@@ -192,7 +192,8 @@ comparisons use the complete benchmark, including context-window failures.
 \begin{figure}[htb]
   \centering
   \includegraphics[width=\textwidth]{../code/analysis/figures/direct_accuracy_by_model_size.pdf}
-  \caption{Mean direct-context retrieval accuracy by model size and family. Each point averages all six
+  \caption{Mean direct-context retrieval accuracy by model size and family (NEM, raw unrescaled BERTScore F1,
+    and ROUGE-L F1). Each point averages all six
     serialization formats and all questions for one model, including zero-scored failed runs. Lines connect
     models within the same family; Qwen~3.5 27B is excluded. Whiskers show pointwise 95\% confidence
   intervals.}
@@ -202,12 +203,12 @@ comparisons use the complete benchmark, including context-window failures.
 Figure~\ref{fig:direct-accuracy-by-model-size} examines the influence of model size. Each point averages one
 model's scores across all six formats and all questions, corresponding to 6.204 Spider runs or 9.204 BIRD
 runs. On Spider, accuracy generally increased with model size in every family. Gemma~4 showed the clearest
-trend: from E2B to 26B-A4B, NEM increased from 0,138 to 0,294, BERTScore~F1 from 0,756 to
-0,777, and ROUGE-L~F1 from 0,302 to 0,478. Qwen~3.5 also improved substantially between 0.8B and 9B, while
+trend: from E2B to 26B-A4B, NEM increased from 0,138 to 0,294, BERTScore from 0,756 to
+0,777, and ROUGE-L from 0,302 to 0,478. Qwen~3.5 also improved substantially between 0.8B and 9B, while
 the improvement from Ministral~3 8B to 14B was smaller.
 
 The same general relationship was present on BIRD, but at considerably lower score levels. Gemma~4 improved
-consistently with size and reached 0,095 NEM, 0,311 BERTScore~F1, and 0,113 ROUGE-L~F1 at
+consistently with size and reached 0,095 NEM, 0,311 BERTScore, and 0,113 ROUGE-L at
 26B-A4B. Qwen~3.5 improved steadily in NEM and ROUGE-L, but its BERTScore did not increase
 monotonically, and Ministral~3 14B improved over 8B on NEM and ROUGE-L while obtaining a
 lower BERTScore. Model scale was therefore beneficial overall, but parameter count alone did not determine
@@ -228,7 +229,8 @@ The corresponding BIRD gains were 5,61 (1,69--10,63), 5,38 (1,79--9,86), and 0,7
 \input{../code/analysis/tables/direct_operational_efficiency}
 
 Operational efficiency was evaluated using the number of input and output tokens, TTFT,
-generation time, and total response latency. TTFT is measured from request submission until the first output
+generation time, and total response latency. Output-token counts include reasoning traces and are not split into
+reasoning and visible-answer tokens. TTFT is measured from request submission until the first output
 token is received. Generation time in this subsection covers the remaining interval from the first token to
 completion, while total latency covers the complete request from submission to completion. For Direct Context
 Inference there is no subsequent query-execution phase, so total latency is the sum of TTFT and this
@@ -323,8 +325,8 @@ than row count alone because it also captures the number and width of columns, r
 length of textual values. It refers to full Spider databases and to the deterministically sampled BIRD databases
 used throughout the experiment.
 
-The analysis produces one candidate figure for each retrieval metric: NEM, BERTScore~F1,
-and ROUGE-L~F1. Each figure contains six panels, one for every serialization format, and places all 31 Spider
+The analysis produces one candidate figure for each retrieval metric: NEM, BERTScore,
+and ROUGE-L. Each figure contains six panels, one for every serialization format, and places all 31 Spider
 and BIRD databases on the same logarithmic size axis within each panel. A point reports the mean end-to-end
 score for one database and format across all associated questions and all ten retained models; its area
 indicates the number of associated benchmark questions. Spider and BIRD are distinguished by colour and fitted
@@ -333,7 +335,7 @@ separate avoids hiding differences in both token footprint and context-window fe
 cross-format average.
 
 Across the complete database sets, accuracy generally decreased as effective database size increased: the
-database-level correlations were negative across formats for NEM, BERTScore~F1, and ROUGE-L~F1. The decline
+database-level correlations were negative across formats for NEM, BERTScore, and ROUGE-L. The decline
 was therefore not specific to strict textual equality or a single similarity measure.
 
 The largest databases also expose the hard context-window limit of direct inference. All runs associated with
@@ -363,10 +365,9 @@ This section evaluates retrieval accuracy and operational efficiency for the 25.
 
 \subsection{Retrieval accuracy}
 
-Text-to-SQL retrieval was evaluated using NEM, BERTScore~F1, and ROUGE-L~F1 on text representations of
-the returned and reference rows. NEM measures normalized textual equality, ROUGE-L measures lexical sequence
-overlap, and BERTScore reports raw, unrescaled semantic similarity. These similarities are not probabilities
-and do not establish correctness. Execution success records whether a query ran without
+Text-to-SQL retrieval was evaluated using NEM, BERTScore, and ROUGE-L on text representations of
+the returned and reference rows, following Section~\ref{sec:reference-answer-metrics}. ROUGE-L and BERTScore
+are similarity measures rather than probabilities of correctness. Execution success records whether a query ran without
 error within the retry limit; it does not establish that the query retrieved the intended information. Failed
 SQL runs retain zero text-based scores, so the reported means represent end-to-end pipeline performance rather
 than scores conditioned on successful execution. The text-based metrics measure agreement with the reference
@@ -379,7 +380,7 @@ queries executed successfully; on BIRD, 89,8\% did so. Successful execution only
 without error and does not establish that it selected the intended tables, columns, conditions, or aggregations.
 
 The text-based metrics show a similar dataset difference. Spider reached mean scores of 0,645 for NEM,
-0,918 for BERTScore~F1, and 0,705 for ROUGE-L~F1. BIRD reached 0.598, 0,861, and 0,373,
+0,918 for BERTScore, and 0,705 for ROUGE-L. BIRD reached 0.598, 0,861, and 0,373,
 respectively. The reduction from Spider to BIRD was much larger for ROUGE-L than for BERTScore, indicating
 that sequence-level overlap with the reference rows degraded more sharply than raw embedding-based semantic
 similarity. The two metric values are not directly comparable because they use different scoring scales.
@@ -387,7 +388,8 @@ similarity. The two metric values are not directly comparable because they use d
 \begin{figure}[htb]
   \centering
   \includegraphics[width=\textwidth]{../code/analysis/figures/text_to_sql_accuracy_by_model_size.pdf}
-  \caption{Mean Text-to-SQL retrieval accuracy by model size and family. Failed SQL runs retain zero scores,
+  \caption{Mean Text-to-SQL retrieval accuracy by model size and family (NEM, raw unrescaled BERTScore F1,
+    and ROUGE-L F1). Failed SQL runs retain zero scores,
     and Qwen~3.5 27B is excluded from the analysis. Gemma~4 26B-A4B is positioned by its total nominal parameter
   count. Whiskers show pointwise 95\% confidence intervals.}
   \label{fig:text-to-sql-accuracy-by-model-size}
@@ -398,7 +400,7 @@ text-based agreement scores, particularly within Qwen~3.5. On Spider, Qwen~3.5 N
 0,292 at 0.8B parameters to 0,719 at 9B; on BIRD it increased from 0,202 to 0,686. Most of this improvement
 occurred between 0.8B and 4B, after which the curve began to flatten. Gemma~4 was the strongest family overall
 and improved consistently with size. Its 26B-A4B variant achieved the highest observed scores: 0,778
-NEM, 0,975 BERTScore~F1, and 0,816 ROUGE-L~F1 on Spider, and 0,745, 0,969, and 0,487 on
+NEM, 0,975 BERTScore, and 0,816 ROUGE-L on Spider, and 0,745, 0,969, and 0,487 on
 BIRD. Ministral~3 improved more modestly between 8B and 14B and remained below similarly sized Gemma~4 models.
 These results show that model scale improves the reported retrieval metrics, but architecture remains important
 because models of similar nominal size did not achieve equivalent accuracy.
@@ -412,10 +414,10 @@ For Gemma~4 26B-A4B relative to E2B, the gains were 8,61 (4,36--13,02) and 10,69
 \subsection{Operational efficiency}
 
 Text-to-SQL operational measurements include every initial generation and correction attempt. Input and output
-tokens are accumulated across attempts, as is model-generation time. The latency decomposition uses the sum of
-TTFT intervals across attempts, the remaining post-first-token generation time, and SQL
-execution time. Total latency therefore captures the full cost of retries rather than only the final successful
-query. Unlike Direct Context Inference, all Text-to-SQL runs have operational measurements, including those
+tokens are accumulated across attempts, as is model-generation time; output counts include any reasoning traces.
+The latency decomposition uses the sum of TTFT intervals across attempts, the remaining post-first-token
+generation time, and SQL execution time. Total latency therefore includes the model and database time of all
+retries. Unlike Direct Context Inference, all Text-to-SQL runs have operational measurements, including those
 that exhausted the retry limit.
 
 \input{../code/analysis/tables/text_to_sql_operational_efficiency}

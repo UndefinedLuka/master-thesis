@@ -32,8 +32,8 @@ def test_shared_display_labels_match_publication_style() -> None:
     ]
     assert list(METRIC_TITLES.values()) == [
         "NEM",
-        "ROUGE-L F1",
-        "BERTScore F1",
+        "ROUGE-L",
+        "BERTScore",
     ]
 
 

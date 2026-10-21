@@ -148,9 +148,10 @@ both complete experiment matrices, and invokes the independent table/figure gene
 `analysis/figures/text_to_sql_latency.pdf`,
 `analysis/tables/text_to_sql_error_correction.tex`, and
 `analysis/figures/text_to_sql_error_correction.pdf`. The direct-context accuracy figures report
-normalized exact match, BERTScore F1, and ROUGE-L F1. The format figure averages over retained
-models and questions, while the model-size figure averages each model over all six formats and
-questions. The three database-size figures separately report NEM, BERTScore, and ROUGE-L.
+NEM, BERTScore, and ROUGE-L; the latter two report F1, and BERTScore is raw (unrescaled). The
+format figure averages over retained models and questions, while the model-size figure averages
+each model over all six formats and questions. The three database-size figures separately report
+NEM, BERTScore, and ROUGE-L.
 Each contains six format panels, and every panel places all Spider and BIRD databases on the same
 logarithmic axis using that format's mean tokenizer-specific token footprint as effective size.
 Explicit zero scores assigned to failed runs remain included in the accuracy figures. The operational

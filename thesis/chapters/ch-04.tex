@@ -98,14 +98,15 @@ the same conditions during all the experiment runs.
 
 \subsection{Streaming and Timing Measurement}
 
-The backend always streams its responses (token by token). Streaming is essential because TTFT
-can only be measured by observing when the first token arrives after the request is dispatched.
+The backend always streams its responses (token by token). Streaming allows TTFT to be measured from request
+submission until the first output token arrives. Total model time runs from submission through completion, so it
+includes TTFT and all generation after the first token.
 
 We monitor the token stream for reasoning phase markers. Models in the Qwen~3.5 family emit explicit
-\texttt{<think>...</think>} blocks containing their thinking part of the answer. We timestamp the closing
-\texttt{</think>} tag, which allows us to separate reasoning time from generation time. We also strip the
-thinking block from the final output so that accuracy scoring evaluates only the model's visible answer, not
-its internal processes.
+\texttt{<think>...</think>} blocks containing reasoning traces. The closing \texttt{</think>} tag provides a
+reasoning-duration diagnostic, but reasoning time is included in both total model time and output-token counts;
+it is not subtracted from or added to those totals separately. The thinking block is stripped from the visible
+answer so accuracy scoring evaluates only the model's answer text.
 
 \subsection{Serialization}
 
@@ -164,10 +165,11 @@ and must produce a
 valid SQLite query. When the generated SQL fails to execute (due to syntax errors, missing columns, or
 runtime exceptions), the error message is appended to the conversation as a user message and the model is
 given another attempt. This error-correction loop runs up to three retry attempts beyond the initial
-generation. All attempts are recorded with their individual timing and token metrics, the final reported
-metrics sum token counts and generation times across all attempts, reflecting the true resource cost of
-arriving at a working query. If the model fails to produce a valid query after exhausting all retries, the
-example is marked as a definitive failure.
+generation. All attempts are recorded with their individual timing and token metrics. Reported token counts and
+model time accumulate across all attempts; model time includes TTFT and post-first-token generation on each
+attempt, and total Text-to-SQL response latency also includes query-execution time. These measurements cover the
+response workflow, not preprocessing before request submission. If the model fails to produce a valid query
+after exhausting all retries, the example is marked as a definitive failure.
 
 \subsection{Prompt Design}
 
@@ -182,22 +184,27 @@ capability remains the variable under test.
 
 \section{Scoring Pass}
 
-Accuracy metrics are computed in a separate pass. We read the raw benchmark NDJSON, and join each record with
-its pre-computed reference answer, and write a scored output file. The metrics are computed as described in
-Chapter~\ref{ch:methodolgy}:
+Accuracy metrics are computed in a separate pass. We read the raw benchmark NDJSON, join each record with its
+pre-computed reference answer, and write a scored output file. The metrics follow the definitions in
+Section~\ref{sec:reference-answer-metrics}:
 
 \begin{itemize}
-  \item \textbf{NEM:} checks equality between the textual output and reference answer after normalization.
-  \item \textbf{ROUGE-L:} measures the longest common subsequence overlap between the model's output and the
-    reference answer, using Porter stemming for normalization.
-  \item \textbf{BERTScore:} computes contextual embedding similarity using \texttt{roberta-large}
-    for English (\texttt{en}), with baseline rescaling disabled. The reported precision, recall,
-    and F1 are raw values.
+  \item \textbf{NEM:} applies SQuAD text normalization before exact comparison.
+  \item \textbf{ROUGE-L:} records F1 from the longest common subsequence over the complete answer token
+    sequences, using Porter stemming.
+  \item \textbf{BERTScore:} uses the English configuration (\texttt{en}) of \texttt{roberta-large}.
+    Baseline rescaling is disabled. The scoring pass stores raw precision, recall, and F1; the results report F1.
 \end{itemize}
+
+SQL results and references are rendered with one row per line and cells separated by a vertical bar in column
+order. Empty result sets render as empty text. For Direct Context Inference, an empty reference is instead
+represented as \texttt{N/A}, matching the prompt's requested no-answer response. Before BERTScore evaluation,
+blank candidate or reference texts are replaced with a full stop (\texttt{.}) to handle empty inputs in the
+scoring library. NEM and ROUGE-L receive the original comparison texts.
 
 For a failed pipeline, backend, or SQL execution with a usable reference, each enabled accuracy
 metric is set to zero. Records without a usable reference are not scored; when BERTScore is
 disabled, its fields are null. BERTScore values are similarities, not probabilities.
 
-It should be noted, because of subsampling some gold queries for BIRD dataset yielded empty sets as result,
-such successfully executed quires were retained in the evaluation.
+Some gold queries returned empty results after BIRD subsampling. These successfully executed reference
+queries were retained in the evaluation.

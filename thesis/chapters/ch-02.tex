@@ -52,6 +52,7 @@ Accuracy is only one aspect of format choice. Different representations also req
 tokens to encode the same data, affecting the resources needed to process it.
 
 \section{Token Efficiency and Economic Impact of Data Serialization}
+\label{sec:token-efficiency}
 
 Since serialization format has a direct influence on how many characters are used to represent the data it
 has a direct knock on effect on LLMs' performance \cite{liu2024lost}. Format verbosity determines
@@ -206,147 +207,160 @@ moves this task from simple one shot examples into multi step agentic workflows 
 than 100 lines.
 
 Benchmarks define the tasks on which systems are evaluated, while metrics determine which aspects of their
-outputs count as successful. Comparing the two retrieval approaches requires considering both answer
-quality and SQL correctness.
+outputs count as successful. Comparing the two retrieval approaches requires considering reference-answer
+agreement, execution reliability, and the resources required to obtain an answer.
 
-\section{Metrics for Automated Output Verification}
+\section[Evaluation Metrics]{Evaluation Metrics for Structured Data Extraction}
+\label{sec:evaluation-metrics-background}
 
-In order to evaluate the performance of each model and check its alignment with the ground truth data, we
-need a well defined metrics which are going to tell us how correct the provided answer is. These evaluation
-metrics can be categorized along these $3$ ideas, which range from checking for literal match to deep
-validation. The first section is \emph{Word Overlap Metrics}, which check for literal
-text similarity, after it we have \emph{Semantic Similarity} which tries to
-capture contextual meaning beyond the exact word matches \cite{novikova2017we}. Finally, for the Text-to-SQL
-purposes we are also
-going to take a look at \emph{SQL Evaluation Metrics} \cite{yu2018spider}, which assess generated queries
-through structural comparison or execution against a database.
+Evaluation of structured-data extraction involves several distinct questions: how closely an answer agrees
+with its reference, whether the retrieval pipeline completes successfully, and how much time and computation
+it requires. Text-based measures capture different aspects of answer agreement, but their scores do not
+necessarily reflect factual correctness \cite{novikova2017we}. Execution and resource measurements therefore
+provide complementary information when comparing Direct Context Inference with Text-to-SQL.
 
-\subsection{Word Overlap Metrics}
+This thesis evaluates reference-answer agreement using Normalized Exact Match (NEM), ROUGE-L F1, and
+BERTScore F1. For brevity, subsequent references to \emph{ROUGE-L} and \emph{BERTScore} denote these F1
+measures unless stated otherwise. ROUGE-L uses longest-common-subsequence matching over the complete answer
+token sequences; BERTScore uses contextual token embeddings. The following subsections introduce these
+measures alongside execution reliability, token consumption, latency, and context-window feasibility.
 
-These metrics represent historical foundation of natural language generation evaluation, they relay on direct
-token comparisons between candidate outputs and ground truths. While they are computationally inexpensive and
-simple to implement, they fall short when trying to score the outputs that have the same meaning but are
-different in structure.
+\subsection{Reference-Answer Agreement}
+\label{sec:reference-answer-metrics}
 
-\subsubsection{Exact Match and Token-Level F1 Score}
+The two pipelines can be compared at the answer level by evaluating their outputs against a common reference.
+For Direct Context Inference, this output is the model's answer; for Text-to-SQL, it is a textual
+representation of the rows returned by the generated query. Strict equality, lexical overlap, and contextual
+similarity offer progressively more flexible ways of comparing these texts.
 
-The simplest metrics are exact match and token-level F1. They were popularized by early benchmarks like
-the Stanford Question Answering Dataset \cite{rajpurkar2016squad}. Exact match is a strict binary indicator,
-giving a score of $100$ only
-if the normalized candidate is completely the same as ground truth. Otherwise it gives the score of $0$. This
-is effective for short answers and answers that are part of a strict set (single digits, dates, or specific
-keys). They have problem with longer answers because a single misplaced can cause the whole answer to be
-penalized and considered as wrong.
+\subsubsection{Normalized Exact Match}
 
-To provide a more granular evaluation, we first calculate token level precision and recall between proposed
-answer and ground truth, with these two we can then compute F1 score. This formula rewards partial
-correctness and is not a strict binary indicator.
-
-\subsubsection{Bilingual Evaluation Understudy}
-
-Originally designed for scoring machine translations, the Bilingual Evaluation Understudy (BLEU)
-\cite{papineni2002bleu} metric measures
-precision of $n$-grams
-in a candidate answer compared to the reference text. A brevity penalty (BP) was added to prevent models from
-outputting excessively short sequences.
-
+Exact match is a binary measure widely used in question-answering benchmarks such as SQuAD
+\cite{rajpurkar2016squad}. Given a candidate answer $c$, a reference $r$, and a normalization function $n$,
+Normalized Exact Match is defined as
 \begin{equation}
-  \text{BLEU} = \text{BP} \cdot \exp {\left( \sum_{n=1}^{N} w_n \log p_n \right)}
-  \quad
-  \text{BP} =
+  \operatorname{NEM}(c,r) =
   \begin{cases}
-    1 & \text{if } c > r \\
-    e^{1-\frac{r}{c}} & \text{if } c \le r
+    1 & \text{if } n(c) = n(r), \\
+    0 & \text{otherwise.}
   \end{cases}
 \end{equation}
+The SQuAD normalization used here lowercases the text, removes punctuation and English articles, and
+collapses whitespace. Averaging the binary scores gives the proportion of answers that match after these
+transformations.
 
-As stated in \cite{callison2006re}, still the metric has shortcomings, it cannot distinguish between
-synonyms, all the words are equally weighted
-and missing content-bearing words brings no additional penalty. BP is an attempt to
-compensate for a shortcoming that it cannot compute recall.
+NEM gives a clear measure of normalized textual agreement, especially for short answers. However, a correct
+answer with additional explanation or a different row order can fail to match. Normalization can also remove
+meaningful distinctions in structured values, such as decimal points or minus signs. NEM therefore measures
+equality of the normalized representation rather than directly verifying the underlying values.
 
-\subsubsection{Recall-Oriented Understudy for Gisting Evaluation}
+\subsubsection{ROUGE-L F1}
 
-Recall-Oriented Understudy for Gisting Evaluation (ROUGE) \cite{lin2004rouge}, calculates overlap of n-grams,
-and structural
-similarities between generated candidate and reference. This metric prioritizes recall to ensure that model
-successfully captures the core information present in the reference. Special version ROUGE-L, relies on
-Longest common subsequence algorithm, which identifies the longest sequence of words that appear in both the
-generated and reference texts in the same relative order.
+ROUGE-L belongs to the ROUGE family of summary-evaluation measures \cite{lin2004rouge}. It uses the
+longest common subsequence (LCS): the longest sequence of tokens appearing in both texts in the same relative
+order, without requiring adjacent matches. Let $C$ and $R$ be the candidate and reference token sequences,
+and let $L$ be their LCS length. For nonempty sequences, precision and recall are
+\begin{equation}
+  P_{\mathrm{LCS}} = \frac{L}{|C|}, \qquad
+  R_{\mathrm{LCS}} = \frac{L}{|R|}, \qquad
+  F_1 = \frac{2P_{\mathrm{LCS}}R_{\mathrm{LCS}}}{P_{\mathrm{LCS}}+R_{\mathrm{LCS}}}.
+\end{equation}
+The F1 score balances precision and recall, rewarding partial overlap while accounting for both additional
+and missing content. The implementation assigns zero when either token sequence is empty or no tokens match.
 
-\subsection{Semantic Similarity}
+The variant used in this thesis compares the complete token sequences, with Porter stemming to reduce
+inflectional differences. Line breaks do not create separate matching units. Consequently, row ordering can
+affect the score even when two answers contain the same values. ROUGE-L also cannot establish whether a
+matching value belongs to the correct row or column, and substantial overlap can coexist with an incorrect
+number or identifier.
 
-To overcome the limitations of the Lexical-level metrics, semantic and embedding metrics leverage vector
-representations of the answers. These answers are represented in continuous embedding space, and compared
-between each other.
+\subsubsection{BERTScore F1}
 
-\subsubsection{BERTScore}
+BERTScore \cite{zhang2019bertscore} compares contextual token embeddings from a pretrained language model.
+For each candidate token, it finds the reference token with the highest cosine similarity; averaging these
+best matches gives a soft precision. Reversing the matching direction gives a soft recall. BERTScore F1
+combines the two through their harmonic mean, allowing semantically related wording to receive credit even
+when the surface forms differ.
 
-BERTScore \cite{zhang2019bertscore} utilizes contextual token embeddings of the pre trained language models.
-These token embeddings are
-used to calculate cosine similarity between reference answer and the candidate answer. In order to calculate
-the score, we compare pairwise cosine similarity between these embeddings, and we add a greedy matching step
-which pairs together the most similar tokens.
+This flexibility complements exact and lexical matching, but similar embeddings do not guarantee that
+numbers, entities, or relationships are correct. The reported scores depend on the embedding model and
+scoring configuration. This thesis uses raw scores with baseline rescaling disabled, as specified in
+Chapter~\ref{ch:implementation}. These values are similarities rather than probabilities of correctness and are
+not constrained to be nonnegative.
 
-We can use this score to calculate precision and recall. In order to get precision we need to normalize this
-greedy cosine similarity with candidate length, and for recall we should normalize it with the length of the
-reference text. These two can later be used to calculate F1 score
+Together, NEM, ROUGE-L, and BERTScore describe strict agreement, ordered lexical overlap, and contextual
+similarity. Their complementary views help interpret differences between outputs, while their shared
+dependence on the textual representation limits conclusions about factual correctness.
 
-\subsubsection{LLM Evaluators}
+An alternative is to ask an LLM to judge answer quality. G-Eval \cite{liu2023g} uses explicit evaluation
+criteria and structured scoring, while the MT-Bench study \cite{zheng2023judging} examines grading and
+pairwise judgments. These approaches can capture qualities beyond reference overlap, but introduce an
+additional model, evaluation prompts, and potential judgment biases. They provide useful context for answer
+evaluation, although the experiments here use the three reference-based measures above.
 
-The general idea is to use a superior LLM to score the results of an LLM which has fewer parameters. The idea
-is that the model will be able to capture subtle differences between answers. Two papers present different
-ideas of how to apply this idea in practice.
+\subsection{SQL Execution and Error Correction}
+\label{sec:sql-execution-metrics}
 
-\begin{itemize}
-  \item \textbf{G-Eval \cite{liu2023g}:} it utilizes LLMs (specifically GPT-4), as evaluators, by combining an automatic
-    Chain-of-thought approach with form filling paradigm. When provided with a specific evaluation criteria,
-    the model first generates its own instructions for evaluation. The model then scores the proposed answer
-    against the reference by following the the steps it has created beforehand.
-    This method demonstrates strong alignment with human references, outperforming the metric which were used
-    up until that point. But still some limitations are still present, it shows bias towards machine
-    generated text compared to superior human written content.
-  \item \textbf{MT-Bench \cite{zheng2023judging}:} it proposes 3 LLM as a judge variations.
-    \begin{itemize}
-      \item \emph{Pairwise comparison} An LLM judge is presented with two answers and it needs to determine
-        which one is better. (It utilizes place swapping between two answers in order to account for position bias)
-      \item \emph{Single answer grading} LLM is tasked with assigning a score to a single answer.
-      \item \emph{Reference-guided grading} In some cases it might be beneficial to provide a reference
-        solution if applicable.
-    \end{itemize}
-    All of these methods have their shortcomings. For example, pairwise comparison is not scalable, because
-    the number of pairs grows quadratically with increase of models. Single answer grading may not be able to
-    decern between subtle differences between specific answers, and the results may become unstable.
-\end{itemize}
+SQL evaluation distinguishes the ability to execute a query from agreement with the intended result.
+\emph{Execution success} indicates that a generated query runs without error, including when it returns an
+empty result. Its mean is the execution-success rate. A query can nevertheless execute successfully while
+using an incorrect join, filter, or aggregation, so this rate describes operational reliability.
 
-\subsection{SQL Evaluation Metrics}
+\emph{Execution accuracy}, used in Text-to-SQL benchmarks \cite{yu2018spider,li2023can}, instead compares
+the results of the generated and reference queries on the same database. Matching results provide stronger
+evidence than execution success, although agreement on one database instance does not prove equivalence on
+all possible data. The execution-accuracy figures cited earlier for Text-to-SQL architectures use this
+benchmark notion. In this thesis, execution success is reported alongside text-based agreement with the
+reference result.
 
-When we are reliant on code execution to retrieve information (such as SQL queries, and Python code), textual
-and semantic similarity metric are ineffective. Generated query can be syntactically different to the
-reference one, but produce the same result, or it can be very similar but fail to execute.
+For pipelines that correct execution errors, first-attempt success and final success describe different
+levels of reliability. Recovery can be reported as the proportion of initially unsuccessful runs that later
+execute, or as the increase in success rate across all runs; the denominator must be stated. The number of
+retries and their additional model-generation time describe the cost of this recovery. These measures assess
+the correction of detectable execution failures, since a wrong query that runs successfully produces no
+execution error to trigger correction.
 
-\subsubsection{Exact Set Match}
+Other benchmark measures address query structure and database efficiency. Spider's \emph{Exact Set Match}
+compares normalized SQL components but can reject structurally different queries with equivalent results
+\cite{yu2018spider}. BIRD's \emph{Valid Efficiency Score} combines result correctness with query-execution
+efficiency relative to the reference \cite{li2023can}. These measures contextualize the benchmark literature;
+the present comparison uses answer agreement, execution success, and separately measured latency.
 
-Exact Set Match was introduced in the Spider benchmark \cite{yu2018spider}; it tries to evaluate queries
-without executing
-them. The idea is to parse both reference and proposed queries into abstract syntax trees, normalize them to
-remove syntactic variations, and at the end perform set based comparison of the SQL subclasses. This allows
-us to compare queries without executing them on a database. This method fails to account for structurally
-different syntax, such as using nested subqueries instead of a join.
+\subsection{Operational Efficiency and Context Feasibility}
+\label{sec:operational-metrics}
 
-\subsubsection{Execution Accuracy}
+\textbf{Token consumption.} The serialization studies discussed in Section~\ref{sec:token-efficiency}
+motivate counting the tokens required to encode identical data in different formats. Serialized-payload token
+counts isolate representation overhead, whereas complete input counts also include instructions, questions,
+and chat-template tokens. Output counts describe the generated sequence, including reasoning tokens when
+present. Relative token-count ratios express overhead against an explicit baseline, and comparisons across
+tokenizers show how the same text can occupy different amounts of context. Input and output lengths affect
+different phases of inference; their performance implications also depend on the hardware and serving stack
+\cite{fernandez2025energy}. Token counts indicate workload, while monetary cost additionally depends on
+pricing and energy use requires separate measurement.
 
-Execution Accuracy \cite{yu2018spider} evaluates both queries directly on the same database and tries
-to compare the
-results. This is a binary evaluation metric and it evaluates the score of $100$ if and only if the results
-are completely the same, otherwise it awards score of $0$.
+\textbf{Context-window feasibility.} The number of serialized databases that fit within a token budget
+describes payload coverage. A complete request must additionally accommodate prompt overhead and an output
+allowance for generated output and reasoning. A pre-inference context-limit check therefore assesses the
+complete request, while payload-fit counts describe the data alone. Accounting for skipped requests alongside
+answer scores distinguishes end-to-end effectiveness from answer agreement conditional on successful inference.
 
-\subsubsection{Valid Efficiency Score}
-When working with enterprise databases, correctness is only one piece of the equation. Query execution
-efficiency directly influences latency and cost. This motivated the introduction of the Valid Efficiency Score
-in \cite{li2023can}, which aims to score both correctness and efficiency. By evaluating both of these it
-ensures that models are penalized for inefficient queries, such as joins using unindexed columns, which are
-unsuitable for production workflows.
+\textbf{Latency.} LLM inference consists of processing the prompt and generating subsequent output tokens.
+Serving research distinguishes these prefill and decoding phases because their computational demands and
+latency requirements differ \cite{zhong2024distserve}. \emph{Time to First Token (TTFT)} measures the
+interval from request submission until the first output token is received. It reflects prompt processing
+and any intervening serving overhead, rather than a pure measurement of prefill computation.
+\emph{Generation time after the first token} covers the remaining model response, including any generated
+reasoning. Their sum gives the model response time for a single attempt. For Text-to-SQL, the answer also
+requires \emph{SQL execution time}. Recording these components explains whether delays arise mainly from
+large inputs, long generations, or database execution.
+
+When SQL correction requires several attempts, token counts and model times must be accumulated across
+those attempts to describe the work needed for one answer. The latency decomposition then includes
+cumulative first-token waits, subsequent generation, and database execution. Measuring only the final attempt
+would omit the cost of recovery. Chapter~\ref{ch:methodolgy} specifies the measurement boundaries used in
+this thesis, while Chapter~\ref{ch:implementation} describes their implementation. The analysis cohorts are
+defined alongside the results in Chapter~\ref{ch:results}.
 
 When trying to retrieve information from structured data we are faced with two choices: how to represent data
 for direct use by an LLM, and how to retrieve information through generated SQL. Serialization studies

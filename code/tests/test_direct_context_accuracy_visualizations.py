@@ -185,8 +185,8 @@ def test_format_and_model_size_figures_have_dataset_metric_grid(tmp_path: Path) 
     assert all(len(row) == 3 for row in format_axes)
     assert [axis.get_title() for axis in format_axes[0]] == [
         "NEM",
-        "BERTScore F1",
-        "ROUGE-L F1",
+        "BERTScore",
+        "ROUGE-L",
     ]
     assert len(size_axes) == 2
     assert all(len(row) == 3 for row in size_axes)

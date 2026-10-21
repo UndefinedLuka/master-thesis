@@ -216,27 +216,21 @@ the reference answer). This will allow us to consider both economic viability an
 when designing our decision framework.
 
 \subsubsection{Operational Efficiency}
-Resource consumption directly translates to financial cost and user experience. We will be monitoring both
-computational latency and token utilization.
+We measure token consumption and response latency using the concepts introduced in
+Section~\ref{sec:operational-metrics}. These measurements describe inference workload and waiting time.
 
-\textbf{Token Consumption:} Token tracking is strictly split into input, output, and thinking tokens. This separation is
-critical because commercial LLM APIs price output tokens significantly higher than other kinds. Also local
-models experience different throttles during prompt ingestion compared to token generation.
+\textbf{Token Consumption:} We record input and output token counts. Output counts cover the complete model
+completion, including any reasoning trace; reasoning tokens are not counted separately. The token measures
+therefore distinguish prompt consumption from total generated output, not visible answer tokens from reasoning.
 
-\textbf{System Latency:} Time based metrics measure end to end duration required to deliver a final
-answer. In order to capture a clear picture of the system, we are going to decompose latency into distinct
-phases to identify bottlenecks: context processing stage and token generation phase. Where context generation
-phase can be split into two distinct phases, reasoning and generation. To this end we are going to be
-capturing multiple timestamps which are going to allow us to get a clear insight into our system: \emph{Time
-to First Token (TTFT)} represents the elapsed
-time from query submission to the model's first output token; \emph{Reasoning Time} time spent by the model
-thinking over the problem, and finally the \emph{Generation Time} time spent by the model producing the human
-usable response.
-
-It should be noted that Text-to-SQL answer is not considered complete until the information is successfully
-retrieved from the database. Therefor the query execution time is also going to be recorded and will be added
-to the Total Generation Time for Text-to-SQL paradigm. This captures the total latency and penalizes the models
-that generate unoptimized, and computationally expensive queries.
+\textbf{System Latency:} Measured model time starts at request submission and ends when the streamed completion
+finishes. It includes both \emph{Time to First Token (TTFT)}, from submission to the first output token, and
+the remaining post-first-token generation interval. The first token can belong to a reasoning trace, and
+subsequent reasoning is included in the generation interval. The recorded reasoning-marker duration is a
+diagnostic subinterval, not a separately added stage. For Text-to-SQL, measured total response latency sums
+model time and SQL execution time across the initial attempt and all correction attempts. This includes the
+time needed to retrieve the answer after generation. These measurements exclude preprocessing before request
+submission, such as database sampling, reference generation, and serialization preparation.
 
 \subsubsection{Retrieval Accuracy}
 
@@ -246,23 +240,15 @@ rather than taken from the original full databases). For Direct Context Inferenc
 response is compared with a textual representation of the reference result. For Text-to-SQL, the generated
 query is executed, and its result rows are converted to text for comparison with the same reference.
 
-We report \emph{Normalized Exact Match (NEM)}, \emph{ROUGE-L}, and \emph{BERTScore} as complementary measures of
-reference-answer agreement. NEM checks equality after textual normalization,
-ROUGE-L measures lexical sequence overlap, and BERTScore measures semantic similarity using contextual
-embeddings. These metrics were selected to capture strict agreement and similarity under differences in
-wording, particularly for free-text answers. However, they do not provide equivalent evidence of correctness.
-ROUGE-L and BERTScore can assign high scores to answers containing
-incorrect numbers, identifiers, or entities when the surrounding content remains similar.
-Conversely, a correct answer expressed in a different form may receive a lower score. NEM
-is stricter, but remains sensitive to how equivalent results are represented.
-The text-based metrics therefore measure agreement with the reference representation, rather
-than directly verifying the correctness of each retrieved value.
-BERTScore uses \texttt{roberta-large} for English (\texttt{en}) with baseline rescaling disabled.
-The scoring pass stores raw precision, recall, and F1, while the results report F1. These similarity
-values are not probabilities and are not constrained to be nonnegative.
+We report Normalized Exact Match (NEM), ROUGE-L, and BERTScore as complementary measures of reference-answer
+agreement, following the definitions in Section~\ref{sec:reference-answer-metrics}.
+The text-based metrics measure agreement with the reference representation rather than independently verifying
+the correctness of each retrieved value. Similarity scores may remain high when an answer contains an incorrect
+number, identifier, or entity, while a correct answer expressed differently may score lower. For consistency,
+the same reference-answer scoring is applied to direct answers and to text representations of executed SQL rows.
 
-For Text-to-SQL, execution success indicates whether a query runs without error; it does not establish that
-the query retrieves the intended information. We are also going to implement an error correction loop, which
+For Text-to-SQL, we use execution success as defined in Section~\ref{sec:sql-execution-metrics}; it does not
+establish that the query retrieves the intended information. We also implement an error correction loop, which
 will entail the following steps. If a generated SQL query fails
 to execute due to a database syntax or runtime error, the error log is fed back to the model, granting it up
 to three retries beyond the initial attempt to self-correct the query. The system logs the exact number of retries
@@ -298,6 +284,10 @@ dataset and format.
 Both configurations will use matched observations and the same sampled
 databases. The corresponding effect-size statistic will be recomputed in each bootstrap repetition, and
 its confidence interval will be calculated using the same percentile method.
+
+For the exploratory database-size analysis, Pearson's $r$ is computed across database-level mean accuracy and
+the base-10 logarithm of each database-format's mean serialized token count. Each database contributes one
+unweighted observation.
 
 \section{LLM Selection}
 

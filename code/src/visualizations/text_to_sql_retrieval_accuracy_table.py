@@ -49,7 +49,7 @@ def render_text_to_sql_retrieval_table(
             r"  \resizebox{\linewidth}{!}{%",
             r"  \begin{tabular}{@{}lrrrr@{}}",
             r"    \toprule",
-            "    Dataset & NEM & BERTScore F1 & ROUGE-L F1 & Executed \\\\",
+            "    Dataset & NEM & BERTScore & ROUGE-L & Executed \\\\",
             r"    \midrule",
             *rows,
             r"    \bottomrule",
@@ -57,8 +57,9 @@ def render_text_to_sql_retrieval_table(
             r"  }",
             r"  \vspace{0.4em}",
             (
-                r"  \parbox{\linewidth}{\scriptsize \textit{Note:} Text-similarity means "
-                r"include zero-scored failed SQL runs. Executed is the share of generated "
+                r"  \parbox{\linewidth}{\scriptsize \textit{Note:} BERTScore and ROUGE-L "
+                r"report F1; BERTScore is raw (unrescaled). Text-similarity means include "
+                r"zero-scored failed SQL runs. Executed is the share of generated "
                 r"queries that ran successfully within the retry limit. Brackets show "
                 r"pointwise 95\% "
                 r"database-bootstrap confidence intervals.}"

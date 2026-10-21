@@ -46,7 +46,7 @@ process the prompt, as reflected in the higher TTFT and total response latency r
 Chapter~\ref{ch:results}. Compact formats also allowed more databases to fit within the context window.
 
 No serialization format was uniformly best across both datasets and all retrieval metrics. On Spider, TOON
-achieved the highest NEM, while CSV achieved the highest BERTScore~F1 and ROUGE-L~F1. Raw BERTScore means
+achieved the highest NEM, while CSV achieved the highest BERTScore and ROUGE-L. Raw BERTScore means
 were 0,8154 for CSV and 0,8148 for TOON, compared with 0,717--0,720 for the other formats; NEM and ROUGE-L
 differences remained smaller. On BIRD, CSV achieved the highest score for all three metrics, with TOON
 following closely. For BERTScore, CSV's mean was 0,424 versus 0,169 for XML, a ratio of about 2,5; the
@@ -196,17 +196,18 @@ interpretation without confounding token consumption with different question coh
 $8,08\times$ as many input tokens as Text-to-SQL on Spider and $42,06\times$ on BIRD. Mean output
 consumption also favoured Text-to-SQL on the shared cohort, although the relative difference was smaller
 and varied by model and correction frequency. Input and output tokens should therefore be considered
-separately. Token counts indicate inference workload, not measured GPU memory or energy use. The actual
-monetary difference was not measured and would depend on provider-specific pricing for input, cached-input,
-reasoning, and output tokens.
+separately; output counts include reasoning traces, which were not counted separately in this experiment. Token
+counts indicate inference workload, not measured GPU memory or energy use. The actual monetary difference was
+not measured and would depend on provider-specific pricing, including any distinct treatment of reasoning tokens.
 
 Local deployments face a different trade-off. Text-to-SQL requires access to a queryable database engine, but
 this may not constitute additional infrastructure when the source data are already stored in a relational
 database. Direct Context Inference avoids query execution but requires the relevant data to be loaded,
 serialized, and transferred into the prompt for each request.
 
-Practitioners should therefore monitor input, output, and reasoning-token consumption separately, together
-with context-window utilization and overflow frequency. Latency should be decomposed into TTFT,
+Practitioners should therefore monitor input and total output-token consumption, together with context-window
+utilization and overflow frequency. Where supported, a separate reasoning-token count can further explain
+output consumption. Latency should be decomposed into TTFT,
 generation time after the first token, SQL execution time, and total end-to-end response time.
 Text-to-SQL systems should additionally track retry counts, cumulative costs across attempts, and query
 timeouts. Execution success should not be treated as evidence of semantic correctness. Local deployments should
@@ -294,8 +295,8 @@ input tokens, and produced lower average latency than Direct Context Inference. 
 that Text-to-SQL was superior for every individual question or deployment environment, but they provide
 strong support for treating it as the default for queryable structured data. A per-database comparison of
 mean scores across the same questions and ten retained models supports this preference across the observed
-size range: Text-to-SQL exceeded every direct-context format in NEM on all 31 databases, in BERTScore~F1 on
-29 of 31, and in ROUGE-L~F1 on 30 of 31. The BERTScore exceptions were Spider's \texttt{poker\_player} and
+size range: Text-to-SQL exceeded every direct-context format in NEM on all 31 databases, in BERTScore on
+29 of 31, and in ROUGE-L on 30 of 31. The BERTScore exceptions were Spider's \texttt{poker\_player} and
 BIRD's \texttt{thrombosis\_prediction}; the ROUGE-L exception was BIRD's \texttt{toxicology}. These are
 comparisons of database-level means, not evidence that one method is better on every question. On the
 successful shared cohort defined in Section~\ref{sec:common-cohort-comparison}, it used fewer mean input

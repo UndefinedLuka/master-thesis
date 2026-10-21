@@ -6,7 +6,7 @@
   \resizebox{\linewidth}{!}{%
   \begin{tabular}{@{}lrrrr@{}}
     \toprule
-    Dataset & NEM & BERTScore F1 & ROUGE-L F1 & Executed \\
+    Dataset & NEM & BERTScore & ROUGE-L & Executed \\
     \midrule
     Spider & \shortstack[r]{0.645\\{\scriptsize [0.575, 0.724]}} & \shortstack[r]{0.918\\{\scriptsize [0.892, 0.945]}} & \shortstack[r]{0.705\\{\scriptsize [0.645, 0.774]}} & \shortstack[r]{95.3\%\\{\scriptsize [93.5, 97.1]}} \\
     BIRD & \shortstack[r]{0.598\\{\scriptsize [0.529, 0.668]}} & \shortstack[r]{0.861\\{\scriptsize [0.827, 0.889]}} & \shortstack[r]{0.373\\{\scriptsize [0.315, 0.443]}} & \shortstack[r]{89.8\%\\{\scriptsize [86.7, 92.4]}} \\
@@ -14,5 +14,5 @@
   \end{tabular}
   }
   \vspace{0.4em}
-  \parbox{\linewidth}{\scriptsize \textit{Note:} Text-similarity means include zero-scored failed SQL runs. Executed is the share of generated queries that ran successfully within the retry limit. Brackets show pointwise 95\% database-bootstrap confidence intervals.}
+  \parbox{\linewidth}{\scriptsize \textit{Note:} BERTScore and ROUGE-L report F1; BERTScore is raw (unrescaled). Text-similarity means include zero-scored failed SQL runs. Executed is the share of generated queries that ran successfully within the retry limit. Brackets show pointwise 95\% database-bootstrap confidence intervals.}
 \end{table}
