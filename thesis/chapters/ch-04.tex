@@ -190,8 +190,7 @@ Section~\ref{sec:reference-answer-metrics}:
 \begin{itemize}
   \item \textbf{NEM:} applies SQuAD text normalization before exact comparison.
   \item \textbf{ROUGE-L:} records F1 from the longest common subsequence over the complete answer token
-    sequences, using Porter stemming. Line breaks do not create separate matching units; empty token
-    sequences or pairs with no matching tokens receive zero.
+    sequences, using Porter stemming. Empty token sequences or pairs with no matching tokens receive zero.
   \item \textbf{BERTScore:} uses the English configuration (\texttt{en}) of \texttt{roberta-large}.
     Baseline rescaling is disabled. The scoring pass stores raw precision, recall, and F1; the results report F1.
 \end{itemize}
@@ -199,8 +198,10 @@ Section~\ref{sec:reference-answer-metrics}:
 SQL results and references are rendered with one row per line and cells separated by a vertical bar in column
 order. Empty result sets render as empty text. For Direct Context Inference, an empty reference is instead
 represented as \texttt{N/A}, matching the prompt's requested no-answer response. Before BERTScore evaluation,
-blank candidate or reference texts are replaced with a full stop (\texttt{.}) to handle empty inputs in the
-scoring library. NEM and ROUGE-L receive the original comparison texts.
+blank candidate or reference texts are replaced with a full stop, to handle empty inputs in the
+scoring library. This bypasses an empty-input tokenizer call that is unavailable in newer Transformers
+versions, but also means that two blank texts are compared as identical full stops and can receive a
+near-perfect BERTScore. NEM and ROUGE-L receive the original comparison texts.
 
 For a failed pipeline, backend, or SQL execution with a usable reference, each enabled accuracy
 metric is set to zero. Records without a usable reference are not scored; when BERTScore is
