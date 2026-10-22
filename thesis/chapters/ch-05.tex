@@ -4,56 +4,62 @@
 This chapter reports the experiments described in Chapters~\ref{ch:methodolgy} and
 \ref{ch:implementation}. Serialization efficiency is presented first, followed by analysis cohorts and
 experiment coverage, Direct Context Inference, Text-to-SQL, and a comparison of the two pipelines.
-The results cover retrieval accuracy, token use, response latency, and SQL correction performance.
-Estimates retain equal weight per run within each dataset. Unless stated otherwise, intervals are pointwise
-\qty{95}{\percent} database-bootstrap intervals, following Section~\ref{sec:confidence-intervals};
-table cells show these intervals in brackets. BERTScore values are raw (unrescaled).
-Paired differences and ratios accompany the main comparisons; an ordering of observed means alone does not
-establish a reliable ranking.
+The results operational efficiency and retrieval accuracy as described in \ref{sec:evaluation-metrics-implementation}.
+Estimates retain equal weight per run within each dataset. Intervals are pointwise
+\qty{95}{\percent} database-bootstrap intervals, as presented in Section~\ref{sec:confidence-intervals}
+(table cells show these intervals in brackets).
 
 \section{Serialization efficiency}
 \label{sec:serialization-results}
 
 \input{../code/analysis/tables/serialization_efficiency}
 
-The payload comparison counted only serialized database contents: full Spider databases and the sampled
-BIRD databases described in Chapter~\ref{ch:implementation}. It used one representative tokenizer from each
-of the Qwen~3.5, Ministral~3, and Gemma~4 families, giving \num{558} measurements of \num{31} databases
-across six formats and three tokenizer families.
+To measure the serialization efficiency of each format, we tokenized the serialized database contents
+without questions or additional prompt context. This allows us to compare the number of tokens needed to
+represent the same data in different formats. We used the full Spider databases and the sampled BIRD
+databases described in Chapter~\ref{ch:implementation}, with one representative tokenizer from each of
+Qwen~3.5, Ministral~3, and Gemma~4 families. This gave us \num{558} measurements across \num{31}
+databases, six formats, and three tokenizer families.
 
-Table~\ref{tab:serialization-efficiency} reports arithmetic means across databases and tokenizer families:
-\num{60} observations per Spider format and \num{33} per BIRD format. Relative values are ratios of these
-means to CSV, rather than averages of individual ratios. CSV had the lowest mean in both datasets.
-TOON added little to its footprint, with ratios of \num{1.04} on Spider and \num{1.03} on BIRD;
-XML required \num{3.24} and \num{2.40} times the CSV means. The table retains the intervals and the
-intermediate Markdown, YAML, and JSON results. These are total payload footprints for the evaluated
-encoder layouts, not isolated syntax-token counts. The means are also sensitive to large databases:
-\texttt{wta\_1} contributed \qty{98.76}{\percent} of the pooled Spider CSV total, so the Spider mean
-does not represent a typical database size.
+Table~\ref{tab:serialization-efficiency} shows the mean token counts across databases and tokenizer
+families, with \num{60} measurements per format for Spider and \num{33} for BIRD. The ratios compare each
+format's mean token count with the CSV mean for the same dataset. CSV required the fewest tokens on
+average in both datasets. TOON was close to CSV, using \num{1.04} times as many tokens on Spider and
+\num{1.03} times as many on BIRD. XML required the most tokens, with means \num{3.24} and \num{2.40}
+times those of CSV, respectively. Markdown, YAML, and JSON fell between these formats.
 
-\begin{figure}[htbp]
+These averages are strongly influenced by large databases. For example, \texttt{wta\_1} accounted for
+\qty{98.76}{\percent} of all Spider CSV tokens counted across the three tokenizer families. The Spider
+mean therefore does not describe the token count of a typical database.
+
+\begin{figure}[htb]
   \centering
-  \includegraphics[width=\textwidth]{../code/analysis/figures/tokenizer_family_comparison.pdf}
-  \caption{Median tokenizer-family percentage excess over the smallest token count for each
-    database--format pair, separately for Spider and BIRD. Whiskers show pointwise
-    \qty{95}{\percent} intervals. Zero median excess does not imply a minimum on every database.}
+  \includegraphics[width=0.8\textwidth]{../code/analysis/figures/tokenizer_family_comparison.pdf}
+  \caption{Median percentage increase in token count relative to the smallest count among the three
+    tokenizer families for each database and format.}
   \label{fig:tokenizer-family-comparison}
 \end{figure}
 
-Tokenizer differences depended on format (Figure~\ref{fig:tokenizer-family-comparison}). Qwen~3.5 had the
-lowest median excess for CSV and YAML on both datasets, while Ministral~3 had zero median excess for
-Markdown and JSON. For TOON, Gemma~4 had zero median excess on Spider, whereas Qwen~3.5 was closest to the
-payload-wise minimum on BIRD. XML favoured Ministral~3 on Spider; Ministral~3 and Gemma~4 both had small
-median excess on BIRD. Thus, no tokenizer family was uniformly the most efficient across formats.
+The choice of tokenizer also influenced token counts, but the differences depended on the format.
+Figure~\ref{fig:tokenizer-family-comparison} compares each tokenizer with the one that used the fewest
+tokens for the same database and format, then reports the median percentage difference across databases.
+A median of zero does not mean that the tokenizer used the fewest tokens for every database.
 
-At a payload limit of \num{131072} tokens, CSV and TOON fit \num{19} of \num{20} Spider databases for
-each tokenizer family; the other formats fit \num{18}. On BIRD, CSV and TOON fit \num{6} of \num{11}
-sampled databases, compared with only \num{2} for XML. Markdown fit \num{5} with Qwen~3.5 and \num{6}
-with Ministral~3 and Gemma~4. JSON fit \num{3}, \num{4}, and \num{3}, respectively.
-Payload fit does not establish complete-request feasibility: other prompt components and output headroom
-also require space. The following section therefore turns to the recorded coverage of the actual runs.
+Qwen~3.5 had the lowest median increase for CSV and YAML on both datasets, while Ministral~3 had a median
+increase of zero for Markdown and JSON. For TOON, Gemma~4 had a median increase of zero on Spider,
+whereas Qwen~3.5 had the lowest median increase on BIRD. For XML, Ministral~3 had the lowest median
+increase on Spider, while both Ministral~3 and Gemma~4 had small median increases on BIRD. These results
+show that no tokenizer family was the most efficient across all formats.
 
-\clearpage
+Format choice also affected how many serialized databases fit within a limit of \num{131072} tokens.
+CSV and TOON fit \num{19} of the \num{20} Spider databases with each tokenizer family, while the other
+formats fit \num{18}. On BIRD, CSV and TOON fit \num{6} of the \num{11} sampled databases, compared
+with only \num{2} for XML. Markdown fit \num{5} with Qwen~3.5 and \num{6} with Ministral~3 and Gemma~4.
+JSON fit \num{3}, \num{4}, and \num{3}, respectively. However, fitting the serialized data within this
+limit does not mean that a complete request will fit. Instructions, the question, and space for generated
+output also need to be considered. The following section therefore examines the coverage of the actual
+experimental runs.
+
 \section{Analysis cohorts and experiment coverage}
 \label{sec:analysis-cohorts}
 
