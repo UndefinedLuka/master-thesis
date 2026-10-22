@@ -157,81 +157,108 @@ precision across the full BIRD dataset.
 
 \subsection{Retrieval accuracy}
 
-Accuracy used the answerable cohort, including zero-scored context failures. Each format therefore
-summarized \num{9850} Spider and \num{11080} BIRD model--question runs.
-Figure~\ref{fig:direct-accuracy-by-format} reports all three retrieval metrics defined in
-Section~\ref{sec:reference-answer-metrics}.
+To compare retrieval accuracy, we used the answerable cohort defined in
+Section~\ref{sec:analysis-cohorts}, containing \num{985} Spider questions and \num{1108} sampled BIRD
+questions. Each format was evaluated across all ten retained models, giving \num{9850} Spider runs
+and \num{11080} BIRD runs per format. Runs that exceeded the context limit or failed to complete were
+retained with zero scores. Figure~\ref{fig:direct-accuracy-by-format} shows the mean NEM, BERTScore,
+and ROUGE-L scores, which measure different aspects of agreement with the reference answer as described
+in Section~\ref{sec:reference-answer-metrics}.
 
-\begin{figure}[htbp]
+\begin{figure}[htb]
   \centering
   \includegraphics[width=\textwidth]{../code/analysis/figures/direct_accuracy_by_format.pdf}
-  \caption{Mean direct-context NEM, BERTScore, and ROUGE-L by format on answerable questions.
-    Failed runs retain zero scores. Whiskers show pointwise \qty{95}{\percent} intervals.}
+  \caption{Mean direct-context NEM, BERTScore, and ROUGE-L by format on answerable questions.}
   \label{fig:direct-accuracy-by-format}
 \end{figure}
 
-Spider's observed NEM means were close: JSON had the highest value (\num{0.169}), followed by TOON
-(\num{0.166}) and CSV (\num{0.163}). JSON exceeded CSV by \num{0.57} percentage points, but the paired
-interval (\numrange{-1.21}{2.34}) included zero. CSV had the highest BERTScore (\num{0.812}) and
-ROUGE-L (\num{0.336}). Its BERTScore exceeded XML by \num{0.099} (\numrange{0.003}{0.269}), whereas
-the TOON-minus-CSV difference was only \num{-0.0004} (\numrange{-0.0020}{0.0011}). Thus, the evidence
-separated compact formats from XML more clearly in BERTScore than in NEM.
+On Spider, JSON had the highest mean NEM score at \num{0.169}, followed by TOON at \num{0.166} and
+CSV at \num{0.163}. These differences were small. Comparing the same question--model pairs, JSON
+exceeded CSV by \num{0.57} percentage points, but the interval (\numrange{-1.21}{2.34}) included zero,
+so this comparison does not establish a clear advantage for JSON. CSV had the highest mean BERTScore
+and ROUGE-L scores, at \num{0.812} and \num{0.336}, respectively. Its BERTScore exceeded XML by
+\num{0.099} (\numrange{0.003}{0.269}), while the difference between TOON and CSV was only
+\num{-0.0004} (\numrange{-0.0020}{0.0011}). These comparisons show similar BERTScore results for
+CSV and TOON, but a clearer difference between CSV and XML.
 
-On BIRD, CSV had the highest means: NEM, BERTScore, and ROUGE-L were \num{0.054}, \num{0.463}, and
-\num{0.079}, with TOON close behind. XML had the lowest means (\num{0.026}, \num{0.185}, and
-\num{0.042}). Its NEM difference from CSV was \num{-2.75} percentage points
-(\numrange{-5.12}{-0.82}), while TOON's difference was \num{-0.31}
-(\numrange{-0.79}{0.14}). These estimates include the formats' different context-overflow rates;
-they do not isolate answer agreement conditional on inference taking place.
+On BIRD, CSV had the highest mean scores on all three measures: NEM was \num{0.054}, BERTScore was
+\num{0.463}, and ROUGE-L was \num{0.079}, with TOON close behind. XML had the lowest means, at
+\num{0.026}, \num{0.185}, and \num{0.042}, respectively. XML's NEM score was \num{2.75} percentage
+points below CSV, with a paired XML-minus-CSV difference of \num{-2.75}
+(\numrange{-5.12}{-0.82}). TOON was only \num{0.31} percentage points below CSV, and its difference
+of \num{-0.31} (\numrange{-0.79}{0.14}) did not establish a clear separation between the two formats.
+Because failed runs retain zero scores, these results reflect both agreement with the reference answer
+and the ability to process the request within the context limit. They do not measure accuracy only among
+runs that completed successfully.
 
-\begin{figure}[htbp]
+\begin{figure}[htb]
   \centering
   \includegraphics[width=\textwidth]{../code/analysis/figures/direct_accuracy_by_model_size.pdf}
   \caption{Mean direct-context retrieval accuracy by model size and family on answerable questions,
-    averaged over all six formats. Lines join models within a family; intervals are pointwise
-    \qty{95}{\percent}. Gemma~4 26B-A4B is positioned at its total nominal parameter count.}
+    averaged over all six formats. Gemma~4 26B-A4B is positioned at its total nominal parameter count.}
   \label{fig:direct-accuracy-by-model-size}
 \end{figure}
 
-Larger variants generally had higher observed scores, but the size association varied by family and
-dataset (Figure~\ref{fig:direct-accuracy-by-model-size}). On Spider, Gemma~4 26B-A4B exceeded E2B by
-\num{15.52} NEM percentage points (\numrange{10.19}{21.78}); Qwen~3.5 9B exceeded 0.8B by
-\num{14.45} (\numrange{9.60}{20.16}). On BIRD, the corresponding gains were \num{1.58}
-(\numrange{-0.02}{3.29}) and \num{4.18} (\numrange{1.48}{7.02}). Ministral~3 14B's gain over 8B was
-\num{2.01} points on Spider (\numrange{0.90}{3.21}) but only \num{0.09} on BIRD
-(\numrange{-0.72}{1.12}). The latter comparisons do not establish a uniform benefit from nominal
-parameter count.
+We also compared model sizes within each family, averaging scores across all six formats
+(Figure~\ref{fig:direct-accuracy-by-model-size}). Larger variants generally had higher mean scores,
+but the differences varied between model families and datasets. On Spider, Gemma~4 26B-A4B exceeded
+E2B by \num{15.52} NEM percentage points (\numrange{10.19}{21.78}), while Qwen~3.5 9B exceeded
+0.8B by \num{14.45} percentage points (\numrange{9.60}{20.16}). On BIRD, these gains were smaller:
+\num{1.58} percentage points (\numrange{-0.02}{3.29}) for Gemma and \num{4.18}
+(\numrange{1.48}{7.02}) for Qwen. The Gemma interval included zero, so the BIRD comparison does not
+establish a clear advantage for its larger variant.
+
+Ministral~3 14B exceeded 8B by \num{2.01} NEM percentage points on Spider
+(\numrange{0.90}{3.21}), but by only \num{0.09} on BIRD (\numrange{-0.72}{1.12}). Thus, a larger
+model did not consistently provide a clear improvement across both datasets. These comparisons describe
+the evaluated variants within each family; they do not isolate parameter count from other differences
+between the models.
 
 \subsection{Database-size associations}
 
-\begin{figure}[htbp]
+To examine the relationship between database size and retrieval accuracy, we compared the mean scores
+for each database with the number of tokens needed to represent its contents. We used the answerable
+cohort, which included all \num{20} Spider databases and all \num{11} sampled BIRD databases. For each
+format, database size was measured as the mean token count across the three tokenizer families, while
+scores were averaged across the retained question--model runs for that database.
+Figure~\ref{fig:direct-accuracy-by-database-size-nem} shows this comparison for NEM, with database size
+on a logarithmic scale.
+
+\begin{figure}[htb]
   \centering
   \includegraphics[width=\textwidth]{../code/analysis/figures/direct_accuracy_by_database_size_nem.pdf}
-  \caption{Direct-context NEM on answerable questions by database payload size and format. Points
-    average the retained model--question runs for each database; area indicates question count.
-    Size is the mean payload-token count across the three tokenizer families, on a logarithmic axis.
-    Dataset-specific trends and Pearson correlations have pointwise \qty{95}{\percent} intervals.
-    A correlation interval is unavailable when more than \qty{5}{\percent} of resamples have constant scores.}
+  \caption{Mean direct-context NEM by serialized database size and format on answerable questions.
+    Each point represents one database, with point area indicating the number of questions. Size is
+    the mean token count across the three tokenizer families, shown on a logarithmic scale. Trends
+    and Pearson correlations are calculated separately for each dataset. A correlation interval is omitted when more than
+    \qty{5}{\percent} of bootstrap samples have constant scores.}
   \label{fig:direct-accuracy-by-database-size-nem}
 \end{figure}
 
-All \num{20} Spider and \num{11} sampled BIRD databases remained represented in the answerable cohort.
-Database-level mean scores were negatively associated with log payload size across all formats and
-metrics. For CSV, the NEM correlation was \num{-0.63} on Spider (\numrange{-0.84}{-0.13}) and
-\num{-0.77} on BIRD (\numrange{-0.93}{-0.64}); Figure~\ref{fig:direct-accuracy-by-database-size-nem}
-shows the other formats. The recalculated BERTScore correlations ranged from \numrange{-0.86}{-0.85}
-on Spider and \numrange{-0.84}{-0.60} on BIRD; ROUGE-L correlations ranged from
-\numrange{-0.83}{-0.78} and \numrange{-0.82}{-0.60}. For CSV, BERTScore intervals were
-\numrange{-0.97}{-0.63} and \numrange{-0.95}{-0.71}. The corresponding ROUGE-L intervals were
+Larger serialized databases generally had lower mean scores across all formats and all three metrics.
+For CSV, the Pearson correlation between NEM and the logarithm of database token count was
+\num{-0.63} on Spider (\numrange{-0.84}{-0.13}) and \num{-0.77} on BIRD
+(\numrange{-0.93}{-0.64}). Both intervals were below zero, supporting a negative association in
+these comparisons. The figure shows the NEM results for the other formats.
+
+BERTScore and ROUGE-L showed the same general pattern. Across formats, BERTScore correlations ranged
+from \numrange{-0.86}{-0.85} on Spider and \numrange{-0.84}{-0.60} on BIRD. ROUGE-L correlations
+ranged from \numrange{-0.83}{-0.78} on Spider and \numrange{-0.82}{-0.60} on BIRD. For CSV, the
+BERTScore correlation intervals were \numrange{-0.97}{-0.63} on Spider and
+\numrange{-0.95}{-0.71} on BIRD. The corresponding ROUGE-L intervals were
 \numrange{-0.94}{-0.52} and \numrange{-0.96}{-0.71}, respectively.
 
-These associations include structural zero scores from context overflow. All direct runs for Spider's
-\texttt{wta\_1} and five BIRD databases exceeded the context limit in every format. Only two BIRD
-databases had positive XML scores, and the XML correlation interval was not estimable under the stated
-bootstrap criterion. Database size also varied with domain, schema, and questions, so these results
-describe associations rather than an isolated causal effect of size.
+These results include zero scores from runs that exceeded the context limit. All Direct Context
+Inference runs for Spider's \texttt{wta\_1} and five BIRD databases exceeded this limit in every
+format. The negative associations therefore reflect both answer agreement and the inability to
+process some larger databases, rather than accuracy only among completed runs. For XML on BIRD, only
+two databases had positive scores. Too many bootstrap samples had constant scores to report a
+correlation interval under the criterion stated in the figure caption.
 
-\clearpage
+Database size also varied alongside the domain, schema, and questions. We therefore cannot conclude
+from these comparisons that size alone caused the lower scores. They describe the relationship between
+serialized database size and retrieval accuracy in the evaluated databases.
+
 \section{Text-to-SQL}
 \label{sec:text-to-sql-results}
 
