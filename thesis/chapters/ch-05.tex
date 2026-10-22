@@ -268,82 +268,84 @@ Failed runs retain their recorded operational costs and zero retrieval scores.
 
 \subsection{Operational efficiency}
 
-Table~\ref{tab:text-to-sql-operational-efficiency} reports the five shared operational metrics, SQL execution
-time, and retries. Input and output tokens, first-token waits, and generation after the first token are
-accumulated across all attempts, including unsuccessful correction sequences. Output counts include reasoning
-traces; total response latency also includes the recorded aggregate SQL execution time.
+We measured the tokens and time required per Text-to-SQL run on the answerable cohort.
+Table~\ref{tab:text-to-sql-operational-efficiency} shows the mean input and output token counts, Time to
+First Token (TTFT), generation time after the first token, SQL execution time, total latency, and retries.
+For each run, we added the tokens and times across the initial attempt and any correction attempts,
+including those in runs that ultimately failed. Output counts include reasoning traces, and total
+latency includes SQL execution time. These measurements therefore describe the cost of the complete
+attempt sequence rather than a single model response.
 
 \input{../code/analysis/tables/text_to_sql_operational_efficiency}
 
-Mean input and output use was \num{811} and \num{107.3} tokens on Spider, compared with \num{1873} and
-\num{211.1} on BIRD. Mean total latency was \qty{0.536}{\second} (\qtyrange{0.385}{0.667}{\second}) and
-\qty{1.033}{\second} (\qtyrange{0.862}{1.219}{\second}), respectively. Generation after the first token
-accounted for most of these totals: \qty{0.441}{\second} on Spider and \qty{0.849}{\second} on BIRD,
-compared with cumulative TTFT of \qty{0.084}{\second} and \qty{0.176}{\second}. SQL execution contributed
-only \qty{0.010}{\second} and \qty{0.008}{\second}; mean retries were \num{0.173} and \num{0.399}.
+BIRD runs required more tokens and took longer on average than Spider runs. Mean input and output
+counts were \num{1873} and \num{211.1} tokens on BIRD, compared with \num{811} and \num{107.3} on
+Spider. Mean total latency was \qty{1.033}{\second} (\qtyrange{0.862}{1.219}{\second}) on BIRD and
+\qty{0.536}{\second} (\qtyrange{0.385}{0.667}{\second}) on Spider.
 
-\begin{figure}[!htbp]
-  \centering
-  \includegraphics[width=\textwidth]{../code/analysis/figures/text_to_sql_token_usage.pdf}
-  \caption{Mean accumulated Text-to-SQL input and output tokens by model on the answerable cohort:
-    \num{985} Spider and \num{1108} sampled-BIRD questions per model. All initial and correction attempts,
-    including terminal failures, are included. Whiskers show pointwise \qty{95}{\percent} confidence intervals.}
-  \label{fig:text-to-sql-token-usage}
-\end{figure}
+Generation after the first token accounted for most of the total latency on both datasets. It took
+\qty{0.441}{\second} per run on Spider and \qty{0.849}{\second} on BIRD, compared with total
+first-token waits of \qty{0.084}{\second} and \qty{0.176}{\second}, respectively. SQL execution
+contributed a much smaller amount: \qty{0.010}{\second} on Spider and \qty{0.008}{\second} on BIRD.
+Mean retries per run were also higher on BIRD, at \num{0.399}, compared with \num{0.173} on Spider.
 
-Accumulated token use varied substantially between models (Figure~\ref{fig:text-to-sql-token-usage}).
-For Qwen~3.5 2B relative to 0.8B, paired mean input-token ratios were \num{0.589}
-(\numrange{0.490}{0.699}) on Spider and \num{0.556} (\numrange{0.484}{0.621}) on BIRD.
-Output-token ratios were smaller still: \num{0.379} (\numrange{0.184}{0.614}) and \num{0.293}
-(\numrange{0.207}{0.400}). These are accumulated request costs, including repeated prompts and outputs.
+The smallest model did not necessarily require the fewest tokens across the complete run. Comparing
+Qwen~3.5 2B with 0.8B on the same questions, the 2B-to-0.8B ratios of mean input tokens were
+\num{0.589} (\numrange{0.490}{0.699}) on Spider and \num{0.556} (\numrange{0.484}{0.621}) on BIRD.
+The corresponding output-token ratios were \num{0.379} (\numrange{0.184}{0.614}) and \num{0.293}
+(\numrange{0.207}{0.400}). All four intervals were below one, showing that 2B required fewer input
+and output tokens on average than 0.8B on both datasets, including repeated prompts and correction
+outputs.
 
-\begin{figure}[!htbp]
-  \centering
-  \includegraphics[width=\textwidth]{../code/analysis/figures/text_to_sql_latency.pdf}
-  \caption{Mean Text-to-SQL latency and retries by model on the answerable cohort. Stacks separate cumulative
-    TTFT, generation after the first token, and SQL execution, including failed sequences. Labels report total
-    latency and mean retries; whiskers show pointwise \qty{95}{\percent} intervals for total latency.}
-  \label{fig:text-to-sql-latency}
-\end{figure}
-
-The smallest model did not have the lowest accumulated latency (Figure~\ref{fig:text-to-sql-latency}).
-Qwen~3.5 0.8B averaged \qty{1.662}{\second} and \num{0.990} retries on Spider, and \qty{3.754}{\second}
-and \num{1.819} retries on BIRD. For 2B relative to 0.8B, paired mean-latency ratios were \num{0.432}
-(\numrange{0.207}{0.702}) and \num{0.333} (\numrange{0.233}{0.457}), respectively.
-Lower latency therefore coincided with lower token use and fewer retries in this comparison.
+Qwen~3.5 2B also had lower mean total latency than 0.8B. The 0.8B model averaged
+\qty{1.662}{\second} and \num{0.990} retries per run on Spider, and \qty{3.754}{\second} and
+\num{1.819} retries on BIRD. Comparing the same questions, the 2B-to-0.8B ratios of mean total
+latency were \num{0.432} (\numrange{0.207}{0.702}) on Spider and \num{0.333}
+(\numrange{0.233}{0.457}) on BIRD. Both intervals were below one. Lower latency therefore
+coincided with lower token use and fewer retries in this comparison; it does not show that a
+single generation attempt was faster for the larger model.
 
 \subsection{Retrieval accuracy}
 
+We evaluated Text-to-SQL answers by comparing the textual query results with the reference answers
+using NEM, BERTScore, and ROUGE-L. Table~\ref{tab:text-to-sql-retrieval-accuracy} shows the mean scores
+on the answerable cohort alongside the proportion of runs whose generated SQL executed successfully
+within the retry limit. These measurements distinguish agreement with the reference answer from the
+ability to execute a query.
+
 \input{../code/analysis/tables/text_to_sql_retrieval_accuracy}
 
-Spider had higher observed mean agreement on all three metrics: NEM was \num{0.634}, BERTScore \num{0.916},
-and ROUGE-L \num{0.740}, compared with \num{0.501}, \num{0.848}, and \num{0.517} on BIRD
-(Table~\ref{tab:text-to-sql-retrieval-accuracy}). The Executed column reports final execution success
-within the retry limit: \qty{95.23}{\percent} and \qty{89.75}{\percent}, respectively.
-The gap between execution success and NEM shows that an executable
-query did not necessarily return an answer agreeing with the reference.
+Spider had higher mean scores than BIRD on all three measures. NEM was \num{0.634}, BERTScore was
+\num{0.916}, and ROUGE-L was \num{0.740} on Spider, compared with \num{0.501}, \num{0.848}, and
+\num{0.517} on BIRD, respectively. The Executed column reports final execution-success rates of
+\qty{95.23}{\percent} on Spider and \qty{89.75}{\percent} on BIRD. On both datasets, successful
+execution was more common than normalized exact agreement with the reference. A query that executes
+without error can still return a different result, while differences in the textual representation can
+also prevent an exact match. Execution success therefore does not establish answer correctness.
 
-\begin{figure}[!htbp]
+We also compared model sizes within each family.
+Figure~\ref{fig:text-to-sql-accuracy-by-model-size} shows the mean scores for each model on the same
+answerable questions, including zero scores for failed runs.
+
+\begin{figure}[htb]
   \centering
   \includegraphics[width=\textwidth]{../code/analysis/figures/text_to_sql_accuracy_by_model_size.pdf}
-  \caption{Mean Text-to-SQL NEM, BERTScore, and ROUGE-L by model size and family on the answerable cohort.
-    Each point includes \num{985} Spider or \num{1108} sampled-BIRD questions, with zero scores for failures.
-    Lines connect models within families; Gemma~4 26B-A4B is positioned at its total nominal size, with
-    approximately \num{4}B active parameters. Whiskers show pointwise \qty{95}{\percent} confidence intervals.}
+  \caption{Mean Text-to-SQL NEM, BERTScore, and ROUGE-L by model size and family on the answerable cohort.}
   \label{fig:text-to-sql-accuracy-by-model-size}
 \end{figure}
 
-All three observed scores increased with nominal size within each family
-(Figure~\ref{fig:text-to-sql-accuracy-by-model-size}). The largest NEM change was within Qwen~3.5:
-9B exceeded 0.8B by \num{44.06} percentage points on Spider (\numrange{39.24}{48.61}) and \num{46.03}
-on BIRD (\numrange{39.80}{52.86}). Most of the observed increase occurred by 4B.
-Gemma~4 26B-A4B had the highest observed scores on both datasets, with NEM of \num{0.774} and \num{0.669}.
-Relative to E2B, its paired NEM gains were \num{9.34} (\numrange{5.35}{13.59}) and \num{12.27}
-(\numrange{6.84}{18.06}) percentage points. Ministral~3 14B exceeded 8B by \num{3.05} points on Spider
-(\numrange{0.00}{6.35}) and \num{2.53} on BIRD (\numrange{0.54}{4.48}); the Spider interval reached zero.
-These within-family comparisons describe the evaluated models rather than an isolated effect of parameter count.
+Within each family, larger variants had higher observed mean scores on all three measures, but the
+gains varied. On the same questions, Qwen~3.5 9B exceeded 0.8B by \num{44.06} NEM percentage points
+on Spider (\numrange{39.24}{48.61}) and \num{46.03} on BIRD (\numrange{39.80}{52.86}), with most
+of the observed increase occurring by 4B. Gemma~4 26B-A4B had the highest observed means, with NEM
+of \num{0.774} on Spider and \num{0.669} on BIRD. Its gains over E2B were \num{9.34} percentage
+points (\numrange{5.35}{13.59}) and \num{12.27} (\numrange{6.84}{18.06}), respectively; this
+does not establish an advantage over every other model. Ministral~3 14B exceeded 8B by only
+\num{3.05} NEM percentage points on Spider (\numrange{0.00}{6.35}) and \num{2.53} on BIRD
+(\numrange{0.54}{4.48}). Unlike the other comparisons, the Ministral Spider interval reached zero
+and did not establish a clear improvement. These comparisons do not isolate parameter count from
+other differences between the evaluated variants.
 
-\clearpage
 \subsection{Error correction performance}
 
 \input{../code/analysis/tables/text_to_sql_error_correction}
@@ -368,7 +370,7 @@ Using only runs entering correction as the denominator, the means were \qty{2.38
 This retry-generation overhead includes first-token waits. Retry-specific SQL execution time cannot be
 isolated from the stored aggregate database time and is excluded from these added-time measurements.
 
-\begin{figure}[!htbp]
+\begin{figure}[htb]
   \centering
   \includegraphics[width=\textwidth]{../code/analysis/figures/text_to_sql_error_correction.pdf}
   \caption{Additional Text-to-SQL model-generation time on the answerable cohort, decomposed by terminal
@@ -387,7 +389,6 @@ Terminal failures accounted for \qty{95.3}{\percent} of all retry-generation tim
 with mean added generation time of \qty{3.54}{\second} and \qty{3.92}{\second} per failed run.
 Thus, most recorded correction cost belonged to sequences that never produced executable SQL.
 
-\clearpage
 \section{Comparison of the two pipelines}
 \label{sec:common-cohort-comparison}
 
@@ -439,7 +440,7 @@ less consistent contrast: Spider CSV produced fewer tokens than SQL in the obser
 establish a reliable difference. Only XML's Spider output-token ratio excluded one; on BIRD,
 all direct formats produced more output tokens, with paired ratio intervals above one.
 
-\begin{figure}[htbp]
+\begin{figure}[htb]
   \centering
   \includegraphics[width=\textwidth]{../code/analysis/figures/common_cohort_token_usage.pdf}
   \caption{Mean input and output tokens on the shared context-fit workload, including SQL failures
@@ -458,7 +459,7 @@ Spider: CSV's direct-to-SQL ratio was \num{1.26} (\numrange{0.73}{1.74}), while 
 had intervals entirely above one. All BIRD direct formats had longer generation intervals than SQL.
 SQL execution itself contributed only \qty{0.005}{\second} and \qty{0.007}{\second} per run.
 
-\begin{figure}[htbp]
+\begin{figure}[htb]
   \centering
   \includegraphics[width=\textwidth]{../code/analysis/figures/common_cohort_latency.pdf}
   \caption{Mean latency components on the shared context-fit workload. SQL includes all initial
