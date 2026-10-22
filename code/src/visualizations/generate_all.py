@@ -67,10 +67,17 @@ from visualizations.experiment_outcomes import (
 from visualizations.experiment_outcomes import (
     validate_complete_coverage as validate_experiment_coverage,
 )
+from visualizations.pipeline_retrieval_by_database_size import (
+    calculate_pipeline_size_retrieval_comparison,
+)
+from visualizations.pipeline_retrieval_by_database_size_figure import (
+    generate_pipeline_size_retrieval_figure,
+)
 from visualizations.pipeline_retrieval_comparison import (
     calculate_pipeline_retrieval_comparison,
     generate_pipeline_retrieval_comparison_figure,
 )
+from visualizations.pipeline_size_cohort_table import generate_pipeline_size_cohort_table
 from visualizations.serialization_data import (
     load_token_report,
 )
@@ -137,10 +144,14 @@ def generate_all(
     retrieval = calculate_pipeline_retrieval_comparison(
         answerable, excluded_model_markers=excluded_model_markers,
     )
+    size_retrieval = calculate_pipeline_size_retrieval_comparison(
+        answerable, serialization_report, excluded_model_markers=excluded_model_markers,
+    )
     generate_cohort_artifacts(cohorts, tables_dir=tables_dir, audit_dir=audit_dir)
     save_chapter5_evidence(
         answerable, serialization_report, efficiency, sql_analysis, retry_analysis,
         common_cohort, retrieval, audit_dir,
+        size_retrieval=size_retrieval,
     )
     return [
         tables_dir / "analysis_cohorts.tex",
@@ -184,6 +195,8 @@ def generate_all(
         generate_error_correction_table(retry_analysis, tables_dir),
         generate_error_correction_figure(retry_analysis, figures_dir),
         generate_pipeline_retrieval_comparison_figure(retrieval, figures_dir),
+        generate_pipeline_size_cohort_table(size_retrieval, tables_dir),
+        generate_pipeline_size_retrieval_figure(size_retrieval, figures_dir),
         generate_common_cohort_table(common_cohort, tables_dir),
         generate_common_cohort_latency_figure(common_cohort, figures_dir),
         generate_common_cohort_token_figure(common_cohort, figures_dir),

@@ -5,7 +5,7 @@ This chapter reports the experiments described in Chapters~\ref{ch:methodolgy} a
 \ref{ch:implementation}. Serialization efficiency is presented first, followed by analysis cohorts and
 experiment coverage, Direct Context Inference, Text-to-SQL, and a comparison of the two pipelines.
 The results operational efficiency and retrieval accuracy as described in \ref{sec:evaluation-metrics-implementation}.
-Estimates retain equal weight per run within each dataset. Intervals are pointwise
+Estimates retain equal weight per run within each reported analysis group. Intervals are pointwise
 \qty{95}{\percent} database-bootstrap intervals, as presented in Section~\ref{sec:confidence-intervals}
 (table cells show these intervals in brackets).
 
@@ -425,6 +425,58 @@ among successful runs or measure SQL execution success. As with the earlier accu
 scores indicate closer agreement with the textual reference rather than a direct verification of factual
 correctness.
 
+\subsection{Retrieval accuracy by database size}
+\label{sec:pipeline-accuracy-by-database-size}
+
+We also compared retrieval accuracy within three database-size tiers: small, with at most
+\num{1500} tokens; medium, with more than \num{1500} and at most \num{10000}; and large, with
+more than \num{10000}. Each database was assigned one fixed tier using its mean payload token
+count across all six formats and three tokenizer families from
+Section~\ref{sec:serialization-results}. Unlike the format-specific sizes in the earlier
+direct-context analysis, this average keeps tier membership identical for every configuration
+in the head-to-head comparison. It excludes questions and other prompt context.
+
+\input{../code/analysis/tables/pipeline_size_cohorts}
+
+Table~\ref{tab:pipeline-size-cohorts} shows the pooled answerable-cohort coverage: eight small,
+eight medium, and fifteen large databases, with \num{265}, \num{400}, and \num{1428}
+questions, respectively. Within each tier, we retained the same question--model pairs across
+both pipelines, including zero scores for failed runs. Means retain equal weight per run across
+the pooled workload, and intervals resample databases within each tier.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\textwidth]{../code/analysis/figures/pipeline_retrieval_by_database_size.pdf}
+  \caption{Mean retrieval accuracy by database-size tier on the answerable cohort. Small databases
+    average at most \num{1500} payload tokens, medium databases more than \num{1500} and at most
+    \num{10000}, and large databases more than \num{10000}.}
+  \label{fig:pipeline-retrieval-by-database-size}
+\end{figure}
+
+Text-to-SQL had higher mean scores than every direct format on all three metrics in every
+tier (Figure~\ref{fig:pipeline-retrieval-by-database-size}). Every paired direct-minus-SQL
+interval was below zero. SQL's mean NEM decreased from \num{0.723} in the small tier to
+\num{0.671} in the medium tier and \num{0.504} in the large
+tier. The highest direct means were \num{0.239} and \num{0.210} for JSON in the small and
+medium tiers, and \num{0.061} for TOON in the large tier. Their paired differences from SQL
+were \num{-0.484} (\numrange{-0.541}{-0.442}), \num{-0.461}
+(\numrange{-0.539}{-0.373}), and \num{-0.443} (\numrange{-0.503}{-0.387}), respectively.
+Thus, the observed NEM gap was smaller in the large tier, but both pipelines also had lower
+mean NEM there.
+
+The other metrics showed a different pattern in the size of the gap. The
+highest-scoring direct format's BERTScore was about \numrange{0.053}{0.054} below SQL in
+the small and medium tiers, compared with \num{0.345} below SQL in the large tier. The
+corresponding ROUGE-L gaps were \num{0.356}, \num{0.366}, and \num{0.445}. These contrasts
+describe observed gaps rather than establishing differences between tiers, and the direct
+format with the highest mean varied by metric and tier.
+
+The tier results do not isolate database size from differences in workload composition,
+domain, schema, or questions. Some large databases also exceeded the context limit in every
+direct format. The comparisons therefore describe end-to-end reference-answer agreement,
+including context failures, rather than accuracy only among completed runs or a causal effect
+of size.
+
 \subsection{Operational efficiency}
 
 We compared operational efficiency on the same context-fit questions used in the direct-format analysis:
@@ -432,6 +484,15 @@ We compared operational efficiency on the same context-fit questions used in the
 used identical question--model pairs, retaining the recorded costs of \num{372} unsuccessful SQL runs
 on Spider and \num{231} on BIRD. SQL token counts and timings include all initial and correction
 attempts, with total latency also including SQL execution.
+
+\begin{figure}[htb]
+  \centering
+  \includegraphics[width=\textwidth]{../code/analysis/figures/common_cohort_token_usage.pdf}
+  \caption{Mean input and output tokens on the shared context-fit workload, including SQL failures
+    and all correction attempts. Input tokens use a logarithmic scale; output tokens use a linear
+    scale. Whiskers show pointwise \qty{95}{\percent} intervals.}
+  \label{fig:common-cohort-token-usage}
+\end{figure}
 
 Text-to-SQL used fewer input tokens than every direct format
 (Figure~\ref{fig:common-cohort-token-usage}). CSV required \num{7.19} times as many input tokens
@@ -442,11 +503,11 @@ one. On BIRD, all direct formats produced more output tokens, with ratio interva
 
 \begin{figure}[htb]
   \centering
-  \includegraphics[width=\textwidth]{../code/analysis/figures/common_cohort_token_usage.pdf}
-  \caption{Mean input and output tokens on the shared context-fit workload, including SQL failures
-    and all correction attempts. Input tokens use a logarithmic scale; output tokens use a linear
-    scale. Whiskers show pointwise \qty{95}{\percent} intervals.}
-  \label{fig:common-cohort-token-usage}
+  \includegraphics[width=\textwidth]{../code/analysis/figures/common_cohort_latency.pdf}
+  \caption{Mean latency components on the shared context-fit workload. SQL includes all initial
+    and correction work, including unsuccessful runs. Whiskers show pointwise \qty{95}{\percent}
+    intervals for total latency.}
+  \label{fig:common-cohort-latency}
 \end{figure}
 
 Text-to-SQL also had lower mean total latency than every direct format
@@ -460,24 +521,7 @@ Most of the latency difference occurred in TTFT. Generation-time differences wer
 Spider, while all direct formats had longer mean generation times than SQL on BIRD. SQL execution
 contributed only \qty{0.005}{\second} per run on Spider and \qty{0.007}{\second} on BIRD.
 
-\begin{figure}[htb]
-  \centering
-  \includegraphics[width=\textwidth]{../code/analysis/figures/common_cohort_latency.pdf}
-  \caption{Mean latency components on the shared context-fit workload. SQL includes all initial
-    and correction work, including unsuccessful runs. Whiskers show pointwise \qty{95}{\percent}
-    intervals for total latency.}
-  \label{fig:common-cohort-latency}
-\end{figure}
-
 Lower mean latency did not mean faster responses in ev  ery case: SQL was faster than CSV in
 \qty{58.9}{\percent} of Spider pairs and \qty{98.8}{\percent} of BIRD pairs. The BIRD results cover
 only two sampled databases. Since accuracy and efficiency use different cohorts, these results do not
 establish a joint cost--accuracy trade-off on the same question set.
-
-\section{Summary}
-
-CSV and TOON had compact payloads, while XML imposed the largest mean token overhead. Direct-context
-accuracy varied with format, model, and database size. Text-to-SQL achieved higher answerable-cohort
-accuracy than every direct format. Correction recovered executable queries, but failed sequences
-consumed most retry time. On the separate context-fit workload, SQL used fewer input tokens and had
-lower mean latency, including unsuccessful attempts.

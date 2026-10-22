@@ -12,6 +12,7 @@ from visualizations.direct_accuracy_data import (
 def save_chapter5_evidence(
     answerable, serialization_report, efficiency, sql, retries, common, retrieval,
     output_dir: Path,
+    *, size_retrieval,
 ) -> None:
     """Save run-weighted means, database intervals, and paired effects without rounding."""
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -29,6 +30,9 @@ def save_chapter5_evidence(
         "sql_retry_gains": retries.gain_summary,
         "pipeline_efficiency": common.summary,
         "pipeline_retrieval": retrieval.summary,
+        "pipeline_database_size_tiers": size_retrieval.database_sizes,
+        "pipeline_size_cohorts": size_retrieval.coverage,
+        "pipeline_retrieval_by_database_size": size_retrieval.summary,
     }
     for name, summary in summaries.items():
         summary.to_csv(output_dir / f"{name}.csv", index=False)

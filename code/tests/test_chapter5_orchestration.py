@@ -182,6 +182,7 @@ def test_cli_dispatches_answerable_and_context_fit_populations(
         "calculate_text_to_sql_retry_analysis",
         "calculate_common_cohort_analysis",
         "calculate_pipeline_retrieval_comparison",
+        "calculate_pipeline_size_retrieval_comparison",
     ):
         calculators[name] = Mock(return_value=object())
         monkeypatch.setattr(orchestration, name, calculators[name])
@@ -203,6 +204,8 @@ def test_cli_dispatches_answerable_and_context_fit_populations(
         "generate_error_correction_table",
         "generate_error_correction_figure",
         "generate_pipeline_retrieval_comparison_figure",
+        "generate_pipeline_size_retrieval_figure",
+        "generate_pipeline_size_cohort_table",
         "generate_common_cohort_table",
         "generate_common_cohort_latency_figure",
         "generate_common_cohort_token_figure",
@@ -237,6 +240,9 @@ def test_cli_dispatches_answerable_and_context_fit_populations(
     assert not context_fit.loc[context_fit["pipeline"].eq("direct"), "has_answer"].any()
     assert calculators["calculate_common_cohort_analysis"].call_args.args[0] is context_fit
     assert calculators["calculate_pipeline_retrieval_comparison"].call_args.args[0] is answerable
+    assert (
+        calculators["calculate_pipeline_size_retrieval_comparison"].call_args.args[0] is answerable
+    )
     for name in (
         "generate_direct_accuracy_by_format_figure",
         "generate_direct_accuracy_by_model_size_figure",
@@ -282,6 +288,10 @@ def test_cli_dispatches_answerable_and_context_fit_populations(
             "calculate_pipeline_retrieval_comparison",
             ("generate_pipeline_retrieval_comparison_figure",),
         ),
+        (
+            "calculate_pipeline_size_retrieval_comparison",
+            ("generate_pipeline_size_retrieval_figure", "generate_pipeline_size_cohort_table"),
+        ),
     ):
         for name in outputs:
             assert generators[name].call_args.args[0] is calculators[calculator].return_value
@@ -297,8 +307,12 @@ def test_cli_dispatches_answerable_and_context_fit_populations(
     report = generators["generate_serialization_efficiency_table"].call_args.args[0]
     assert len(report) == 36
     assert generators["generate_tokenizer_comparison_figure"].call_args.args[0] is report
+    assert calculators["calculate_pipeline_size_retrieval_comparison"].call_args.args[1] is report
     assert evidence.call_args.args[0] is answerable
     assert evidence.call_args.args[-1] == tmp_path / "audit"
+    assert evidence.call_args.kwargs["size_retrieval"] is (
+        calculators["calculate_pipeline_size_retrieval_comparison"].return_value
+    )
 
     manifest = pd.read_csv(tmp_path / "audit" / "analysis_cohort_membership.csv")
     assert len(manifest) == 6

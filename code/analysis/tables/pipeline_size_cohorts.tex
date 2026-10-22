@@ -1,0 +1,17 @@
+\begin{table}[htb]
+  \centering
+  \caption{Pooled answerable-cohort coverage by database-size tier. Size is the mean payload
+    token count across six formats and three tokenizer families. Each question is
+    evaluated across the ten retained models for every retrieval configuration.}
+  \label{tab:pipeline-size-cohorts}
+  \small
+  \begin{tabular}{@{}llrr@{}}
+    \toprule
+    Tier & Mean payload tokens & Databases & Questions \\
+    \midrule
+    Small & $\leq$ \num{1500} & \num{8} & \num{265} \\
+    Medium & $>\!$ \num{1500} and $\leq$ \num{10000} & \num{8} & \num{400} \\
+    Large & $>\!$ \num{10000} & \num{15} & \num{1428} \\
+    \bottomrule
+  \end{tabular}
+\end{table}

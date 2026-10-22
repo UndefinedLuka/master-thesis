@@ -318,6 +318,26 @@ uv run python -m cli.score_results --results results/ --overwrite
 This regular `score_results` command supports full rescoring; keep the old files outside `results/`
 until the new scores have been validated.
 
+### Chapter 5 visualizations
+
+```bash
+uv run --extra visualizations thesis-visualize-all
+```
+
+This regenerates the chapter's tables and figures from the scored results and stored reference
+answers. The retrieval-only head-to-head database-size comparison uses the answerable cohort and
+assigns each database to a fixed tier using its mean payload tokens across all six formats and
+three tokenizer families: small (at most 1,500), medium (over 1,500 through 10,000), or large
+(over 10,000). It retains failed runs with zero scores and uses paired database-bootstrap
+intervals within each tier, pooling questions from both datasets. Database identities remain
+dataset-qualified internally, so similarly named databases remain separate bootstrap clusters.
+
+The new artifacts are `analysis/figures/pipeline_retrieval_by_database_size.pdf` and
+`analysis/tables/pipeline_size_cohorts.tex`. Full-precision means, paired effects, tier assignments,
+and cohort counts are saved under `analysis/chapter5/` in the corresponding
+`pipeline_retrieval_by_database_size.csv`, `pipeline_database_size_tiers.csv`, and
+`pipeline_size_cohorts.csv` files. No new model inference or rescoring is needed.
+
 ## Tests & lint
 
 ```bash
