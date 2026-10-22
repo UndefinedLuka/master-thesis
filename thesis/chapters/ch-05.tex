@@ -118,47 +118,42 @@ comparison.
 
 \input{../code/analysis/tables/direct_operational_efficiency}
 
-On the context-fit workload from Section~\ref{sec:analysis-cohorts}, compact formats required fewer
-input tokens and had lower mean latency. Table~\ref{tab:direct-operational-efficiency} reports all five
-operational measurements. TTFT measures the wait from request submission to the first output token;
-generation covers the remaining time to completion, and total latency spans both intervals.
-CSV used \num{5366} input tokens per Spider run and \num{31756} per BIRD run,
-compared with \num{20186} and \num{97190} for XML. The paired XML-to-CSV ratios were \num{3.76}
-(\numrange{2.84}{4.38}) and \num{3.06} (\numrange{2.94}{3.20}), respectively. These are measured prompt
-tokens on the context-fit questions, unlike the database-only payload counts in Section~\ref{sec:serialization-results}.
+To compare operational efficiency across formats, we used the context-fit cohort defined in
+Section~\ref{sec:analysis-cohorts}. Each format was evaluated on the same questions across all ten
+retained models, including the recorded resource use of unsuccessful runs.
+Table~\ref{tab:direct-operational-efficiency} shows the mean input and output token counts, Time to
+First Token (TTFT), generation time after the first token, and total latency. Unlike the serialization
+counts in Section~\ref{sec:serialization-results}, the input counts here include the complete prompt
+rather than only the serialized database contents.
 
-\begin{figure}[htbp]
-  \centering
-  \includegraphics[width=\textwidth]{../code/analysis/figures/direct_token_usage_by_format.pdf}
-  \caption{Mean direct-context input and output tokens on the context-fit cohort. Every format uses
-    the same questions and ten models. Output counts include reasoning tokens. Whiskers show pointwise
-    \qty{95}{\percent} intervals; BIRD covers two sampled databases.}
-  \label{fig:direct-token-usage-by-format}
-\end{figure}
+CSV required the fewest input tokens on average, with \num{5366} per run on Spider and \num{31756} on
+BIRD. XML required the most, with \num{20186} and \num{97190}, respectively. Comparing the same
+question--model pairs, the XML-to-CSV ratios of mean input tokens were \num{3.76}
+(\numrange{2.84}{4.38}) on Spider and \num{3.06} (\numrange{2.94}{3.20}) on BIRD. TOON was close to
+CSV, with ratios of \num{1.07} (\numrange{1.04}{1.12}) and \num{1.03} (\numrange{1.02}{1.04}).
+Markdown, YAML, and JSON fell between TOON and XML in mean input token use.
 
-TOON remained close to CSV in input use, with paired ratios of \num{1.07} (\numrange{1.04}{1.12}) on
-Spider and \num{1.03} (\numrange{1.02}{1.04}) on BIRD. Output counts varied less across formats
-(Figure~\ref{fig:direct-token-usage-by-format}): the observed means ranged from \numrange{81}{120}
-tokens on Spider and \numrange{220}{260} on BIRD. Their ordering differed from input-token use, and
-they include both reasoning traces and visible answers.
+Output token counts varied much less across formats. The means ranged from \numrange{81.2}{119.6}
+tokens on Spider and \numrange{219.6}{260.5} on BIRD, including both reasoning traces and final
+answers. Formats that required more input tokens did not always produce more output tokens. For
+example, YAML had the highest mean output count on both datasets, even though JSON and XML required
+more input tokens.
 
-\begin{figure}[htbp]
-  \centering
-  \includegraphics[width=\textwidth,height=0.58\textheight,keepaspectratio]{../code/analysis/figures/direct_latency_by_format.pdf}
-  \caption{Mean direct-context latency on the context-fit cohort, divided into TTFT and generation
-    after the first token. Whiskers show pointwise \qty{95}{\percent} intervals for total latency.}
-  \label{fig:direct-latency-by-format}
-\end{figure}
+The differences in input token use were accompanied by differences in response time. CSV had the lowest
+mean total latency, at \qty{1.25}{\second} on Spider and \qty{8.02}{\second} on BIRD, while XML had
+the highest, at \qty{7.42}{\second} and \qty{50.88}{\second}. The paired XML-to-CSV ratios were
+\num{5.91} (\numrange{2.24}{8.31}) and \num{6.34} (\numrange{6.22}{6.47}), respectively. TOON was
+again close to CSV, with latency ratios of \num{1.09} (\numrange{1.04}{1.16}) on Spider and
+\num{1.031} (\numrange{1.028}{1.033}) on BIRD.
 
-Mean total latency rose from \qty{1.25}{\second} for CSV to \qty{7.42}{\second} for XML on Spider,
-and from \qty{8.02}{\second} to \qty{50.88}{\second} on BIRD
-(Figure~\ref{fig:direct-latency-by-format}). The paired XML-to-CSV ratios were \num{5.91}
-(\numrange{2.24}{8.31}) and \num{6.34} (\numrange{6.22}{6.47}). Most of the difference occurred in
-TTFT: CSV and XML averaged \qty{0.78}{\second} and \qty{6.45}{\second} on Spider, compared with
-\qty{6.32}{\second} and \qty{46.87}{\second} on BIRD. Generation after the first token ranged from
-\qtyrange{0.48}{0.97}{\second} and \qtyrange{1.70}{4.00}{\second}, respectively. TOON's latency was
-closer to CSV, with ratios of \num{1.09} (\numrange{1.04}{1.16}) and \num{1.031}
-(\numrange{1.028}{1.033}). The narrow BIRD intervals remain conditional on its two represented databases.
+Most of the latency difference between CSV and XML occurred before the first output token. Mean TTFT
+increased from \qty{0.78}{\second} for CSV to \qty{6.45}{\second} for XML on Spider, and from
+\qty{6.32}{\second} to \qty{46.87}{\second} on BIRD. Generation after the first token varied less,
+ranging from \qtyrange{0.48}{0.97}{\second} across formats on Spider and
+\qtyrange{1.70}{4.00}{\second} on BIRD. These results show that compact formats were associated with
+lower token use and shorter response times on the shared question set. However, the BIRD results cover
+only the two sampled databases in its context-fit cohort, so the narrow intervals do not imply the same
+precision across the full BIRD dataset.
 
 \subsection{Retrieval accuracy}
 
