@@ -47,9 +47,7 @@ def render_error_correction_table(
         ("final_success_rate", "Final execution success", 100, r"\%"),
         ("recovery_rate", "Recovery / initially failed runs", 100, r"\%"),
         ("execution_gain_pp", "Success-rate gain (percentage points)", 1, ""),
-        ("average_retries", "Mean retries / eligible run", 1, ""),
         ("average_retries_per_retried_run", "Mean retries / run entering correction", 1, ""),
-        ("added_seconds", "Mean added generation (s) / eligible run", 1, ""),
         (
             "added_seconds_per_retried_run",
             "Mean added generation (s) / run entering correction", 1, "",

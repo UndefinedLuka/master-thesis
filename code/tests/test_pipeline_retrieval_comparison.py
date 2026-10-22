@@ -180,10 +180,22 @@ def test_display_covers_both_datasets_all_metrics_and_formats(tmp_path) -> None:
     analysis = calculate_pipeline_retrieval_comparison(_matrix())
     figure = plot_pipeline_retrieval_comparison(analysis)
     assert len(figure.axes) == 6
-    for axis in figure.axes:
-        assert len(axis.get_yticklabels()) == 6 or not axis.get_yticklabels()
-        assert len(axis.collections) == 6  # one confidence-interval segment per format
-        assert "Direct minus SQL" in axis.get_xlabel()
+    for index, axis in enumerate(figure.axes):
+        assert len(axis.get_yticklabels()) == 7 or not axis.get_yticklabels()
+        assert len(axis.collections) == 7  # absolute mean interval for SQL and each format
+        points = [line for line in axis.lines if line.get_marker() == "o"]
+        dataset = ("spider", "bird")[index // 3]
+        metric = DIRECT_ACCURACY_METRIC_ORDER[index % 3]
+        panel = analysis.summary.loc[
+            analysis.summary["dataset"].eq(dataset) & analysis.summary["metric"].eq(metric)
+        ]
+        np.testing.assert_allclose(
+            [line.get_xdata()[0] for line in points], panel["mean_score"],
+        )
+        for collection, row in zip(axis.collections, panel.itertuples(), strict=True):
+            np.testing.assert_allclose(
+                collection.get_segments()[0][:, 0], [row.mean_score_low, row.mean_score_high],
+            )
     plt.close(figure)
     path = generate_pipeline_retrieval_comparison_figure(analysis, tmp_path)
     assert path.name == "pipeline_retrieval_comparison.pdf"

@@ -234,7 +234,8 @@ def test_error_correction_table(tmp_path: Path) -> None:
 
     assert "First attempt" in latex
     assert "Complete failure" in latex
-    assert "Mean added generation (s) / eligible run" in latex
+    assert "/ eligible run" not in latex
+    assert "Mean added generation (s) / run entering correction" in latex
     assert "Recovery / initially failed runs" in latex
     assert "Mean retries / run entering correction" in latex
     assert r"\parbox" not in latex

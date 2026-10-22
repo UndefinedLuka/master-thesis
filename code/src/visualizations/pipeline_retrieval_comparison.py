@@ -21,14 +21,13 @@ from visualizations.config import (
     DATASET_ORDER,
     DEFAULT_EXCLUDED_MODEL_MARKERS,
     DIRECT_ACCURACY_METRIC_ORDER,
-    FORMAT_COLORS,
     FORMAT_LABELS,
     METRIC_TITLES,
     SERIALIZATION_FORMAT_ORDER,
 )
 from visualizations.experiment_outcomes import model_is_excluded
-from visualizations.plot_numbers import number_formatter, save_pgf_figure, tight_layout
-from visualizations.uncertainty import effect_marks, mean_intervals
+from visualizations.plot_numbers import number, number_formatter, save_pgf_figure, tight_layout
+from visualizations.uncertainty import interval_marks, mean_intervals
 
 if TYPE_CHECKING:
     from matplotlib.figure import Figure
@@ -140,7 +139,7 @@ def calculate_pipeline_retrieval_comparison(
 
 
 def plot_pipeline_retrieval_comparison(analysis: PipelineRetrievalComparison) -> Figure:
-    """Show all six direct-minus-SQL effects for all metrics, separately by dataset."""
+    """Compare absolute mean scores, highlighting SQL above the six direct formats."""
     import matplotlib
 
     matplotlib.use("Agg")
@@ -150,42 +149,61 @@ def plot_pipeline_retrieval_comparison(analysis: PipelineRetrievalComparison) ->
     if summary.empty:
         raise ValueError("No pipeline retrieval comparisons are available to plot")
     datasets = [value for value in DATASET_ORDER if value in set(summary["dataset"])]
+    methods = COMMON_COHORT_METHOD_ORDER
+    positions = np.arange(len(methods), dtype=float)
+    positions[1:] += 0.4
+    labels = ["Text-to-SQL", *(FORMAT_LABELS[fmt] for fmt in SERIALIZATION_FORMAT_ORDER)]
+    sql_color, direct_color = "#0072B2", "#707070"
     figure, axes = plt.subplots(
         len(datasets), len(DIRECT_ACCURACY_METRIC_ORDER),
-        figsize=(12.6, 3.4 * len(datasets)), squeeze=False, sharex="col", sharey=True,
+        figsize=(9, 2.9 * len(datasets)), squeeze=False, sharex="col", sharey=True,
     )
     for row, dataset in enumerate(datasets):
         for col, metric in enumerate(DIRECT_ACCURACY_METRIC_ORDER):
             axis = axes[row, col]
             panel = summary.loc[summary["dataset"].eq(dataset) & summary["metric"].eq(metric)]
-            panel = panel.set_index("method").loc[list(SERIALIZATION_FORMAT_ORDER)]
-            for position, fmt in enumerate(SERIALIZATION_FORMAT_ORDER):
-                effect_marks(axis, [position], panel.loc[[fmt]], "mean_score",
-                             horizontal=True, color=FORMAT_COLORS[fmt])
-            axis.axvline(0, color="#777777", linewidth=0.8)
-            axis.set_yticks(range(len(SERIALIZATION_FORMAT_ORDER)),
-                            [FORMAT_LABELS[fmt] for fmt in SERIALIZATION_FORMAT_ORDER])
-            axis.set_ylim(len(SERIALIZATION_FORMAT_ORDER) - 0.5, -0.5)
-            axis.set_title(f"{DATASET_LABELS[dataset]} / {METRIC_TITLES[metric]}")
-            axis.set_xlabel("Mean score difference (Direct minus SQL)", fontsize=9)
+            panel = panel.set_index("method").loc[list(methods)]
+            for position, method in zip(positions, methods, strict=True):
+                color = sql_color if method == COMMON_COHORT_SQL_METHOD else direct_color
+                interval_marks(axis, [position], panel.loc[[method]], "mean_score",
+                               horizontal=True, color=color)
+                mean = panel.loc[method, "mean_score"]
+                axis.plot(mean, position, "o", color=color, markersize=4, zorder=6)
+                axis.annotate(number(mean, 3), (mean, position), xytext=(0, 5),
+                              textcoords="offset points", ha="center", va="bottom",
+                              fontsize=8, color=color)
+            axis.axhline(0.7, color="#dddddd", linewidth=0.6)
+            axis.set_yticks(positions, labels)
+            axis.set_ylim(positions[-1] + 0.5, -0.9)
+            # Use the same score scale in every panel unless negative BERTScore
+            # means/intervals require extending that metric's shared axis.
+            metric_values = summary.loc[summary["metric"].eq(metric),
+                                        ["mean_score", "mean_score_low", "mean_score_high"]]
+            lower = min(0.0, float(metric_values.min().min()))
+            upper = max(1.0, float(metric_values.max().max()))
+            axis.set_xlim(lower - 0.025, upper + 0.025)
+            axis.set_xticks(np.linspace(0, 1, 5))
+            if row == 0:
+                axis.set_title(METRIC_TITLES[metric], fontsize=11, pad=12)
+            if col == 0:
+                axis.set_ylabel(DATASET_LABELS[dataset], fontsize=11, labelpad=12)
+                axis.get_yticklabels()[0].set_color(sql_color)
             axis.xaxis.set_major_formatter(number_formatter())
-            axis.spines[["top", "right"]].set_visible(False)
-            axis.grid(axis="x", alpha=0.3)
-    figure.suptitle("Answerable cohort: paired retrieval accuracy", fontsize=13)
-    figure.text(
-        0.5, 0.01,
-        "Points: mean paired differences; bars: pointwise 95% database-bootstrap intervals. "
-        "Positive values favor Direct.",
-        ha="center", fontsize=9,
-    )
-    tight_layout(figure, rect=(0, 0.04, 1, 0.96))
+            axis.tick_params(axis="y", length=0, labelsize=9)
+            axis.tick_params(axis="x", labelsize=9)
+            axis.spines[["top", "right", "left"]].set_visible(False)
+            axis.spines["bottom"].set_color("#aaaaaa")
+            axis.set_axisbelow(True)
+            axis.grid(axis="x", color="#e8e8e8", linewidth=0.6)
+    figure.supxlabel("Mean score (higher is better)", fontsize=10)
+    tight_layout(figure, h_pad=1.8, w_pad=1.5)
     return figure
 
 
 def generate_pipeline_retrieval_comparison_figure(
     analysis: PipelineRetrievalComparison, figures_dir: Path,
 ) -> Path:
-    """Write the paired accuracy PDF from an already validated analysis."""
+    """Write the absolute-score accuracy PDF from an already validated analysis."""
     import matplotlib.pyplot as plt
 
     path = figures_dir / PIPELINE_RETRIEVAL_FIGURE_FILENAME

@@ -348,97 +348,97 @@ other differences between the evaluated variants.
 
 \subsection{Error correction performance}
 
+We evaluated whether correction produced executable SQL after an initial failure and how much
+additional model-generation time it required. We used the answerable cohort and the retry policy
+described in Section~\ref{sec:minimalist-text-to-sql}. Table~\ref{tab:text-to-sql-error-correction}
+groups runs by the attempt on which SQL first executed successfully and shows how many still failed
+after all three retries. The outcome percentages refer to all runs in the answerable cohort, while
+the recovery rate refers only to runs whose initial attempt failed. Successful correction means that
+the query executed without error.
+
 \input{../code/analysis/tables/text_to_sql_error_correction}
 
-Under the retry policy in Section~\ref{sec:minimalist-text-to-sql}, execution success increased from
-\qty{92.55}{\percent} on the first attempt to \qty{95.23}{\percent} on Spider, and from
-\qty{82.23}{\percent} to \qty{89.75}{\percent} on BIRD. Table~\ref{tab:text-to-sql-error-correction}
-groups successful runs by the attempt on which SQL first executed successfully and lists terminal
-failures; outcome percentages use all eligible runs. Retries recovered \num{264} of \num{734}
-initially failed Spider runs, or \qty{35.97}{\percent} (\qtyrange{30.66}{41.49}{\percent}), and \num{833}
-of \num{1969} BIRD runs, or \qty{42.31}{\percent} (\qtyrange{38.36}{47.37}{\percent}). Across all
-\num{9850} and \num{11080} eligible runs, these recoveries were paired execution-success gains of
-\num{2.68} (\numrange{1.66}{3.61}) and \num{7.52} (\numrange{6.36}{8.76}) percentage points.
-They measure recovered execution, not recovered answer accuracy.
+Correction increased execution success on both datasets. On Spider, the success rate rose from
+\qty{92.55}{\percent} on the first attempt to \qty{95.23}{\percent} after correction, a gain of
+\num{2.68} percentage points (\numrange{1.66}{3.61}). On sampled BIRD, it rose from
+\qty{82.23}{\percent} to \qty{89.75}{\percent}, a gain of \num{7.52} percentage points
+(\numrange{6.36}{8.76}). These comparisons used the same \num{9850} Spider and \num{11080} BIRD
+runs before and after correction. Both intervals were above zero, supporting an increase in
+execution success over the initial attempt.
 
-All initially failed runs entered correction. Mean retries were \num{0.173} per eligible Spider run and
-\num{0.399} per eligible BIRD run; among runs entering correction, they were \num{2.32} and \num{2.24}.
-Added model-generation time averaged \qty{0.177}{\second} (\qtyrange{0.078}{0.269}{\second}) per eligible
-Spider run and \qty{0.455}{\second} (\qtyrange{0.337}{0.587}{\second}) per eligible BIRD run.
-Using only runs entering correction as the denominator, the means were \qty{2.38}{\second}
-(\qtyrange{1.53}{2.92}{\second}) and \qty{2.56}{\second} (\qtyrange{2.21}{2.96}{\second}).
-This retry-generation overhead includes first-token waits. Retry-specific SQL execution time cannot be
-isolated from the stored aggregate database time and is excluded from these added-time measurements.
+Most initially failed runs still failed after correction, and most recoveries occurred on the first
+retry. Retries recovered \num{264} of \num{734} initially failed Spider runs, or
+\qty{35.97}{\percent} (\qtyrange{30.66}{41.49}{\percent}), and \num{833} of \num{1969} BIRD runs,
+or \qty{42.31}{\percent} (\qtyrange{38.36}{47.37}{\percent}). The first retry accounted for
+\num{238} of these recoveries on Spider and \num{680} on BIRD, with fewer additional recoveries
+from the remaining two retries.
 
-\begin{figure}[htb]
-  \centering
-  \includegraphics[width=\textwidth]{../code/analysis/figures/text_to_sql_error_correction.pdf}
-  \caption{Additional Text-to-SQL model-generation time on the answerable cohort, decomposed by terminal
-    outcome (left) and retry stage (right). Both panels report seconds per eligible run, using all
-    \num{9850} Spider and \num{11080} sampled-BIRD runs as denominators. Time includes first-token waits
-    in correction attempts and excludes SQL execution; terminal failures retain their recorded costs.}
-  \label{fig:text-to-sql-error-correction}
-\end{figure}
+All initially failed runs entered correction. Among these runs, including those that ultimately
+failed, the mean number of retries was \num{2.32} on Spider and \num{2.24} on BIRD. The mean
+additional model-generation time was \qty{2.38}{\second} (\qtyrange{1.53}{2.92}{\second}) on
+Spider and \qty{2.56}{\second} (\qtyrange{2.21}{2.96}{\second}) on BIRD. This measurement includes
+first-token waits during correction. It excludes SQL execution time because the stored records
+provide only aggregate database time, which cannot be separated by attempt.
 
-The first retry supplied most recoveries: \num{238} on Spider and \num{680} on BIRD. Later stages still
-accounted for substantial generation time (Figure~\ref{fig:text-to-sql-error-correction}). The three stages
-added \qty{0.063}{\second}, \qty{0.057}{\second}, and \qty{0.057}{\second} per eligible Spider run,
-and \qty{0.174}{\second}, \qty{0.143}{\second}, and \qty{0.138}{\second} per eligible BIRD run.
-Terminal failures accounted for \qty{95.3}{\percent} of all retry-generation time on Spider and
-\qty{88.3}{\percent} on BIRD. The \num{470} and \num{1136} failed sequences each used all three retries,
-with mean added generation time of \qty{3.54}{\second} and \qty{3.92}{\second} per failed run.
-Thus, most recorded correction cost belonged to sequences that never produced executable SQL.
+Most correction time was spent on runs that never produced executable SQL. These runs accounted for \qty{95.3}{\percent} of
+all retry-generation time on Spider and \qty{88.3}{\percent} on BIRD. All \num{470} Spider runs
+and \num{1136} BIRD runs that failed after correction used the three available retries, with mean
+additional generation times of \qty{3.54}{\second} and \qty{3.92}{\second} per failed run,
+respectively. Correction therefore recovered some executable queries, but most of its recorded
+generation time was spent on unsuccessful attempts.
 
 \section{Comparison of the two pipelines}
 \label{sec:common-cohort-comparison}
 
 \subsection{Retrieval accuracy}
 
-The accuracy comparison used all \num{985} answerable Spider questions and \num{1108} answerable BIRD
-questions, paired across the ten retained models and all six direct formats. Context overflows and other
-terminal failures remained in the comparison with zero scores. Text-to-SQL had higher mean NEM,
-BERTScore, and ROUGE-L than every direct format on both datasets; all paired difference intervals
-excluded zero (Figure~\ref{fig:pipeline-retrieval-comparison}).
-
-On Spider, Text-to-SQL reached NEM \num{0.634}, compared with \num{0.169} for JSON, the highest direct
-mean. The paired JSON-minus-SQL difference was \num{-0.465} (\numrange{-0.507}{-0.422}). On sampled
-BIRD, Text-to-SQL reached \num{0.501}, compared with CSV's \num{0.054}, a difference of
-\num{-0.447} (\numrange{-0.524}{-0.380}). CSV had the highest direct BERTScore and ROUGE-L means
-on both datasets, but its paired differences from SQL were still \num{-0.104}
-(\numrange{-0.229}{-0.038}) and \num{-0.403} (\numrange{-0.450}{-0.359}) on Spider, and
-\num{-0.385} (\numrange{-0.661}{-0.137}) and \num{-0.438} (\numrange{-0.508}{-0.367}) on BIRD.
-These comparisons describe answer agreement, including failures, rather than SQL execution success.
+To compare retrieval accuracy between the two pipelines, we used the same \num{985} answerable Spider
+questions and \num{1108} answerable sampled BIRD questions across all ten retained models. Each of the
+six Direct Context Inference formats was compared with Text-to-SQL on the same question--model pairs.
+Runs that exceeded the context limit or failed to complete were retained with zero scores.
+Figure~\ref{fig:pipeline-retrieval-comparison} shows the mean NEM, BERTScore, and ROUGE-L scores and
+their intervals for both pipelines.
 
 \begin{figure}[htbp]
   \centering
   \includegraphics[width=\textwidth]{../code/analysis/figures/pipeline_retrieval_comparison.pdf}
-  \caption{Paired direct-minus-SQL differences in NEM, BERTScore, and ROUGE-L on the answerable
-    cohort. Negative values favour Text-to-SQL. Bars show pointwise \qty{95}{\percent} intervals;
-    context overflows and other terminal failures retain zero scores.}
+  \caption{Mean NEM, BERTScore, and ROUGE-L for Text-to-SQL (blue) and the six direct formats
+    (grey) on the answerable cohort, averaged over the ten retained models. }
   \label{fig:pipeline-retrieval-comparison}
 \end{figure}
 
+On Spider, Text-to-SQL had a mean NEM score of \num{0.634}, compared with \num{0.169} for JSON,
+the highest-scoring direct format on this measure. The paired JSON-minus-SQL difference was
+\num{-0.465} (\numrange{-0.507}{-0.422}). On sampled BIRD, Text-to-SQL had a mean NEM score of
+\num{0.501}, compared with \num{0.054} for CSV, the highest direct mean. The paired CSV-minus-SQL
+difference was \num{-0.447} (\numrange{-0.524}{-0.380}).
+
+CSV had the highest direct BERTScore and ROUGE-L means on both datasets, but Text-to-SQL also had
+higher scores in these comparisons. On Spider, the paired CSV-minus-SQL differences were
+\num{-0.104} (\numrange{-0.229}{-0.038}) for BERTScore and \num{-0.403}
+(\numrange{-0.450}{-0.359}) for ROUGE-L. On sampled BIRD, the corresponding differences were
+\num{-0.385} (\numrange{-0.661}{-0.137}) and \num{-0.438} (\numrange{-0.508}{-0.367}).
+
+Because failed runs retain zero scores, these comparisons reflect both agreement with the reference
+answer and the ability of each pipeline to complete the request. They do not isolate answer agreement
+among successful runs or measure SQL execution success. As with the earlier accuracy results, higher
+scores indicate closer agreement with the textual reference rather than a direct verification of factual
+correctness.
+
 \subsection{Operational efficiency}
 
-Operational comparisons used exactly the same context-fit questions as the direct-format analysis:
-\num{852} questions from \num{18} Spider databases and \num{303} from two sampled BIRD databases.
-All methods retained identical question--model pairs, including \num{372} unsuccessful SQL runs on
-Spider and \num{231} on BIRD and their recorded costs. Table~\ref{tab:common-cohort-operational-efficiency}
-reports all five shared measures and SQL execution time. SQL tokens and timings accumulated all attempts,
-with TTFT summing first-token waits and generation measuring the remaining model time.
-Mean SQL retries per run were \num{0.157} (\numrange{0.099}{0.230}) on Spider and
-\num{0.314} (\numrange{0.288}{0.337}) on BIRD.
+We compared operational efficiency on the same context-fit questions used in the direct-format analysis:
+\num{852} from \num{18} Spider databases and \num{303} from two sampled BIRD databases. Both pipelines
+used identical question--model pairs, retaining the recorded costs of \num{372} unsuccessful SQL runs
+on Spider and \num{231} on BIRD. SQL token counts and timings include all initial and correction
+attempts, with total latency also including SQL execution.
 
-\input{../code/analysis/tables/common_cohort_operational_efficiency}
-
-Text-to-SQL used fewer input tokens than all direct formats
-(Figure~\ref{fig:common-cohort-token-usage}).
-For CSV, the direct-to-SQL ratio of mean input tokens was \num{7.19} (\numrange{2.38}{13.17})
-on Spider and \num{28.91} (\numrange{24.71}{35.63}) on BIRD. Output tokens showed a smaller and
-less consistent contrast: Spider CSV produced fewer tokens than SQL in the observed means
-(\num{81.2} versus \num{89.7}), but its ratio of \num{0.91} (\numrange{0.65}{1.12}) did not
-establish a reliable difference. Only XML's Spider output-token ratio excluded one; on BIRD,
-all direct formats produced more output tokens, with paired ratio intervals above one.
+Text-to-SQL used fewer input tokens than every direct format
+(Figure~\ref{fig:common-cohort-token-usage}). CSV required \num{7.19} times as many input tokens
+(\numrange{2.38}{13.17}) on Spider and \num{28.91} times as many (\numrange{24.71}{35.63}) on BIRD.
+Output differences were less consistent on Spider: the CSV-to-SQL output-token ratio of \num{0.91}
+(\numrange{0.65}{1.12}) did not establish a clear difference, and only XML's ratio interval excluded
+one. On BIRD, all direct formats produced more output tokens, with ratio intervals above one.
 
 \begin{figure}[htb]
   \centering
@@ -450,14 +450,15 @@ all direct formats produced more output tokens, with paired ratio intervals abov
 \end{figure}
 
 Text-to-SQL also had lower mean total latency than every direct format
-(Figure~\ref{fig:common-cohort-latency}). On Spider, CSV took \qty{1.255}{\second} against SQL's
-\qty{0.466}{\second}, a ratio of \num{2.69} (\numrange{1.06}{4.27}); XML's ratio reached
-\num{15.93} (\numrange{2.60}{31.80}). On BIRD, the corresponding ratios were \num{10.43}
-(\numrange{9.54}{11.51}) for CSV and \num{66.17} (\numrange{59.32}{74.40}) for XML.
-The largest component differences were in TTFT. Generation-only differences were less consistent on
-Spider: CSV's direct-to-SQL ratio was \num{1.26} (\numrange{0.73}{1.74}), while only YAML and XML
-had intervals entirely above one. All BIRD direct formats had longer generation intervals than SQL.
-SQL execution itself contributed only \qty{0.005}{\second} and \qty{0.007}{\second} per run.
+(Figure~\ref{fig:common-cohort-latency}). On Spider, CSV averaged \qty{1.255}{\second}, compared with
+\qty{0.466}{\second} for SQL. The CSV-to-SQL latency ratio was \num{2.69}
+(\numrange{1.06}{4.27}), while XML's ratio was \num{15.93} (\numrange{2.60}{31.80}). On BIRD,
+the corresponding ratios were \num{10.43} (\numrange{9.54}{11.51}) for CSV and \num{66.17}
+(\numrange{59.32}{74.40}) for XML.
+
+Most of the latency difference occurred in TTFT. Generation-time differences were less consistent on
+Spider, while all direct formats had longer mean generation times than SQL on BIRD. SQL execution
+contributed only \qty{0.005}{\second} per run on Spider and \qty{0.007}{\second} on BIRD.
 
 \begin{figure}[htb]
   \centering
@@ -468,10 +469,10 @@ SQL execution itself contributed only \qty{0.005}{\second} and \qty{0.007}{\seco
   \label{fig:common-cohort-latency}
 \end{figure}
 
-Lower mean latency did not imply a faster response for every pair: SQL was faster than CSV in
-\qty{58.9}{\percent} of Spider pairs, compared with \qty{98.8}{\percent} on BIRD. The BIRD operational
-results describe only two sampled databases. Accuracy and operational results use distinct cohorts,
-so they do not establish a joint cost--accuracy trade-off on one matched workload.
+Lower mean latency did not mean faster responses in ev  ery case: SQL was faster than CSV in
+\qty{58.9}{\percent} of Spider pairs and \qty{98.8}{\percent} of BIRD pairs. The BIRD results cover
+only two sampled databases. Since accuracy and efficiency use different cohorts, these results do not
+establish a joint cost--accuracy trade-off on the same question set.
 
 \section{Summary}
 
