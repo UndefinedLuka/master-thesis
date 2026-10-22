@@ -2,7 +2,7 @@
 \begin{table}[htbp]
   \centering
   \small
-  \caption{Mean operational measurements for both pipelines on the same successful questions and models.}
+  \caption{Mean operational measurements for both pipelines on the same recorded context-fit questions and models.}
   \label{tab:common-cohort-operational-efficiency}
   \setlength{\tabcolsep}{4pt}
   \resizebox{\textwidth}{!}{%
@@ -10,24 +10,24 @@
     \toprule
     Dataset & Method & Input tokens & Output tokens & TTFT (s) & Generation (s) & SQL (s) & Total (s) \\
     \midrule
-    Spider & Text-to-SQL & \num{555} & \num{40.9} & \num{0.067} & \num{0.207} & \num{0.005} & \num{0.279} \\
-     & Direct / CSV & \num{4487} & \num{63.0} & \num{0.633} & \num{0.326} & \num{0.000} & \num{0.959} \\
-     & Direct / TOON & \num{4885} & \num{75.1} & \num{0.693} & \num{0.394} & \num{0.000} & \num{1.087} \\
-     & Direct / Markdown & \num{5765} & \num{72.8} & \num{0.870} & \num{0.379} & \num{0.000} & \num{1.249} \\
-     & Direct / YAML & \num{10006} & \num{90.5} & \num{2.064} & \num{0.503} & \num{0.000} & \num{2.567} \\
-     & Direct / JSON & \num{13274} & \num{84.4} & \num{3.197} & \num{0.505} & \num{0.000} & \num{3.702} \\
-     & Direct / XML & \num{17612} & \num{98.1} & \num{5.673} & \num{0.693} & \num{0.000} & \num{6.366} \\
+    Spider & Text-to-SQL & \num{747} & \num{89.7} & \num{0.079} & \num{0.382} & \num{0.005} & \num{0.466} \\
+     & Direct / CSV & \num{5366} & \num{81.2} & \num{0.776} & \num{0.479} & \num{0.000} & \num{1.255} \\
+     & Direct / TOON & \num{5758} & \num{90.3} & \num{0.835} & \num{0.532} & \num{0.000} & \num{1.367} \\
+     & Direct / Markdown & \num{6779} & \num{94.2} & \num{1.044} & \num{0.563} & \num{0.000} & \num{1.607} \\
+     & Direct / YAML & \num{11525} & \num{119.6} & \num{2.389} & \num{0.775} & \num{0.000} & \num{3.164} \\
+     & Direct / JSON & \num{15296} & \num{102.5} & \num{3.692} & \num{0.749} & \num{0.000} & \num{4.441} \\
+     & Direct / XML & \num{20186} & \num{119.2} & \num{6.450} & \num{0.973} & \num{0.000} & \num{7.423} \\
     \midrule
-    BIRD & Text-to-SQL & \num{755} & \num{63.2} & \num{0.090} & \num{0.312} & \num{0.006} & \num{0.409} \\
-     & Direct / CSV & \num{31754} & \num{198.7} & \num{6.316} & \num{1.570} & \num{0.000} & \num{7.887} \\
-     & Direct / TOON & \num{32808} & \num{219.7} & \num{6.519} & \num{1.729} & \num{0.000} & \num{8.248} \\
-     & Direct / Markdown & \num{34376} & \num{218.9} & \num{6.911} & \num{1.952} & \num{0.000} & \num{8.863} \\
-     & Direct / YAML & \num{53360} & \num{260.9} & \num{14.640} & \num{2.606} & \num{0.000} & \num{17.245} \\
-     & Direct / JSON & \num{76239} & \num{226.0} & \num{28.361} & \num{2.863} & \num{0.000} & \num{31.224} \\
-     & Direct / XML & \num{97193} & \num{261.2} & \num{46.877} & \num{3.986} & \num{0.000} & \num{50.863} \\
+    BIRD & Text-to-SQL & \num{1099} & \num{160.7} & \num{0.109} & \num{0.653} & \num{0.007} & \num{0.769} \\
+     & Direct / CSV & \num{31756} & \num{221.7} & \num{6.317} & \num{1.704} & \num{0.000} & \num{8.021} \\
+     & Direct / TOON & \num{32810} & \num{219.6} & \num{6.520} & \num{1.747} & \num{0.000} & \num{8.267} \\
+     & Direct / Markdown & \num{34377} & \num{237.5} & \num{6.912} & \num{2.042} & \num{0.000} & \num{8.954} \\
+     & Direct / YAML & \num{53362} & \num{260.5} & \num{14.641} & \num{2.514} & \num{0.000} & \num{17.155} \\
+     & Direct / JSON & \num{76239} & \num{242.5} & \num{28.362} & \num{2.839} & \num{0.000} & \num{31.200} \\
+     & Direct / XML & \num{97190} & \num{259.2} & \num{46.874} & \num{4.002} & \num{0.000} & \num{50.876} \\
     \bottomrule
   \end{tabular}%
   }
   \vspace{0.4em}
-  \parbox{\linewidth}{\scriptsize \textit{Note:} Spider: \num{561} questions, \num{18} databases; BIRD: \num{121} questions, \num{2} databases; all \num{10} retained models. Every question completed with every model in all displayed methods. Completion does not imply correctness. Text-to-SQL token and timing totals include all correction attempts; TTFT sums the first-token waits across attempts, and generation excludes these waits. Direct formats are alternative runs, not a six-run pipeline.}
+  \parbox{\linewidth}{\scriptsize \textit{Note:} Spider: \num{852} questions, \num{18} databases; BIRD: \num{303} questions, \num{2} databases; all \num{10} retained models. Every method uses identical question/model pairs, retaining blank outputs and SQL failures. Text-to-SQL token and timing totals include all correction attempts; TTFT sums the first-token waits across attempts, and generation excludes these waits. Direct formats are alternative runs, not a six-run pipeline. Mean SQL retries per run: Spider \num{0.157} [\num{0.099}; \num{0.230}]; BIRD \num{0.314} [\num{0.288}; \num{0.337}]. Brackets give pointwise \qty{95}{\percent} intervals.}
 \end{table}

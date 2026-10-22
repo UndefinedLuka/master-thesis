@@ -1,0 +1,749 @@
+{
+  "configuration": {
+    "release": "dev_20240627",
+    "executed_at_utc": "2026-10-18T20:48:38.408064+00:00",
+    "row_caps": [
+      100,
+      500,
+      1000
+    ],
+    "sample_seed": 0,
+    "context_window_tokens": 131072,
+    "formats": [
+      "json",
+      "xml",
+      "yaml",
+      "csv",
+      "markdown",
+      "toon"
+    ],
+    "tokenizer_models": {
+      "qwen-3.5": "Qwen3.5-0.8B-Q4_K_M.gguf",
+      "ministral-3": "Ministral-3-3B-Instruct-2512-Q4_K_M.gguf",
+      "gemma-4": "gemma-4-E2B-it-Q4_K_M.gguf"
+    },
+    "empty_definition": "Successful gold SQL returning zero rows; NULL/0 rows are non-empty",
+    "context_fit_definition": "Serialized payload tokens <= context window; no prompt/output",
+    "scope": "Single-seed post-hoc sensitivity analysis; no model inference"
+  },
+  "total_questions": 1534,
+  "total_databases": 11,
+  "samples": [
+    {
+      "sample_rows_per_table": 100,
+      "empty_results": 649,
+      "empty_percentage": 42.30769230769231,
+      "non_empty_results": 885,
+      "gold_sql_failures": 0,
+      "by_database": {
+        "california_schools": {
+          "total_questions": 89,
+          "empty_results": 58,
+          "sampled_rows": 300
+        },
+        "card_games": {
+          "total_questions": 191,
+          "empty_results": 114,
+          "sampled_rows": 600
+        },
+        "codebase_community": {
+          "total_questions": 186,
+          "empty_results": 97,
+          "sampled_rows": 800
+        },
+        "debit_card_specializing": {
+          "total_questions": 64,
+          "empty_results": 28,
+          "sampled_rows": 500
+        },
+        "european_football_2": {
+          "total_questions": 129,
+          "empty_results": 46,
+          "sampled_rows": 522
+        },
+        "financial": {
+          "total_questions": 106,
+          "empty_results": 39,
+          "sampled_rows": 777
+        },
+        "formula_1": {
+          "total_questions": 174,
+          "empty_results": 71,
+          "sampled_rows": 1240
+        },
+        "student_club": {
+          "total_questions": 158,
+          "empty_results": 21,
+          "sampled_rows": 495
+        },
+        "superhero": {
+          "total_questions": 129,
+          "empty_results": 40,
+          "sampled_rows": 534
+        },
+        "thrombosis_prediction": {
+          "total_questions": 163,
+          "empty_results": 69,
+          "sampled_rows": 300
+        },
+        "toxicology": {
+          "total_questions": 145,
+          "empty_results": 66,
+          "sampled_rows": 400
+        }
+      },
+      "empty_by_difficulty": {
+        "simple": 400,
+        "moderate": 193,
+        "challenging": 56
+      },
+      "payload_measurements": 198,
+      "payloads_exceeding_context": 40,
+      "by_format": {
+        "json": {
+          "mean_tokens": 129035.12121212122,
+          "fitting_databases_by_tokenizer": {
+            "qwen-3.5": [
+              "california_schools",
+              "debit_card_specializing",
+              "financial",
+              "formula_1",
+              "student_club",
+              "superhero",
+              "thrombosis_prediction",
+              "toxicology"
+            ],
+            "ministral-3": [
+              "california_schools",
+              "debit_card_specializing",
+              "financial",
+              "formula_1",
+              "student_club",
+              "superhero",
+              "thrombosis_prediction",
+              "toxicology"
+            ],
+            "gemma-4": [
+              "california_schools",
+              "debit_card_specializing",
+              "financial",
+              "formula_1",
+              "student_club",
+              "superhero",
+              "thrombosis_prediction",
+              "toxicology"
+            ]
+          }
+        },
+        "xml": {
+          "mean_tokens": 182623.33333333334,
+          "fitting_databases_by_tokenizer": {
+            "qwen-3.5": [
+              "debit_card_specializing",
+              "financial",
+              "student_club",
+              "superhero",
+              "thrombosis_prediction",
+              "toxicology"
+            ],
+            "ministral-3": [
+              "debit_card_specializing",
+              "financial",
+              "formula_1",
+              "student_club",
+              "superhero",
+              "thrombosis_prediction",
+              "toxicology"
+            ],
+            "gemma-4": [
+              "debit_card_specializing",
+              "financial",
+              "formula_1",
+              "student_club",
+              "superhero",
+              "thrombosis_prediction",
+              "toxicology"
+            ]
+          }
+        },
+        "yaml": {
+          "mean_tokens": 113479.60606060606,
+          "fitting_databases_by_tokenizer": {
+            "qwen-3.5": [
+              "california_schools",
+              "debit_card_specializing",
+              "financial",
+              "formula_1",
+              "student_club",
+              "superhero",
+              "thrombosis_prediction",
+              "toxicology"
+            ],
+            "ministral-3": [
+              "california_schools",
+              "debit_card_specializing",
+              "financial",
+              "formula_1",
+              "student_club",
+              "superhero",
+              "thrombosis_prediction",
+              "toxicology"
+            ],
+            "gemma-4": [
+              "california_schools",
+              "debit_card_specializing",
+              "financial",
+              "formula_1",
+              "student_club",
+              "superhero",
+              "thrombosis_prediction",
+              "toxicology"
+            ]
+          }
+        },
+        "csv": {
+          "mean_tokens": 75848.42424242424,
+          "fitting_databases_by_tokenizer": {
+            "qwen-3.5": [
+              "california_schools",
+              "card_games",
+              "codebase_community",
+              "debit_card_specializing",
+              "financial",
+              "formula_1",
+              "student_club",
+              "superhero",
+              "thrombosis_prediction",
+              "toxicology"
+            ],
+            "ministral-3": [
+              "california_schools",
+              "card_games",
+              "codebase_community",
+              "debit_card_specializing",
+              "financial",
+              "formula_1",
+              "student_club",
+              "superhero",
+              "thrombosis_prediction",
+              "toxicology"
+            ],
+            "gemma-4": [
+              "california_schools",
+              "card_games",
+              "codebase_community",
+              "debit_card_specializing",
+              "financial",
+              "formula_1",
+              "student_club",
+              "superhero",
+              "thrombosis_prediction",
+              "toxicology"
+            ]
+          }
+        },
+        "markdown": {
+          "mean_tokens": 82952.72727272728,
+          "fitting_databases_by_tokenizer": {
+            "qwen-3.5": [
+              "california_schools",
+              "card_games",
+              "codebase_community",
+              "debit_card_specializing",
+              "financial",
+              "formula_1",
+              "student_club",
+              "superhero",
+              "thrombosis_prediction",
+              "toxicology"
+            ],
+            "ministral-3": [
+              "california_schools",
+              "card_games",
+              "codebase_community",
+              "debit_card_specializing",
+              "financial",
+              "formula_1",
+              "student_club",
+              "superhero",
+              "thrombosis_prediction",
+              "toxicology"
+            ],
+            "gemma-4": [
+              "california_schools",
+              "card_games",
+              "codebase_community",
+              "debit_card_specializing",
+              "financial",
+              "formula_1",
+              "student_club",
+              "superhero",
+              "thrombosis_prediction",
+              "toxicology"
+            ]
+          }
+        },
+        "toon": {
+          "mean_tokens": 77874.27272727272,
+          "fitting_databases_by_tokenizer": {
+            "qwen-3.5": [
+              "california_schools",
+              "card_games",
+              "codebase_community",
+              "debit_card_specializing",
+              "financial",
+              "formula_1",
+              "student_club",
+              "superhero",
+              "thrombosis_prediction",
+              "toxicology"
+            ],
+            "ministral-3": [
+              "california_schools",
+              "card_games",
+              "codebase_community",
+              "debit_card_specializing",
+              "financial",
+              "formula_1",
+              "student_club",
+              "superhero",
+              "thrombosis_prediction",
+              "toxicology"
+            ],
+            "gemma-4": [
+              "california_schools",
+              "card_games",
+              "codebase_community",
+              "debit_card_specializing",
+              "financial",
+              "formula_1",
+              "student_club",
+              "superhero",
+              "thrombosis_prediction",
+              "toxicology"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "sample_rows_per_table": 500,
+      "empty_results": 426,
+      "empty_percentage": 27.770534550195567,
+      "non_empty_results": 1108,
+      "gold_sql_failures": 0,
+      "by_database": {
+        "california_schools": {
+          "total_questions": 89,
+          "empty_results": 34,
+          "sampled_rows": 1500
+        },
+        "card_games": {
+          "total_questions": 191,
+          "empty_results": 84,
+          "sampled_rows": 3000
+        },
+        "codebase_community": {
+          "total_questions": 186,
+          "empty_results": 89,
+          "sampled_rows": 4000
+        },
+        "debit_card_specializing": {
+          "total_questions": 64,
+          "empty_results": 19,
+          "sampled_rows": 2500
+        },
+        "european_football_2": {
+          "total_questions": 129,
+          "empty_results": 30,
+          "sampled_rows": 2321
+        },
+        "financial": {
+          "total_questions": 106,
+          "empty_results": 30,
+          "sampled_rows": 3577
+        },
+        "formula_1": {
+          "total_questions": 174,
+          "empty_results": 36,
+          "sampled_rows": 4982
+        },
+        "student_club": {
+          "total_questions": 158,
+          "empty_results": 13,
+          "sampled_rows": 1134
+        },
+        "superhero": {
+          "total_questions": 129,
+          "empty_results": 19,
+          "sampled_rows": 1801
+        },
+        "thrombosis_prediction": {
+          "total_questions": 163,
+          "empty_results": 26,
+          "sampled_rows": 1500
+        },
+        "toxicology": {
+          "total_questions": 145,
+          "empty_results": 46,
+          "sampled_rows": 1843
+        }
+      },
+      "empty_by_difficulty": {
+        "simple": 265,
+        "moderate": 130,
+        "challenging": 31
+      },
+      "payload_measurements": 198,
+      "payloads_exceeding_context": 117,
+      "by_format": {
+        "json": {
+          "mean_tokens": 620824.1515151515,
+          "fitting_databases_by_tokenizer": {
+            "qwen-3.5": [
+              "student_club",
+              "superhero",
+              "toxicology"
+            ],
+            "ministral-3": [
+              "debit_card_specializing",
+              "student_club",
+              "superhero",
+              "toxicology"
+            ],
+            "gemma-4": [
+              "student_club",
+              "superhero",
+              "toxicology"
+            ]
+          }
+        },
+        "xml": {
+          "mean_tokens": 884487.0,
+          "fitting_databases_by_tokenizer": {
+            "qwen-3.5": [
+              "student_club",
+              "toxicology"
+            ],
+            "ministral-3": [
+              "student_club",
+              "toxicology"
+            ],
+            "gemma-4": [
+              "student_club",
+              "toxicology"
+            ]
+          }
+        },
+        "yaml": {
+          "mean_tokens": 549669.5454545454,
+          "fitting_databases_by_tokenizer": {
+            "qwen-3.5": [
+              "debit_card_specializing",
+              "student_club",
+              "superhero",
+              "toxicology"
+            ],
+            "ministral-3": [
+              "debit_card_specializing",
+              "student_club",
+              "superhero",
+              "toxicology"
+            ],
+            "gemma-4": [
+              "debit_card_specializing",
+              "student_club",
+              "superhero",
+              "toxicology"
+            ]
+          }
+        },
+        "csv": {
+          "mean_tokens": 368703.8787878788,
+          "fitting_databases_by_tokenizer": {
+            "qwen-3.5": [
+              "debit_card_specializing",
+              "financial",
+              "student_club",
+              "superhero",
+              "thrombosis_prediction",
+              "toxicology"
+            ],
+            "ministral-3": [
+              "debit_card_specializing",
+              "financial",
+              "student_club",
+              "superhero",
+              "thrombosis_prediction",
+              "toxicology"
+            ],
+            "gemma-4": [
+              "debit_card_specializing",
+              "financial",
+              "student_club",
+              "superhero",
+              "thrombosis_prediction",
+              "toxicology"
+            ]
+          }
+        },
+        "markdown": {
+          "mean_tokens": 402243.2121212121,
+          "fitting_databases_by_tokenizer": {
+            "qwen-3.5": [
+              "debit_card_specializing",
+              "student_club",
+              "superhero",
+              "thrombosis_prediction",
+              "toxicology"
+            ],
+            "ministral-3": [
+              "debit_card_specializing",
+              "financial",
+              "student_club",
+              "superhero",
+              "thrombosis_prediction",
+              "toxicology"
+            ],
+            "gemma-4": [
+              "debit_card_specializing",
+              "financial",
+              "student_club",
+              "superhero",
+              "thrombosis_prediction",
+              "toxicology"
+            ]
+          }
+        },
+        "toon": {
+          "mean_tokens": 378266.6060606061,
+          "fitting_databases_by_tokenizer": {
+            "qwen-3.5": [
+              "debit_card_specializing",
+              "financial",
+              "student_club",
+              "superhero",
+              "thrombosis_prediction",
+              "toxicology"
+            ],
+            "ministral-3": [
+              "debit_card_specializing",
+              "financial",
+              "student_club",
+              "superhero",
+              "thrombosis_prediction",
+              "toxicology"
+            ],
+            "gemma-4": [
+              "debit_card_specializing",
+              "financial",
+              "student_club",
+              "superhero",
+              "thrombosis_prediction",
+              "toxicology"
+            ]
+          }
+        }
+      },
+      "baseline_verification": {
+        "databases_with_identical_contents": 11,
+        "references_with_identical_error_and_empty_status": 1534,
+        "non_empty_row_count_changes": [
+          {
+            "example_id": "bird:european_football_2:1118",
+            "gold_sql": "SELECT player_name FROM Player WHERE CAST((JULIANDAY('now') - JULIANDAY(birthday)) AS REAL) / 365 >= 35",
+            "stored_row_count": 392,
+            "current_row_count": 395
+          }
+        ],
+        "identical_payload_token_counts": 198
+      }
+    },
+    {
+      "sample_rows_per_table": 1000,
+      "empty_results": 342,
+      "empty_percentage": 22.294654498044327,
+      "non_empty_results": 1192,
+      "gold_sql_failures": 0,
+      "by_database": {
+        "california_schools": {
+          "total_questions": 89,
+          "empty_results": 30,
+          "sampled_rows": 3000
+        },
+        "card_games": {
+          "total_questions": 191,
+          "empty_results": 69,
+          "sampled_rows": 5551
+        },
+        "codebase_community": {
+          "total_questions": 186,
+          "empty_results": 86,
+          "sampled_rows": 8000
+        },
+        "debit_card_specializing": {
+          "total_questions": 64,
+          "empty_results": 13,
+          "sampled_rows": 4591
+        },
+        "european_football_2": {
+          "total_questions": 129,
+          "empty_results": 27,
+          "sampled_rows": 4321
+        },
+        "financial": {
+          "total_questions": 106,
+          "empty_results": 25,
+          "sampled_rows": 6651
+        },
+        "formula_1": {
+          "total_questions": 174,
+          "empty_results": 21,
+          "sampled_rows": 9298
+        },
+        "student_club": {
+          "total_questions": 158,
+          "empty_results": 13,
+          "sampled_rows": 1634
+        },
+        "superhero": {
+          "total_questions": 129,
+          "empty_results": 6,
+          "sampled_rows": 3051
+        },
+        "thrombosis_prediction": {
+          "total_questions": 163,
+          "empty_results": 10,
+          "sampled_rows": 2806
+        },
+        "toxicology": {
+          "total_questions": 145,
+          "empty_results": 42,
+          "sampled_rows": 3343
+        }
+      },
+      "empty_by_difficulty": {
+        "simple": 214,
+        "moderate": 100,
+        "challenging": 28
+      },
+      "payload_measurements": 198,
+      "payloads_exceeding_context": 149,
+      "by_format": {
+        "json": {
+          "mean_tokens": 1191720.7272727273,
+          "fitting_databases_by_tokenizer": {
+            "qwen-3.5": [
+              "student_club"
+            ],
+            "ministral-3": [
+              "student_club"
+            ],
+            "gemma-4": [
+              "student_club"
+            ]
+          }
+        },
+        "xml": {
+          "mean_tokens": 1698018.8181818181,
+          "fitting_databases_by_tokenizer": {
+            "qwen-3.5": [],
+            "ministral-3": [
+              "student_club"
+            ],
+            "gemma-4": []
+          }
+        },
+        "yaml": {
+          "mean_tokens": 1056284.7575757576,
+          "fitting_databases_by_tokenizer": {
+            "qwen-3.5": [
+              "student_club",
+              "superhero",
+              "toxicology"
+            ],
+            "ministral-3": [
+              "student_club",
+              "superhero",
+              "toxicology"
+            ],
+            "gemma-4": [
+              "student_club",
+              "superhero",
+              "toxicology"
+            ]
+          }
+        },
+        "csv": {
+          "mean_tokens": 707604.3333333334,
+          "fitting_databases_by_tokenizer": {
+            "qwen-3.5": [
+              "debit_card_specializing",
+              "student_club",
+              "superhero",
+              "toxicology"
+            ],
+            "ministral-3": [
+              "debit_card_specializing",
+              "student_club",
+              "superhero",
+              "toxicology"
+            ],
+            "gemma-4": [
+              "debit_card_specializing",
+              "student_club",
+              "superhero",
+              "toxicology"
+            ]
+          }
+        },
+        "markdown": {
+          "mean_tokens": 772209.6666666666,
+          "fitting_databases_by_tokenizer": {
+            "qwen-3.5": [
+              "debit_card_specializing",
+              "student_club",
+              "superhero",
+              "toxicology"
+            ],
+            "ministral-3": [
+              "debit_card_specializing",
+              "student_club",
+              "superhero",
+              "toxicology"
+            ],
+            "gemma-4": [
+              "debit_card_specializing",
+              "student_club",
+              "superhero",
+              "toxicology"
+            ]
+          }
+        },
+        "toon": {
+          "mean_tokens": 726010.4242424242,
+          "fitting_databases_by_tokenizer": {
+            "qwen-3.5": [
+              "debit_card_specializing",
+              "student_club",
+              "superhero",
+              "toxicology"
+            ],
+            "ministral-3": [
+              "debit_card_specializing",
+              "student_club",
+              "superhero",
+              "toxicology"
+            ],
+            "gemma-4": [
+              "debit_card_specializing",
+              "student_club",
+              "superhero",
+              "toxicology"
+            ]
+          }
+        }
+      }
+    }
+  ]
+}

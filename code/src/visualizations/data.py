@@ -12,26 +12,15 @@ from __future__ import annotations
 import json
 import sys
 from collections.abc import Collection, Iterator, Mapping, Sequence
-from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
 import pandas as pd
 
-from visualizations.config import SQL_EXECUTION_LABEL
-
 SCORED_SUFFIX = ".scored.ndjson"
 SOURCE_FILE_COLUMN = "source_file"
 HAS_ANSWER_COLUMN = "has_answer"
 
-
-@dataclass(frozen=True, slots=True)
-class CompleteQuestionCohort:
-    """Successful rows from questions completed by every selected model and method."""
-
-    records: pd.DataFrame
-    question_count: int
-    observation_count: int
 
 # Lightweight fields that are useful to most analyses. Large response/attempt payloads are
 # intentionally opt-in through the ``columns`` argument to ``load_scored_results``.
@@ -78,72 +67,6 @@ def discover_scored_files(target: Path) -> list[Path]:
     if target.is_dir():
         return sorted(path for path in target.rglob(f"*{SCORED_SUFFIX}") if path.is_file())
     raise FileNotFoundError(f"Results path does not exist: {target}")
-
-
-def select_complete_question_cohort(results: pd.DataFrame) -> CompleteQuestionCohort:
-    """Select a common question cohort for unbiased cross-method efficiency means.
-
-    A question is retained within a dataset only when every model--method combination present
-    in that dataset has a row with no pipeline error and a non-empty generated answer. The
-    returned records therefore give every displayed method the same questions and models.
-    Text-to-SQL success here means successful generation, matching the historical filtering of
-    the efficiency plots; reference-answer agreement is scored separately.
-    """
-    required_columns = {
-        "dataset",
-        "example_id",
-        "model_id",
-        "pipeline",
-        "format",
-        "error",
-        HAS_ANSWER_COLUMN,
-    }
-    missing = required_columns.difference(results.columns)
-    if missing:
-        names = ", ".join(sorted(missing))
-        raise ValueError(f"Result data is missing complete-cohort column(s): {names}")
-    if results.empty:
-        return CompleteQuestionCohort(results.copy(), 0, 0)
-
-    data = results.copy()
-    method_column = "_complete_cohort_method"
-    data[method_column] = data["format"]
-    is_sql = data["pipeline"].eq("text_to_sql") & data["format"].isna()
-    data.loc[is_sql, method_column] = SQL_EXECUTION_LABEL
-    valid_identity = data[["dataset", "example_id", "model_id", method_column]].notna().all(axis=1)
-    data = data.loc[valid_identity].copy()
-
-    successful = data["error"].isna() & data[HAS_ANSWER_COLUMN].eq(True)
-    eligible_keys: list[tuple[object, object]] = []
-    for dataset, dataset_rows in data.groupby("dataset", observed=True, sort=False):
-        models = dataset_rows["model_id"].drop_duplicates()
-        methods = dataset_rows[method_column].drop_duplicates()
-        expected_count = len(models) * len(methods)
-        if expected_count == 0:
-            continue
-
-        successful_keys = dataset_rows.loc[
-            successful.loc[dataset_rows.index],
-            ["example_id", "model_id", method_column],
-        ].drop_duplicates()
-        coverage = successful_keys.groupby("example_id", observed=True).size()
-        eligible_keys.extend(
-            (dataset, example_id)
-            for example_id in coverage.index[coverage.eq(expected_count)]
-        )
-
-    if not eligible_keys:
-        empty = data.iloc[0:0].drop(columns=method_column)
-        return CompleteQuestionCohort(empty, 0, 0)
-
-    eligible_index = pd.MultiIndex.from_tuples(eligible_keys, names=["dataset", "example_id"])
-    row_index = pd.MultiIndex.from_frame(data[["dataset", "example_id"]])
-    selected = data.loc[row_index.isin(eligible_index) & successful].drop(columns=method_column)
-    return CompleteQuestionCohort(
-        records=selected.copy(),
-        question_count=len(eligible_keys),
-        observation_count=len(selected),
-    )
 
 
 def load_scored_results(

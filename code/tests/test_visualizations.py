@@ -9,14 +9,10 @@ import pytest
 
 pytest.importorskip("pandas")
 
-import pandas as pd
-
 from visualizations.config import METHOD_LABELS, METRIC_TITLES
 from visualizations.data import (
-    HAS_ANSWER_COLUMN,
     discover_scored_files,
     load_scored_results,
-    select_complete_question_cohort,
 )
 
 
@@ -121,30 +117,3 @@ def test_load_scored_results_skips_malformed_lines(tmp_path: Path, capsys) -> No
 
     assert loaded["input_tokens"].tolist() == [42]
     assert "skipping line 2" in capsys.readouterr().err
-
-
-def test_complete_cohort_removes_a_question_from_every_model_and_method() -> None:
-    rows: list[dict[str, object]] = []
-    for example_id, tokens in (("short", 100), ("long", 1_000)):
-        for model_id in ("model-a", "model-b"):
-            for method in ("csv", "json"):
-                failed = example_id == "long" and model_id == "model-b" and method == "json"
-                rows.append(
-                    {
-                        "dataset": "bird",
-                        "example_id": example_id,
-                        "model_id": model_id,
-                        "pipeline": "direct",
-                        "format": method,
-                        "error": "context_exceeded" if failed else None,
-                        HAS_ANSWER_COLUMN: not failed,
-                        "input_tokens": 0 if failed else tokens,
-                    }
-                )
-
-    cohort = select_complete_question_cohort(pd.DataFrame(rows))
-
-    assert cohort.question_count == 1
-    assert cohort.observation_count == 4
-    assert set(cohort.records["example_id"]) == {"short"}
-    assert set(cohort.records["input_tokens"]) == {100}

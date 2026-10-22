@@ -45,7 +45,8 @@ def render_text_to_sql_operational_table(
             r"\begin{table}[htbp]",
             r"  \centering",
             r"  \small",
-            r"  \caption{Mean Text-to-SQL operational-efficiency measurements by dataset.}",
+            r"  \caption{Mean Text-to-SQL operational-efficiency measurements by dataset "
+            r"on the answerable cohort.}",
             f"  \\label{{{label}}}",
             r"  \resizebox{\textwidth}{!}{%",
             r"  \begin{tabular}{@{}lrrrrrrr@{}}",
@@ -63,7 +64,8 @@ def render_text_to_sql_operational_table(
             (
                 r"  \parbox{\linewidth}{\scriptsize \textit{Note:} Token counts and model "
                 r"times are accumulated across the initial generation and all correction "
-                r"attempts. TTFT is the sum of first-token waits across attempts; Generation "
+                r"attempts, including terminal failures. TTFT is the sum of first-token waits "
+                r"across attempts; Generation "
                 r"is the remaining model time. Total also includes SQL execution. Brackets "
                 r"show pointwise \qty{95}{\percent} database-bootstrap confidence intervals.}"
             ),

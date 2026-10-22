@@ -6,6 +6,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from typing import Any
 
+import numpy as np
 import pandas as pd
 
 from visualizations.config import (
@@ -23,6 +24,8 @@ from visualizations.uncertainty import mean_intervals
 
 ATTEMPT_TTFT_COLUMN = "attempts.llm_metrics.time_to_first_token_s"
 ATTEMPT_GENERATION_COLUMN = "attempts.llm_metrics.total_generation_time_s"
+ATTEMPT_INPUT_COLUMN = "attempts.llm_metrics.input_tokens"
+ATTEMPT_OUTPUT_COLUMN = "attempts.llm_metrics.output_tokens"
 TEXT_TO_SQL_COLUMNS: tuple[str, ...] = (
     "dataset",
     "db_id",
@@ -42,6 +45,8 @@ TEXT_TO_SQL_COLUMNS: tuple[str, ...] = (
     *METRIC_SOURCE_COLUMNS.values(),
     ATTEMPT_TTFT_COLUMN,
     ATTEMPT_GENERATION_COLUMN,
+    ATTEMPT_INPUT_COLUMN,
+    ATTEMPT_OUTPUT_COLUMN,
 )
 NUMERIC_COLUMNS: tuple[str, ...] = (
     "input_tokens",
@@ -51,7 +56,6 @@ NUMERIC_COLUMNS: tuple[str, ...] = (
     "query_execution_time_s",
     "total_time_s",
     "retry_count",
-    *METRIC_SOURCE_COLUMNS.values(),
 )
 
 
@@ -72,7 +76,12 @@ def calculate_text_to_sql_analysis(
     *,
     excluded_model_markers: Sequence[str] = DEFAULT_EXCLUDED_MODEL_MARKERS,
 ) -> TextToSqlAnalysis:
-    """Validate retained Text-to-SQL runs and calculate dataset/model means."""
+    """Summarize explicitly selected records without selecting a question cohort.
+
+    Standalone callers supply answerable records; operational comparisons supply
+    context-fit records. Failed runs retain all recorded work; stored scores must
+    be zero and are never rewritten by this analysis.
+    """
     _require_columns(results, TEXT_TO_SQL_COLUMNS)
     data = results[
         results["dataset"].isin(DATASET_ORDER) & results["pipeline"].eq("text_to_sql")
@@ -89,12 +98,37 @@ def calculate_text_to_sql_analysis(
         identity = data.loc[duplicate, ["dataset", "model_id", "example_id"]].iloc[0]
         raise ValueError(f"Duplicate Text-to-SQL run identity: {identity.to_dict()}")
 
-    for column in NUMERIC_COLUMNS:
+    identities = data[["dataset", "db_id", "example_id", "model_id"]]
+    if identities.isna().any().any() or identities.map(
+        lambda value: not isinstance(value, str) or not value.strip()
+    ).any().any():
+        raise ValueError("Text-to-SQL run identities must be present")
+    if data.groupby(["dataset", "example_id"])["db_id"].nunique().gt(1).any():
+        raise ValueError("Text-to-SQL question identities have inconsistent databases")
+    valid_success = data["execution_success"].map(
+        lambda value: isinstance(value, (bool, np.bool_))
+    )
+    if not valid_success.all():
+        raise ValueError("Text-to-SQL execution_success must be a recorded boolean")
+    data["execution_success"] = data["execution_success"].astype(bool)
+    if (data["execution_success"] & data["error"].notna()).any():
+        raise ValueError("Successful Text-to-SQL runs cannot have a terminal error")
+    score_columns = list(METRIC_SOURCE_COLUMNS.values())
+    for column in score_columns:
         data[column] = pd.to_numeric(data[column], errors="coerce")
-    missing_numeric = data[list(NUMERIC_COLUMNS)].isna().any(axis=1)
+    if not np.isfinite(data[score_columns].to_numpy(dtype=float)).all():
+        raise ValueError("Text-to-SQL runs have missing or invalid accuracy scores")
+    if data.loc[~data["execution_success"], score_columns].ne(0).any().any():
+        raise ValueError("Failed Text-to-SQL runs must have zero stored accuracy scores")
+
+    for column in NUMERIC_COLUMNS:
+        if data[column].map(lambda value: isinstance(value, (bool, np.bool_))).any():
+            raise ValueError(f"Text-to-SQL {column} must be numeric, not boolean")
+        data[column] = pd.to_numeric(data[column], errors="coerce")
+    missing_numeric = ~np.isfinite(data[list(NUMERIC_COLUMNS)].to_numpy(dtype=float)).all(axis=1)
     if missing_numeric.any():
         raise ValueError(
-            f"{int(missing_numeric.sum())} Text-to-SQL row(s) have missing numeric metrics"
+            f"{int(missing_numeric.sum())} Text-to-SQL row(s) have missing or non-finite metrics"
         )
     negative_operational = data[
         [
@@ -111,6 +145,11 @@ def calculate_text_to_sql_analysis(
         raise ValueError(
             f"{int(negative_operational.sum())} Text-to-SQL row(s) have negative metrics"
         )
+    for column in ("input_tokens", "output_tokens", "retry_count"):
+        if data[column].mod(1).ne(0).any():
+            raise ValueError(f"Text-to-SQL {column} must be an integer")
+    if data["retry_count"].gt(3).any():
+        raise ValueError("Text-to-SQL retry_count exceeds the three-retry policy")
 
     timer_difference = (
         data["generation_time_s"]
@@ -152,12 +191,35 @@ def calculate_text_to_sql_analysis(
     )
     data["attempt_count"] = attempt_counts
 
-    data["cumulative_ttft_s"] = data[ATTEMPT_TTFT_COLUMN].map(_sum_attempt_values)
-    missing_attempt_timing = data["cumulative_ttft_s"].isna()
+    attempt_ttft = data[ATTEMPT_TTFT_COLUMN].map(_numeric_attempt_values)
+    missing_attempt_timing = attempt_ttft.isna()
     if missing_attempt_timing.any():
         raise ValueError(
             f"{int(missing_attempt_timing.sum())} Text-to-SQL row(s) lack attempt TTFT data"
         )
+    if attempt_ttft.map(len).ne(attempt_counts).any():
+        raise ValueError("Text-to-SQL rows have inconsistent attempt TTFT counts")
+    for waits, durations in zip(attempt_ttft, data["attempt_generation_times_s"], strict=True):
+        if any(wait > duration + 1e-6 for wait, duration in zip(waits, durations, strict=True)):
+            raise ValueError("Text-to-SQL attempt TTFT exceeds its model generation time")
+    if (attempt_ttft.map(lambda values: values[0]) - data["time_to_first_token_s"]).abs().gt(
+        1e-6
+    ).any():
+        raise ValueError("Text-to-SQL initial TTFT disagrees with the first attempt")
+    data["cumulative_ttft_s"] = attempt_ttft.map(sum)
+    for source, total in (
+        (ATTEMPT_INPUT_COLUMN, "input_tokens"),
+        (ATTEMPT_OUTPUT_COLUMN, "output_tokens"),
+    ):
+        attempts = data[source].map(_numeric_attempt_values)
+        if attempts.isna().any():
+            raise ValueError(f"Text-to-SQL rows lack valid attempt {total}")
+        if attempts.map(len).ne(attempt_counts).any():
+            raise ValueError(f"Text-to-SQL rows have inconsistent attempt {total} counts")
+        if attempts.map(lambda values: any(value % 1 for value in values)).any():
+            raise ValueError(f"Text-to-SQL attempt {total} must be integers")
+        if attempts.map(sum).ne(data[total]).any():
+            raise ValueError(f"Text-to-SQL accumulated {total} disagrees with attempts")
     invalid_ttft = data["cumulative_ttft_s"].gt(data["generation_time_s"] + 1e-6)
     if invalid_ttft.any():
         raise ValueError(
@@ -255,15 +317,12 @@ def text_to_sql_model_label(model_family: str, size_label: str) -> str:
 def _numeric_attempt_values(values: Any) -> list[float] | None:
     if not isinstance(values, list) or not values:
         return None
+    if any(isinstance(value, (bool, np.bool_)) for value in values):
+        return None
     numeric = pd.to_numeric(pd.Series(values), errors="coerce")
-    if numeric.isna().any() or numeric.lt(0).any():
+    if not np.isfinite(numeric).all() or numeric.lt(0).any():
         return None
     return [float(value) for value in numeric]
-
-
-def _sum_attempt_values(values: Any) -> float | None:
-    numeric = _numeric_attempt_values(values)
-    return sum(numeric) if numeric is not None else None
 
 
 def _sort_dataset_summary(summary: pd.DataFrame) -> pd.DataFrame:

@@ -22,8 +22,8 @@ def render_direct_operational_table(
     analysis: DirectEfficiencyAnalysis,
     *,
     caption: str = (
-        "Mean operational-efficiency measurements for Direct Context Inference on the common "
-        "complete-case cohort."
+        "Mean operational-efficiency measurements for Direct Context Inference on the shared "
+        "recorded context-fit cohort."
     ),
     label: str = DIRECT_OPERATIONAL_TABLE_LABEL,
 ) -> str:
@@ -78,13 +78,13 @@ def render_direct_operational_table(
         for dataset in datasets
     ]
     note = (
-        "The matched cohort includes "
+        "The recorded context-fit cohort includes "
         + "; ".join(cohort_parts)
-        + f", with all {num(analysis.model_count)} retained models and all displayed formats. "
+        + f", with all {num(analysis.model_count)} retained models and all six formats. "
+        "Recorded costs are retained regardless of output success or correctness. "
         "Generation time is measured from the first output token to completion; total latency "
         "is measured from request submission to completion. Brackets show pointwise "
-        f"{percent(95)} database-bootstrap confidence intervals. BIRD intervals describe only "
-        "the two observed databases."
+        f"{percent(95)} database-bootstrap confidence intervals for the represented databases."
     )
     return "\n".join(
         [

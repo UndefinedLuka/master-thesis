@@ -1,10 +1,15 @@
-"""Shared preparation and validation for direct-context retrieval-accuracy figures."""
+"""Direct-context accuracy calculations on explicitly supplied answerable records.
+
+Cohort membership is selected by the caller from reference records. No generated-answer,
+execution-success, or context-fit filter is applied here.
+"""
 
 from __future__ import annotations
 
 import re
 from collections.abc import Sequence
 
+import numpy as np
 import pandas as pd
 
 from visualizations.config import (
@@ -51,6 +56,14 @@ def validate_direct_accuracy_scores(
     if direct.empty:
         raise ValueError("No retained direct-context result records are available")
 
+    _validate_scores(direct)
+    return len(direct)
+
+
+def _validate_scores(direct: pd.DataFrame) -> None:
+    identities = ["dataset", "db_id", "example_id", "model_id", "format"]
+    if direct.duplicated(identities).any():
+        raise ValueError("Duplicate direct-context accuracy run identities")
     for metric, source_column in METRIC_SOURCE_COLUMNS.items():
         numeric = pd.to_numeric(direct[source_column], errors="coerce")
         missing_count = int(numeric.isna().sum())
@@ -58,7 +71,8 @@ def validate_direct_accuracy_scores(
             raise ValueError(
                 f"Direct-context accuracy has {missing_count:,} missing {metric} score(s)"
             )
-    return len(direct)
+        if not np.isfinite(numeric).all():
+            raise ValueError(f"Direct-context accuracy has non-finite {metric} score(s)")
 
 
 def prepare_direct_accuracy(
@@ -66,9 +80,10 @@ def prepare_direct_accuracy(
     *,
     excluded_model_markers: Sequence[str] = DEFAULT_EXCLUDED_MODEL_MARKERS,
 ) -> pd.DataFrame:
-    """Return direct-only scores in long form, retaining explicit zero-scored failures."""
+    """Return answerable direct scores in long form, retaining zero-scored failures."""
     _require_columns(results, DIRECT_ACCURACY_COLUMNS)
     direct = _retained_direct_rows(results, excluded_model_markers=excluded_model_markers)
+    _validate_scores(direct)
     renamed = direct.rename(
         columns={source: metric for metric, source in METRIC_SOURCE_COLUMNS.items()}
     )
@@ -78,8 +93,8 @@ def prepare_direct_accuracy(
         var_name="metric",
         value_name="score",
     )
-    long_data["score"] = pd.to_numeric(long_data["score"], errors="coerce")
-    return long_data.dropna(subset=["score"]).reset_index(drop=True)
+    long_data["score"] = pd.to_numeric(long_data["score"], errors="raise")
+    return long_data.reset_index(drop=True)
 
 
 def calculate_format_accuracy(
@@ -88,7 +103,7 @@ def calculate_format_accuracy(
     excluded_model_markers: Sequence[str] = DEFAULT_EXCLUDED_MODEL_MARKERS,
     include_sql: bool = False,
 ) -> pd.DataFrame:
-    """Calculate mean direct-context score for each dataset, format, and metric."""
+    """Calculate answerable-run means and paired format effects for all three metrics."""
     data = prepare_direct_accuracy(
         results,
         excluded_model_markers=excluded_model_markers,
@@ -134,7 +149,7 @@ def calculate_model_size_accuracy(
     *,
     excluded_model_markers: Sequence[str] = DEFAULT_EXCLUDED_MODEL_MARKERS,
 ) -> pd.DataFrame:
-    """Calculate per-model scores averaged equally across all direct serialization runs."""
+    """Calculate run-weighted answerable scores and paired within-family size effects."""
     data = prepare_direct_accuracy(
         results,
         excluded_model_markers=excluded_model_markers,

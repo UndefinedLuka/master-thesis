@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 
+import numpy as np
 import pandas as pd
 
 from visualizations.config import (
@@ -12,7 +13,6 @@ from visualizations.config import (
     DEFAULT_EXCLUDED_MODEL_MARKERS,
     SERIALIZATION_FORMAT_ORDER,
 )
-from visualizations.data import HAS_ANSWER_COLUMN, select_complete_question_cohort
 from visualizations.experiment_outcomes import model_is_excluded
 from visualizations.uncertainty import mean_intervals
 
@@ -23,8 +23,6 @@ DIRECT_EFFICIENCY_COLUMNS: tuple[str, ...] = (
     "model_id",
     "pipeline",
     "format",
-    "error",
-    HAS_ANSWER_COLUMN,
     "input_tokens",
     "output_tokens",
     "time_to_first_token_s",
@@ -56,11 +54,11 @@ def calculate_direct_efficiency(
     *,
     excluded_model_markers: Sequence[str] = DEFAULT_EXCLUDED_MODEL_MARKERS,
 ) -> DirectEfficiencyAnalysis:
-    """Build a fair complete-case cohort and calculate format-level operational means.
+    """Summarize explicitly selected context-fit records without selecting questions.
 
-    Within each dataset, a question is retained only when all selected models successfully
-    produced an answer in every serialization format present in the result snapshot. This avoids
-    making verbose formats appear cheaper by averaging them over a smaller, easier workload.
+    The caller selects the shared context-fit workload across both pipelines. All six
+    formats must contain the same question/model pairs; invalid or missing records raise
+    rather than change that workload. Blank answers and failed runs retain recorded costs.
     """
     _require_columns(results, DIRECT_EFFICIENCY_COLUMNS)
     direct = results[
@@ -75,22 +73,27 @@ def calculate_direct_efficiency(
     if direct.empty:
         raise ValueError("No retained direct-context records are available")
 
-    cohort = select_complete_question_cohort(direct)
-    data = cohort.records.copy()
-    if data.empty:
-        raise ValueError("No complete direct-context model/question/format cohort is available")
+    data = direct
+    validate_operational_pairing(data, method_column="format", methods=SERIALIZATION_FORMAT_ORDER)
 
     for column in NUMERIC_COLUMNS:
+        if data[column].map(lambda value: isinstance(value, (bool, np.bool_))).any():
+            raise ValueError(f"Direct operational metric {column} cannot be boolean")
         data[column] = pd.to_numeric(data[column], errors="coerce")
-    missing_metrics = data[list(NUMERIC_COLUMNS)].isna().any(axis=1)
+    missing_metrics = ~np.isfinite(data[list(NUMERIC_COLUMNS)].to_numpy(dtype=float)).all(axis=1)
     if missing_metrics.any():
         raise ValueError(
-            f"{int(missing_metrics.sum())} complete-cohort row(s) have missing operational metrics"
+            f"{int(missing_metrics.sum())} context-fit row(s) have missing or non-finite metrics"
         )
     negative_metrics = data[list(NUMERIC_COLUMNS)].lt(0).any(axis=1)
     if negative_metrics.any():
         count = int(negative_metrics.sum())
-        raise ValueError(f"{count} complete-cohort row(s) have negative operational metrics")
+        raise ValueError(f"{count} context-fit row(s) have negative operational metrics")
+    for column in ("input_tokens", "output_tokens"):
+        if data[column].mod(1).ne(0).any():
+            raise ValueError(f"Direct {column} must be an integer")
+    if data["input_tokens"].le(0).any() or data["total_time_s"].le(0).any():
+        raise ValueError("Direct input tokens and total latency must be positive")
 
     # Direct inference has no post-generation SQL phase, so both persisted timers should agree.
     timer_difference = (data["generation_time_s"] - data["total_time_s"]).abs()
@@ -152,6 +155,35 @@ def calculate_direct_efficiency(
         model_count=int(data["model_id"].nunique()),
         observation_count=len(data),
     )
+
+
+def validate_operational_pairing(
+    data: pd.DataFrame, *, method_column: str, methods: Sequence[str]
+) -> None:
+    """Validate a selected matrix, allowing synthetic model rosters but no missing cells."""
+    identities = ["dataset", "example_id", "model_id", method_column]
+    if data[[*identities, "db_id"]].isna().any(axis=None):
+        raise ValueError("Operational records have missing run identities")
+    if data.duplicated(identities).any():
+        raise ValueError("Duplicate operational run identity")
+    if data.groupby(["dataset", "example_id"])["db_id"].nunique().ne(1).any():
+        raise ValueError("Operational questions have inconsistent database identities")
+    models = set(data["model_id"])
+    for dataset, rows in data.groupby("dataset", observed=True):
+        expected = {
+            (question, model)
+            for question in rows["example_id"].unique()
+            for model in models
+        }
+        for method in methods:
+            actual = set(rows.loc[rows[method_column].eq(method),
+                                  ["example_id", "model_id"]].itertuples(index=False, name=None))
+            if actual != expected:
+                raise ValueError(
+                    f"Selected operational cohort must have identical question/model sets "
+                    f"across all methods: {dataset}/{method} has {len(actual)} of "
+                    f"{len(expected)} expected pairs"
+                )
 
 
 def _sort_summary(summary: pd.DataFrame) -> pd.DataFrame:

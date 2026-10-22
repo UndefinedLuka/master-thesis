@@ -173,7 +173,9 @@ def render_serialization_efficiency_table(
     )
     note = (
         "Means are arithmetic averages across all databases in the named dataset and all three "
-        "representative tokenizer families. Context-fit cells show fitting databases/total "
+        "representative tokenizer families (60 observations per Spider format and 33 per BIRD "
+        "format). Ratios are ratios of these means to CSV, not means of individual ratios. "
+        "Payload-fit cells show fitting databases/total "
         "databases (percentage) for each tokenizer family. Only the serialized database payload "
         "is counted; instructions, questions, chat-template tokens, and output-token headroom "
         f"are excluded. Brackets show pointwise {percent(95)} database-bootstrap "
@@ -195,7 +197,7 @@ def render_serialization_efficiency_table(
             r"      \toprule",
             (
                 r"      Dataset & Format & \multicolumn{2}{c}{Token use} & "
-                + f"\\multicolumn{{{len(families)}}}{{c}}{{Databases fitting context window}}"
+                 + f"\\multicolumn{{{len(families)}}}{{c}}{{Payloads at or below token limit}}"
                 + LATEX_ROW_END
             ),
             (r"      \cmidrule(lr){3-4}" + f"\\cmidrule(lr){{5-{4 + len(families)}}}"),

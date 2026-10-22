@@ -122,10 +122,17 @@ uv run python -m cli.score_results --results results/spider/direct/json/model.nd
 
 ```
 
+### Chapter 5 analysis
+
 The `visualizations` package exposes one orchestrator command for all results-chapter artifacts:
 
 ```bash
 uv run --extra visualizations thesis-visualize-all
+# Explicit input and output locations (defaults shown)
+uv run --extra visualizations thesis-visualize-all \
+  --results results/ --references-dir data/ \
+  --serialization-report results/input_token_overhead/serialization_tokens_by_database.csv \
+  --tables-dir analysis/tables/ --figures-dir analysis/figures/ --audit-dir analysis/chapter5/
 ```
 
 Publication numbers use **siunitx v3**, with decimal commas and thousands dots.
@@ -134,45 +141,72 @@ Matplotlib's PGF backend and the shared `../thesis/style/number_formatting.tex`
 configuration. Generating figures requires `pdflatex`, `pgf`, and `siunitx` in the
 local LaTeX installation. Numeric source data retain their machine-readable form.
 
-The command loads the scored benchmark tree and detailed serialization-token CSV once, validates
-both complete experiment matrices, and invokes the independent table/figure generators. It writes
-`analysis/tables/experiment_outcomes.tex`,
-`analysis/tables/serialization_efficiency.tex`,
-`analysis/figures/tokenizer_family_comparison.pdf`,
-`analysis/figures/direct_accuracy_by_format.pdf`,
-`analysis/figures/direct_accuracy_by_model_size.pdf`,
-`analysis/figures/direct_accuracy_by_database_size_nem.pdf`,
-`analysis/figures/direct_accuracy_by_database_size_bertscore.pdf`,
-`analysis/figures/direct_accuracy_by_database_size_rouge_l.pdf`,
-`analysis/tables/direct_operational_efficiency.tex`,
-`analysis/figures/direct_token_usage_by_format.pdf`,
-`analysis/figures/direct_latency_by_format.pdf`,
-`analysis/tables/text_to_sql_retrieval_accuracy.tex`,
-`analysis/figures/text_to_sql_accuracy_by_model_size.pdf`,
-`analysis/tables/text_to_sql_operational_efficiency.tex`,
-`analysis/figures/text_to_sql_token_usage.pdf`,
-`analysis/figures/text_to_sql_latency.pdf`,
-`analysis/tables/text_to_sql_error_correction.tex`, and
-`analysis/figures/text_to_sql_error_correction.pdf`. The direct-context accuracy figures report
-NEM, BERTScore, and ROUGE-L; the latter two report F1, and BERTScore is raw (unrescaled). The
-format figure averages over retained models and questions, while the model-size figure averages
-each model over all six formats and questions. The three database-size figures separately report
-NEM, BERTScore, and ROUGE-L.
-Each contains six format panels, and every panel places all Spider and BIRD databases on the same
-logarithmic axis using that format's mean tokenizer-specific token footprint as effective size.
-Explicit zero scores assigned to failed runs remain included in the accuracy figures. The operational
-efficiency artifacts instead use a common complete-case cohort within each dataset, ensuring
-that every format is averaged over the same successfully processed questions and models. The
-latency figure decomposes total response latency into time to first token and generation after
-the first token. Text-to-SQL operational artifacts include all correction attempts: tokens and
-model time are accumulated, and the retry-aware latency figure also includes SQL execution. The
-error-correction artifacts report the terminal execution attempt and exact model-generation
-time added by attempts after the first.
+The command reads scored benchmark NDJSON, the detailed serialization-token CSV, and the stored
+`spider_references.ndjson` and `bird_references.ndjson` used for scoring. References must describe
+the full Spider and materialized sampled BIRD databases used in the experiments. Analysis reuses
+these records; it does not rerun inference or reference SQL. Reference identities, database
+identities, row counts, and the explicit ten-model/seven-configuration matrix are audited before
+generating results. Qwen 3.5 27B is excluded from the fixed retained cohort roster.
 
-Qwen 3.5 27B is excluded from the outcome and retrieval-accuracy analyses by default; use
-`--exclude-model` to override this. `--context-window` changes the serialization-fit threshold,
-while `--tables-dir` and `--figures-dir` change artifact locations. Use `--allow-incomplete` only
-for smoke tests with partial inputs.
+Questions are joined by `(dataset, example_id)` and selected once for all models and methods:
+
+| Population | Definition | Uses |
+| --- | --- | --- |
+| Answerable | Reference SQL succeeded and returned at least one stored row. Rows containing zero or NULL still count. | All NEM, BERTScore, and ROUGE-L accuracy views, including pipeline comparisons; standalone SQL efficiency, execution success, and correction analysis. |
+| Context-fit | Recorded context feasibility across all ten retained models, all six direct formats, and SQL: 70 records per question. | Direct-format efficiency and head-to-head operational comparisons, using exactly the same question set. |
+
+Answerable analyses retain context overflow and other terminal pipeline failures with their stored
+zero accuracy scores. Empty references are excluded from answerable analyses but remain eligible
+for context-fit analyses. Missing, failed, or inconsistent references are audited separately.
+Context-fit membership does not depend on generated-answer presence, SQL execution success, or
+accuracy. It uses the runner's recorded fixed-system-prompt check plus output headroom and
+inference evidence; SQL requires evidence for every initial and correction attempt. This is
+distinct from a complete question-bearing chat-prompt check and from payload-only token fit.
+SQL execution/extraction failures retain their measured work. Invalid or missing operational
+measurements stop analysis rather than becoming zero costs or silently dropped rows.
+
+The outcome inventory describes the full retained campaign; serialization describes all 31
+experimental databases independently of question cohorts. `--allow-incomplete` skips only the
+campaign-size and serialization-coverage checks for small synthetic smoke inputs. It does **not**
+relax the required ten-model/seven-configuration cohort matrix or identity/evidence validation.
+`--context-window` changes only the serialization payload-fit threshold. Chapter 5 generation
+uses the confirmed ten-model roster and excludes Qwen 3.5 27B consistently across all run analyses.
+
+Generated outputs under `analysis/`:
+
+| Result | Tables in `tables/` | Figures in `figures/` |
+| --- | --- | --- |
+| Serialization | `serialization_efficiency.tex` | `tokenizer_family_comparison.pdf` |
+| Cohorts and campaign | `analysis_cohorts.tex`, `experiment_outcomes.tex` | — |
+| Direct accuracy | — | `direct_accuracy_by_format.pdf`, `direct_accuracy_by_model_size.pdf`, `direct_accuracy_by_database_size_nem.pdf` |
+| Direct efficiency | `direct_operational_efficiency.tex` | `direct_token_usage_by_format.pdf`, `direct_latency_by_format.pdf` |
+| SQL accuracy | `text_to_sql_retrieval_accuracy.tex` | `text_to_sql_accuracy_by_model_size.pdf` |
+| SQL efficiency | `text_to_sql_operational_efficiency.tex` | `text_to_sql_token_usage.pdf`, `text_to_sql_latency.pdf` |
+| SQL correction | `text_to_sql_error_correction.tex` | `text_to_sql_error_correction.pdf` |
+| Pipeline accuracy | — | `pipeline_retrieval_comparison.pdf` |
+| Pipeline efficiency | `common_cohort_operational_efficiency.tex` | `common_cohort_latency.pdf`, `common_cohort_token_usage.pdf` |
+
+The audit directory contains `analysis_cohort_membership.csv` with both question-level membership
+flags, reference status/counts, context evidence, and exclusion/unknown reasons.
+`analysis_cohort_audit.json` records the roster, reference-file paths and SHA-256 hashes,
+dataset-specific counts, unknown eligibility, and cohort intersections. Supporting CSVs retain
+unrounded accuracy, database-size associations for all three metrics, efficiency, SQL retries,
+and paired pipeline comparisons, including `context_fit_sql_outcomes.csv` for SQL failures on
+the shared operational workload.
+
+Results are run-weighted and reported separately for Spider and BIRD, with database-level
+bootstrap uncertainty (10,000 repetitions, pointwise 95% intervals). BERTScore is raw
+(unrescaled); BERTScore and ROUGE-L use F1. Direct format accuracy averages over models and
+questions; model-size accuracy averages each model over all six formats and questions. The NEM
+database-size figure has six format panels with a logarithmic token-footprint axis; supporting
+data also retain BERTScore and ROUGE-L size associations.
+
+Latency separates TTFT and generation after the first token. SQL tokens and model time include
+all initial/correction attempts, plus aggregate SQL execution time in total latency. Correction
+outputs report execution outcomes and additional model-generation time after the first attempt.
+Standalone SQL efficiency uses answerable questions, whereas comparative SQL efficiency uses
+context-fit questions; their means describe different workloads. Likewise, answerable accuracy
+and context-fit timing do not constitute a single matched-workload trade-off.
 
 Internally, each artifact has its own module and produces exactly one table or figure. Shared
 publication labels, orderings, colors, filenames, and experiment constants are defined in

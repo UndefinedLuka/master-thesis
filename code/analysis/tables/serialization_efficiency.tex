@@ -6,7 +6,7 @@
   \resizebox{\linewidth}{!}{%
     \begin{tabular}{@{}llrrccc@{}}
       \toprule
-      Dataset & Format & \multicolumn{2}{c}{Token use} & \multicolumn{3}{c}{Databases fitting context window} \\
+      Dataset & Format & \multicolumn{2}{c}{Token use} & \multicolumn{3}{c}{Payloads at or below token limit} \\
       \cmidrule(lr){3-4}\cmidrule(lr){5-7}
        &  & Mean tokens & Ratio to CSV & Qwen 3.5 & Ministral 3 & Gemma 4 \\
       \midrule
@@ -27,5 +27,5 @@
     \end{tabular}%
   }
   \vspace{0.4em}
-  \parbox{\linewidth}{\scriptsize \textit{Note:} Means are arithmetic averages across all databases in the named dataset and all three representative tokenizer families. Context-fit cells show fitting databases/total databases (percentage) for each tokenizer family. Only the serialized database payload is counted; instructions, questions, chat-template tokens, and output-token headroom are excluded. Brackets show pointwise \qty{95}{\percent} database-bootstrap confidence intervals; ratios use CSV as the reference. The complete set of \num{31} databases, six formats, and three tokenizer families was validated.}
+  \parbox{\linewidth}{\scriptsize \textit{Note:} Means are arithmetic averages across all databases in the named dataset and all three representative tokenizer families (60 observations per Spider format and 33 per BIRD format). Ratios are ratios of these means to CSV, not means of individual ratios. Payload-fit cells show fitting databases/total databases (percentage) for each tokenizer family. Only the serialized database payload is counted; instructions, questions, chat-template tokens, and output-token headroom are excluded. Brackets show pointwise \qty{95}{\percent} database-bootstrap confidence intervals; ratios use CSV as the reference. The complete set of \num{31} databases, six formats, and three tokenizer families was validated.}
 \end{table}

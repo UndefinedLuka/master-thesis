@@ -1,4 +1,4 @@
-"""Tests for the strict cross-pipeline question intersection and its artifacts."""
+"""Tests for recorded costs on an explicitly selected shared context-fit cohort."""
 
 from __future__ import annotations
 
@@ -16,10 +16,6 @@ from visualizations.common_cohort_latency import (
     generate_common_cohort_latency_figure,
     plot_common_cohort_latency,
 )
-from visualizations.common_cohort_latency_by_model import (
-    generate_common_cohort_model_figure,
-    plot_common_cohort_latency_by_model,
-)
 from visualizations.common_cohort_operational_table import (
     generate_common_cohort_table,
     render_common_cohort_table,
@@ -30,12 +26,20 @@ from visualizations.common_cohort_token_usage import (
 )
 from visualizations.config import (
     COMMON_COHORT_LATENCY_FIGURE_FILENAME,
-    COMMON_COHORT_MODEL_FIGURE_FILENAME,
+    COMMON_COHORT_METHOD_LABELS,
+    COMMON_COHORT_METHOD_ORDER,
     COMMON_COHORT_TABLE_FILENAME,
     COMMON_COHORT_TOKENS_FIGURE_FILENAME,
 )
-from visualizations.generate_all import generate_all
-from visualizations.text_to_sql_data import ATTEMPT_GENERATION_COLUMN, ATTEMPT_TTFT_COLUMN
+from visualizations.direct_accuracy_data import METRIC_SOURCE_COLUMNS
+from visualizations.direct_efficiency_data import calculate_direct_efficiency
+from visualizations.text_to_sql_data import (
+    ATTEMPT_GENERATION_COLUMN,
+    ATTEMPT_INPUT_COLUMN,
+    ATTEMPT_OUTPUT_COLUMN,
+    ATTEMPT_TTFT_COLUMN,
+    calculate_text_to_sql_analysis,
+)
 
 
 def _matrix() -> pd.DataFrame:
@@ -43,9 +47,9 @@ def _matrix() -> pd.DataFrame:
     for dataset in ("spider", "bird"):
         for question in (0, 1):
             for model in ("Qwen3.5-2B-Q4.gguf", "gemma-4-E4B-Q4.gguf"):
-                for method in ("csv", "json", "text_to_sql"):
+                for method in COMMON_COHORT_METHOD_ORDER:
                     sql = method == "text_to_sql"
-                    total = {"csv": 2.0, "json": 8.0, "text_to_sql": 1.1}[method]
+                    total = {"csv": 2.0, "text_to_sql": 1.1}.get(method, 8.0)
                     rows.append(
                         {
                             "dataset": dataset,
@@ -56,7 +60,7 @@ def _matrix() -> pd.DataFrame:
                             "format": None if sql else method,
                             "error": None,
                             "has_answer": True,
-                            "input_tokens": {"csv": 100, "json": 400, "text_to_sql": 20}[method],
+                            "input_tokens": {"csv": 100, "text_to_sql": 20}.get(method, 400),
                             "output_tokens": 10,
                             "time_to_first_token_s": 0.2 if sql else total / 2,
                             "generation_time_s": 1.0 if sql else total,
@@ -69,6 +73,8 @@ def _matrix() -> pd.DataFrame:
                             "scores.rouge_l_f": 0.5,
                             ATTEMPT_TTFT_COLUMN: [0.2] if sql else None,
                             ATTEMPT_GENERATION_COLUMN: [1.0] if sql else None,
+                            ATTEMPT_INPUT_COLUMN: [20] if sql else None,
+                            ATTEMPT_OUTPUT_COLUMN: [10] if sql else None,
                             "predicted_sql": "SELECT 1" if sql else None,
                             "definitive_failure": False if sql else None,
                         }
@@ -76,7 +82,7 @@ def _matrix() -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
-def test_sql_execution_failure_excludes_question_from_every_model_and_method() -> None:
+def test_sql_execution_failure_and_blank_outputs_retain_every_question_and_cost() -> None:
     data = _matrix()
     failed = (
         data["dataset"].eq("spider")
@@ -86,37 +92,42 @@ def test_sql_execution_failure_excludes_question_from_every_model_and_method() -
     )
     # These are real failure semantics: model generation succeeded, but SQL never executed.
     data.loc[failed, "execution_success"] = False
+    data.loc[failed, list(METRIC_SOURCE_COLUMNS.values())] = 0.0
+    data.loc[failed, "has_answer"] = False
+    data.loc[data["pipeline"].eq("direct"), "has_answer"] = False
     analysis = calculate_common_cohort_analysis(data)
 
-    assert analysis.question_counts == {"spider": 1, "bird": 2}
-    assert analysis.available_question_counts == {"spider": 2, "bird": 2}
-    assert len(analysis.records) == 18
-    assert "spider:db:1" not in set(analysis.records["example_id"])
+    assert analysis.question_counts == {"spider": 2, "bird": 2}
+    assert len(analysis.records) == len(data)
+    assert "spider:db:1" in set(analysis.records["example_id"])
     counts = analysis.records.groupby(["dataset", "method"])["example_id"].size()
-    assert counts.loc["spider"].tolist() == [2, 2, 2]
-    assert counts.loc["bird"].tolist() == [4, 4, 4]
+    assert counts.loc["spider"].tolist() == [4] * 7
+    assert counts.loc["bird"].tolist() == [4] * 7
+    sql = analysis.records[analysis.records["pipeline"].eq("text_to_sql")]
+    assert sql["execution_success"].eq(False).sum() == 1
+    assert sql["input_tokens"].sum() == 8 * 20
 
 
-@pytest.mark.parametrize("reason", ["missing", "context", "empty"])
-def test_incomplete_direct_run_excludes_the_entire_question(reason: str) -> None:
+@pytest.mark.parametrize("method", ["json", "text_to_sql"])
+def test_missing_selected_run_raises_instead_of_shrinking_the_workload(method: str) -> None:
     data = _matrix()
-    index = data.index[data["example_id"].eq("spider:db:1") & data["format"].eq("json")][0]
-    if reason == "missing":
-        data = data.drop(index)
-    elif reason == "context":
-        data.loc[index, "error"] = "context_exceeded"
-    else:
-        data.loc[index, "has_answer"] = False
-    analysis = calculate_common_cohort_analysis(data)
-    assert analysis.question_counts["spider"] == 1
-    assert "spider:db:1" not in set(analysis.records["example_id"])
+    methods = data["format"].fillna("text_to_sql")
+    index = data.index[data["example_id"].eq("spider:db:1") & methods.eq(method)][0]
+    with pytest.raises(ValueError, match="identical question/model sets"):
+        calculate_common_cohort_analysis(data.drop(index))
 
 
-def test_success_after_retry_is_retained_with_cumulative_cost_and_wrong_answers() -> None:
+@pytest.mark.parametrize("success", [True, False])
+def test_retries_retain_all_costs_for_successes_and_terminal_failures(success: bool) -> None:
     data = _matrix()
     index = data.index[data["pipeline"].eq("text_to_sql")][0]
     data.at[index, ATTEMPT_TTFT_COLUMN] = [0.2, 0.3]
     data.at[index, ATTEMPT_GENERATION_COLUMN] = [1.0, 2.0]
+    data.at[index, ATTEMPT_INPUT_COLUMN] = [20, 40]
+    data.at[index, ATTEMPT_OUTPUT_COLUMN] = [10, 0]
+    data.loc[index, "execution_success"] = success
+    if not success:
+        data.loc[index, list(METRIC_SOURCE_COLUMNS.values())] = 0.0
     data.loc[index, ["retry_count", "generation_time_s", "total_time_s"]] = [1, 3.0, 3.1]
     data.loc[index, "input_tokens"] = 60
     analysis = calculate_common_cohort_analysis(data)
@@ -134,14 +145,14 @@ def test_success_after_retry_is_retained_with_cumulative_cost_and_wrong_answers(
 
 def test_pairing_and_ratios_use_the_same_question_and_model() -> None:
     analysis = calculate_common_cohort_analysis(_matrix())
-    assert len(analysis.paired_comparisons) == 16
+    assert len(analysis.paired_comparisons) == 48
     csv_pairs = analysis.paired_comparisons[analysis.paired_comparisons["method"].eq("csv")]
     assert csv_pairs["latency_ratio"].tolist() == pytest.approx([2 / 1.1] * 8)
     assert csv_pairs["input_token_ratio"].tolist() == [5] * 8
     assert csv_pairs["sql_faster"].all()
 
 
-def test_default_model_exclusion_happens_before_cohort_selection() -> None:
+def test_default_model_exclusion_happens_before_matrix_validation() -> None:
     data = _matrix()
     excluded = data.iloc[[0]].copy()
     excluded["model_id"] = "Qwen3.5-27B-Q4.gguf"
@@ -153,15 +164,43 @@ def test_default_model_exclusion_happens_before_cohort_selection() -> None:
 
 def test_duplicate_run_is_rejected_instead_of_double_weighted() -> None:
     data = _matrix()
-    with pytest.raises(ValueError, match="Duplicate common-cohort run"):
+    with pytest.raises(ValueError, match="Duplicate operational run"):
         calculate_common_cohort_analysis(pd.concat([data, data.iloc[[0]]], ignore_index=True))
 
 
-def test_dataset_with_no_shared_successful_questions_is_rejected() -> None:
+def test_inconsistent_database_identity_is_rejected() -> None:
     data = _matrix()
-    data.loc[data["dataset"].eq("bird"), "has_answer"] = False
-    with pytest.raises(ValueError, match="No successful common question cohort for bird"):
+    data.loc[0, "db_id"] = "other-db"
+    with pytest.raises(ValueError, match="inconsistent database identities"):
         calculate_common_cohort_analysis(data)
+
+
+def test_direct_and_common_calculations_use_identical_records_and_numbers() -> None:
+    data = _matrix()
+    data.loc[data["pipeline"].eq("direct"), "has_answer"] = False
+    data.loc[data["pipeline"].eq("text_to_sql"), "execution_success"] = False
+    data.loc[data["pipeline"].eq("text_to_sql"), list(METRIC_SOURCE_COLUMNS.values())] = 0.0
+    direct = calculate_direct_efficiency(data)
+    common = calculate_common_cohort_analysis(data)
+    sql = calculate_text_to_sql_analysis(data)
+    assert direct.question_counts == common.question_counts == sql.question_counts
+    keys = ["db_id", "example_id", "model_id"]
+    for _dataset, records in common.records.groupby("dataset"):
+        sets = [set(rows[keys].itertuples(index=False, name=None))
+                for _, rows in records.groupby("method")]
+        assert all(pairs == sets[0] for pairs in sets)
+    metrics = ["average_input_tokens", "average_output_tokens", "average_ttft_s",
+               "average_generation_time_s", "average_total_latency_s"]
+    left = direct.summary.set_index(["dataset", "format"])[metrics].sort_index()
+    right = common.summary[common.summary["method"].ne("text_to_sql")].rename(
+        columns={"method": "format"}
+    ).set_index(["dataset", "format"])[metrics].sort_index()
+    pd.testing.assert_frame_equal(left, right)
+    sql_means = common.summary[common.summary["method"].eq("text_to_sql")].set_index("dataset")
+    pd.testing.assert_series_equal(
+        sql_means["average_total_latency_s"].sort_index(),
+        sql.dataset_summary.set_index("dataset")["average_total_latency_s"].sort_index(),
+    )
 
 
 @pytest.mark.parametrize("value", [float("inf"), float("nan"), -1.0])
@@ -179,69 +218,31 @@ def test_artifacts_show_all_methods_and_distinguish_log_and_linear_scales(tmp_pa
     analysis = calculate_common_cohort_analysis(_matrix())
     table = render_common_cohort_table(analysis)
     assert r"\label{tab:common-cohort-operational-efficiency}" in table
-    assert "Completion does not imply correctness" in table
+    assert "recorded context-fit" in table
+    assert "SQL failures" in table
     assert "all correction attempts" in table
     assert "Direct / CSV" in table
     assert "Text-to-SQL" in table
     latency = plot_common_cohort_latency(analysis)
     tokens = plot_common_cohort_token_usage(analysis)
-    models = plot_common_cohort_latency_by_model(analysis)
     assert len(latency.axes) == 2
     assert [text.get_text() for text in latency.legends[0].get_texts()][0] == (
         "TTFT (cumulative for SQL)"
     )
     assert len(tokens.axes) == 4
     assert [axis.get_xscale() for axis in tokens.axes] == ["log", "log", "linear", "linear"]
-    assert len(models.axes) == 3  # two panels plus the colorbar
     for axis in latency.axes:
         assert len(axis.containers) == 3
         assert [tick.get_text() for tick in axis.get_yticklabels()] == [
-            "Text-to-SQL",
-            "Direct / CSV",
-            "Direct / JSON",
+            COMMON_COHORT_METHOD_LABELS[method] for method in COMMON_COHORT_METHOD_ORDER
         ]
     for generator, filename in (
         (generate_common_cohort_latency_figure, COMMON_COHORT_LATENCY_FIGURE_FILENAME),
         (generate_common_cohort_token_figure, COMMON_COHORT_TOKENS_FIGURE_FILENAME),
-        (generate_common_cohort_model_figure, COMMON_COHORT_MODEL_FIGURE_FILENAME),
     ):
         path = generator(analysis, tmp_path)
         assert path.name == filename
         assert path.read_bytes().startswith(b"%PDF-")
     assert generate_common_cohort_table(analysis, tmp_path).name == COMMON_COHORT_TABLE_FILENAME
-    for figure in (latency, tokens, models):
+    for figure in (latency, tokens):
         plt.close(figure)
-
-
-def test_orchestrator_registers_all_new_artifacts(tmp_path: Path) -> None:
-    report = pd.DataFrame(
-        [
-            {
-                "dataset": dataset,
-                "database_id": f"{dataset}-db",
-                "format": fmt,
-                "tokenizer_family": family,
-                "tokenizer_label": family,
-                "row_count": 10,
-                "table_count": 1,
-                "tokens": 100 if fmt == "csv" else 400,
-            }
-            for dataset in ("spider", "bird")
-            for fmt in ("csv", "json")
-            for family in ("qwen-3.5", "ministral-3", "gemma-4")
-        ]
-    )
-    outputs = generate_all(
-        _matrix(),
-        report,
-        tables_dir=tmp_path / "tables",
-        figures_dir=tmp_path / "figures",
-        coverage_validated=False,
-    )
-    names = {path.name for path in outputs}
-    assert {
-        COMMON_COHORT_TABLE_FILENAME,
-        COMMON_COHORT_LATENCY_FIGURE_FILENAME,
-        COMMON_COHORT_TOKENS_FIGURE_FILENAME,
-        COMMON_COHORT_MODEL_FIGURE_FILENAME,
-    } <= names

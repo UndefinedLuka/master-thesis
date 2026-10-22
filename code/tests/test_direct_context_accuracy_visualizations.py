@@ -97,6 +97,51 @@ def test_score_validation_reports_missing_direct_metric() -> None:
         validate_direct_accuracy_scores(results)
 
 
+@pytest.mark.parametrize("calculate", [calculate_format_accuracy, calculate_model_size_accuracy])
+@pytest.mark.parametrize("invalid", [None, float("inf"), float("-inf")])
+def test_calculations_reject_invalid_scores_without_changing_cohort(calculate, invalid) -> None:
+    results = pd.DataFrame([_result(bert=invalid)])
+    with pytest.raises(ValueError, match="missing bertscore_f|non-finite bertscore_f"):
+        calculate(results)
+
+
+@pytest.mark.parametrize("calculate", [calculate_format_accuracy, calculate_model_size_accuracy])
+def test_calculations_reject_duplicate_runs(calculate) -> None:
+    results = pd.DataFrame([_result(), _result()])
+    with pytest.raises(ValueError, match="Duplicate direct-context"):
+        calculate(results)
+
+
+def test_answerable_failures_keep_run_weighting_pairing_and_model_effects() -> None:
+    rows = []
+    for db_id, question_count in (("small", 1), ("large", 3)):
+        for question in range(question_count):
+            for model in ("Qwen3.5-2B-Q4.gguf", "Qwen3.5-4B-Q4.gguf"):
+                for fmt in ("csv", "json"):
+                    failed = model.startswith("Qwen3.5-2B") or db_id == "large"
+                    score = 0.0 if failed else 1.0
+                    row = _result(
+                        db_id=db_id, example_id=f"spider:{db_id}:{question}", model=model,
+                        fmt=fmt, exact=score, bert=score, rouge=score,
+                    )
+                    row.update(error="context_exceeded" if failed else None,
+                               has_answer=not failed)
+                    rows.append(row)
+    results = pd.DataFrame(rows)
+    formats = calculate_format_accuracy(results)
+    sizes = calculate_model_size_accuracy(results)
+    assert formats["mean_score"].eq(0.125).all()
+    assert formats["observation_count"].eq(8).all()
+    assert formats["mean_score_effect"].eq(0).all()
+    larger = sizes[sizes["model_size_b"].eq(4)]
+    assert larger["mean_score"].eq(0.25).all()
+    assert larger["mean_score_effect"].eq(0.25).all()
+    assert larger["mean_score_effect_low"].eq(0).all()
+    assert larger["mean_score_effect_high"].eq(1).all()
+    assert sizes["observation_count"].eq(8).all()
+    pd.testing.assert_frame_equal(sizes, calculate_model_size_accuracy(results))
+
+
 def test_model_family_size_parsing_and_active_size_label() -> None:
     assert parse_model_family_size("Qwen3.5-0.8B-Q4.gguf") == ("qwen-3.5", 0.8)
     assert parse_model_family_size("Ministral-3-14B-Instruct-Q4.gguf") == (

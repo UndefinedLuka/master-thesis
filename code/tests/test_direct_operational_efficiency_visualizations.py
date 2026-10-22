@@ -15,6 +15,7 @@ from visualizations.config import (
     DIRECT_LATENCY_FIGURE_FILENAME,
     DIRECT_OPERATIONAL_TABLE_FILENAME,
     DIRECT_TOKEN_USAGE_FIGURE_FILENAME,
+    SERIALIZATION_FORMAT_ORDER,
 )
 from visualizations.direct_efficiency_data import calculate_direct_efficiency
 from visualizations.direct_latency_by_format import (
@@ -68,7 +69,7 @@ def _complete_matrix() -> pd.DataFrame:
         for model_index, model in enumerate(
             ("Qwen3.5-2B-Q4.gguf", "gemma-4-E4B-Q4.gguf"), start=1
         ):
-            for format_index, fmt in enumerate(("csv", "json"), start=1):
+            for format_index, fmt in enumerate(SERIALIZATION_FORMAT_ORDER, start=1):
                 rows.append(
                     _result(
                         dataset=dataset,
@@ -85,32 +86,30 @@ def _complete_matrix() -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
-def test_matched_cohort_removes_incomplete_question_from_all_formats() -> None:
-    rows = _complete_matrix().to_dict("records")
-    # This second Spider question is missing one model/format combination and must be removed
-    # entirely rather than making CSV average over a different workload than JSON.
-    rows.extend(
-        [
-            _result(example_id="spider:db:1", fmt="csv", input_tokens=10),
-            _result(example_id="spider:db:1", fmt="json", input_tokens=20),
-            _result(
-                example_id="spider:db:1",
-                model="gemma-4-E4B-Q4.gguf",
-                fmt="csv",
-                input_tokens=30,
-            ),
-        ]
-    )
+@pytest.mark.parametrize("missing", ["run", "format", "model_question"])
+def test_incomplete_selected_matrix_raises_instead_of_changing_cohort(missing: str) -> None:
+    data = _complete_matrix()
+    if missing == "run":
+        data = data.drop(data.index[0])
+    elif missing == "format":
+        data = data.loc[~data["format"].eq("json")]
+    else:
+        data = data.loc[~(data["dataset"].eq("bird") & data["model_id"].str.startswith("Qwen"))]
+    with pytest.raises(ValueError, match="identical question/model sets"):
+        calculate_direct_efficiency(data)
 
-    analysis = calculate_direct_efficiency(pd.DataFrame(rows))
-    summary = analysis.summary.set_index(["dataset", "format"])
 
+def test_blank_outputs_and_recorded_failures_retain_costs() -> None:
+    data = _complete_matrix()
+    data["has_answer"] = False
+    data["error"] = "recorded output failure"
+    analysis = calculate_direct_efficiency(data)
     assert analysis.question_counts == {"bird": 1, "spider": 1}
-    assert analysis.database_counts == {"bird": 1, "spider": 1}
+    assert analysis.observation_count == len(data)
     assert analysis.model_count == 2
-    assert analysis.observation_count == 8
-    assert summary.loc[("spider", "csv"), "average_input_tokens"] == 100
-    assert summary.loc[("spider", "json"), "average_input_tokens"] == 200
+    expected = data.groupby(["dataset", "format"])["input_tokens"].mean()
+    actual = analysis.summary.set_index(["dataset", "format"])["average_input_tokens"]
+    pd.testing.assert_series_equal(actual.sort_index(), expected.sort_index(), check_names=False)
 
 
 def test_operational_means_split_ttft_generation_and_total() -> None:
@@ -127,6 +126,7 @@ def test_operational_means_split_ttft_generation_and_total() -> None:
         ]
     )
 
+    results = pd.concat([results.assign(format=fmt) for fmt in SERIALIZATION_FORMAT_ORDER])
     row = calculate_direct_efficiency(results).summary.iloc[0]
 
     assert row["average_input_tokens"] == 200
@@ -145,7 +145,26 @@ def test_operational_analysis_rejects_inconsistent_direct_timers() -> None:
     result["total_time_s"] = 5.0
 
     with pytest.raises(ValueError, match="different generation and total timers"):
-        calculate_direct_efficiency(pd.DataFrame([result]))
+        calculate_direct_efficiency(pd.DataFrame([dict(result, format=fmt)
+                                                for fmt in SERIALIZATION_FORMAT_ORDER]))
+
+
+@pytest.mark.parametrize("column,value", [
+    ("input_tokens", float("inf")), ("output_tokens", float("nan")),
+    ("output_tokens", -1), ("input_tokens", 1.5), ("output_tokens", True),
+    ("input_tokens", 0), ("time_to_first_token_s", 100),
+])
+def test_invalid_recorded_measurements_raise(column: str, value: object) -> None:
+    data = _complete_matrix().astype({column: object})
+    data.at[0, column] = value
+    with pytest.raises(ValueError):
+        calculate_direct_efficiency(data)
+
+
+def test_duplicate_direct_identity_raises() -> None:
+    data = _complete_matrix()
+    with pytest.raises(ValueError, match="Duplicate operational run"):
+        calculate_direct_efficiency(pd.concat([data, data.iloc[[0]]]))
 
 
 def test_table_and_figures_contain_all_requested_metrics(tmp_path: Path) -> None:

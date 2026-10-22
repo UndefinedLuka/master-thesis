@@ -2,18 +2,18 @@
 \begin{table}[htbp]
   \centering
   \small
-  \caption{Mean Text-to-SQL operational-efficiency measurements by dataset.}
+  \caption{Mean Text-to-SQL operational-efficiency measurements by dataset on the answerable cohort.}
   \label{tab:text-to-sql-operational-efficiency}
   \resizebox{\textwidth}{!}{%
   \begin{tabular}{@{}lrrrrrrr@{}}
     \toprule
     Dataset & Input tokens & Output tokens & TTFT (s) & Generation (s) & SQL (s) & Total (s) & Retries \\
     \midrule
-    Spider & \shortstack[r]{\num{802}\\{\scriptsize [\num{605}; \num{978}]}} & \shortstack[r]{\num{108.1}\\{\scriptsize [\num{69.9}; \num{144.4}]}} & \shortstack[r]{\num{0.08}\\{\scriptsize [\num{0.07}; \num{0.10}]}} & \shortstack[r]{\num{0.45}\\{\scriptsize [\num{0.31}; \num{0.58}]}} & \shortstack[r]{\num{0.010}\\{\scriptsize [\num{0.005}; \num{0.021}]}} & \shortstack[r]{\num{0.54}\\{\scriptsize [\num{0.39}; \num{0.68}]}} & \shortstack[r]{\num{0.17}\\{\scriptsize [\num{0.11}; \num{0.23}]}} \\
-    BIRD & \shortstack[r]{\num{1893}\\{\scriptsize [\num{1475}; \num{2349}]}} & \shortstack[r]{\num{219.5}\\{\scriptsize [\num{180.1}; \num{266.0}]}} & \shortstack[r]{\num{0.18}\\{\scriptsize [\num{0.14}; \num{0.22}]}} & \shortstack[r]{\num{0.87}\\{\scriptsize [\num{0.72}; \num{1.05}]}} & \shortstack[r]{\num{0.008}\\{\scriptsize [\num{0.007}; \num{0.009}]}} & \shortstack[r]{\num{1.06}\\{\scriptsize [\num{0.89}; \num{1.26}]}} & \shortstack[r]{\num{0.39}\\{\scriptsize [\num{0.30}; \num{0.50}]}} \\
+    Spider & \shortstack[r]{\num{811}\\{\scriptsize [\num{611}; \num{983}]}} & \shortstack[r]{\num{107.3}\\{\scriptsize [\num{69.4}; \num{141.2}]}} & \shortstack[r]{\num{0.08}\\{\scriptsize [\num{0.07}; \num{0.10}]}} & \shortstack[r]{\num{0.44}\\{\scriptsize [\num{0.30}; \num{0.56}]}} & \shortstack[r]{\num{0.010}\\{\scriptsize [\num{0.005}; \num{0.022}]}} & \shortstack[r]{\num{0.54}\\{\scriptsize [\num{0.39}; \num{0.67}]}} & \shortstack[r]{\num{0.17}\\{\scriptsize [\num{0.11}; \num{0.24}]}} \\
+    BIRD & \shortstack[r]{\num{1873}\\{\scriptsize [\num{1443}; \num{2346}]}} & \shortstack[r]{\num{211.1}\\{\scriptsize [\num{173.6}; \num{251.7}]}} & \shortstack[r]{\num{0.18}\\{\scriptsize [\num{0.14}; \num{0.22}]}} & \shortstack[r]{\num{0.85}\\{\scriptsize [\num{0.70}; \num{1.01}]}} & \shortstack[r]{\num{0.008}\\{\scriptsize [\num{0.007}; \num{0.009}]}} & \shortstack[r]{\num{1.03}\\{\scriptsize [\num{0.86}; \num{1.22}]}} & \shortstack[r]{\num{0.40}\\{\scriptsize [\num{0.31}; \num{0.51}]}} \\
     \bottomrule
   \end{tabular}%
   }
   \vspace{0.4em}
-  \parbox{\linewidth}{\scriptsize \textit{Note:} Token counts and model times are accumulated across the initial generation and all correction attempts. TTFT is the sum of first-token waits across attempts; Generation is the remaining model time. Total also includes SQL execution. Brackets show pointwise \qty{95}{\percent} database-bootstrap confidence intervals.}
+  \parbox{\linewidth}{\scriptsize \textit{Note:} Token counts and model times are accumulated across the initial generation and all correction attempts, including terminal failures. TTFT is the sum of first-token waits across attempts; Generation is the remaining model time. Total also includes SQL execution. Brackets show pointwise \qty{95}{\percent} database-bootstrap confidence intervals.}
 \end{table}

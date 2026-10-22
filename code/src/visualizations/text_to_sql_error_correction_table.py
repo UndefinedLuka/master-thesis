@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pandas as pd
+
 from visualizations.config import (
     DATASET_LABELS,
     DATASET_ORDER,
@@ -15,6 +17,7 @@ from visualizations.config import (
 )
 from visualizations.latex_numbers import num, percent
 from visualizations.text_to_sql_retry_data import TextToSqlRetryAnalysis
+from visualizations.uncertainty import table_estimate
 
 
 def render_error_correction_table(
@@ -22,30 +25,46 @@ def render_error_correction_table(
     *,
     label: str = TEXT_TO_SQL_RETRY_TABLE_LABEL,
 ) -> str:
-    """Render terminal execution attempt and retry-time counts."""
+    """Render outcomes, reliability, recovery, and costs with explicit denominators."""
     rows: list[str] = []
-    for dataset in DATASET_ORDER:
-        dataset_rows = analysis.outcome_summary[
-            analysis.outcome_summary["dataset"].eq(dataset)
-        ].set_index("terminal_outcome")
-        for index, outcome in enumerate(RETRY_OUTCOME_ORDER):
-            row = dataset_rows.loc[outcome]
-            rows.append(
-                "    "
-                + " & ".join(
-                    (
-                        DATASET_LABELS[dataset] if index == 0 else "",
-                        RETRY_OUTCOME_LABELS[outcome],
-                        num(int(row["run_count"])),
-                        percent(float(row["run_percentage"]), 2),
-                        num(float(row["total_retry_generation_s"]), 1),
-                        num(float(row["average_retry_generation_s"]), 2),
-                    )
-                )
-                + LATEX_ROW_END
+    outcomes = analysis.outcome_summary.set_index(["dataset", "terminal_outcome"])
+    summary = analysis.gain_summary.set_index("dataset")
+    datasets = [dataset for dataset in DATASET_ORDER if dataset in summary.index]
+    for outcome in RETRY_OUTCOME_ORDER:
+        cells = [RETRY_OUTCOME_LABELS[outcome]]
+        for dataset in datasets:
+            row = outcomes.loc[(dataset, outcome)]
+            cells.append(
+                num(int(row["run_count"])) + " (" + percent(row["run_percentage"], 2) + ")"
             )
-        if dataset != DATASET_ORDER[-1]:
-            rows.append(r"    \midrule")
+        rows.append("    " + " & ".join(cells) + LATEX_ROW_END)
+    rows.append(r"    \midrule")
+    for metric, title, scale, suffix in (
+        ("run_count", "Eligible runs", 1, ""),
+        ("initially_failed_run_count", "Initially failed runs", 1, ""),
+        ("retried_run_count", "Runs entering correction", 1, ""),
+        ("first_attempt_success_rate", "First-attempt execution success", 100, r"\%"),
+        ("final_success_rate", "Final execution success", 100, r"\%"),
+        ("recovery_rate", "Recovery / initially failed runs", 100, r"\%"),
+        ("execution_gain_pp", "Success-rate gain (percentage points)", 1, ""),
+        ("average_retries", "Mean retries / eligible run", 1, ""),
+        ("average_retries_per_retried_run", "Mean retries / run entering correction", 1, ""),
+        ("added_seconds", "Mean added generation (s) / eligible run", 1, ""),
+        (
+            "added_seconds_per_retried_run",
+            "Mean added generation (s) / run entering correction", 1, "",
+        ),
+    ):
+        cells = [title]
+        for dataset in datasets:
+            row = summary.loc[dataset]
+            cells.append(
+                "---" if pd.isna(row[metric]) else table_estimate(
+                    row, metric, 0 if metric.endswith("run_count") else 2,
+                    scale=scale, suffix=suffix,
+                )
+            )
+        rows.append("    " + " & ".join(cells) + LATEX_ROW_END)
 
     return "\n".join(
         [
@@ -55,17 +74,15 @@ def render_error_correction_table(
             r"  \centering",
             r"  \small",
             (
-                r"  \caption{Text-to-SQL terminal execution outcome and retry-generation "
-                r"overhead.}"
+                r"  \caption{Text-to-SQL execution outcomes, recovery, and retry-generation "
+                r"overhead on the answerable cohort.}"
             ),
             f"  \\label{{{label}}}",
             r"  \resizebox{\textwidth}{!}{%",
-            r"  \begin{tabular}{@{}llrrrr@{}}",
+            r"  \begin{tabular}{@{}l" + "r" * len(datasets) + r"@{}}",
             r"    \toprule",
-            (
-                r"    Dataset & Terminal outcome & Runs & Share & Added time (s) & "
-                r"Mean added (s) \\"
-            ),
+            "    Outcome or measure & " + " & ".join(DATASET_LABELS[d] for d in datasets)
+            + LATEX_ROW_END,
             r"    \midrule",
             *rows,
             r"    \bottomrule",
@@ -74,10 +91,15 @@ def render_error_correction_table(
             r"  \vspace{0.4em}",
             (
                 r"  \parbox{\linewidth}{\scriptsize \textit{Note:} Attempt labels identify "
-                r"the generation on which SQL first executed successfully. Added time is "
+                r"the generation on which SQL first executed successfully; outcome shares "
+                r"use all eligible runs. Recovery uses all initially failed runs, including "
+                r"failures that stopped before a retry. Runs entering correction have at least "
+                r"one retry. Success-rate gain uses all eligible runs. Added time is "
                 r"model-generation time from "
                 r"attempts after the first; per-attempt SQL execution time was not persisted "
-                r"separately and is excluded.}"
+                r"separately and is excluded. Failed sequences retain their recorded costs. "
+                r"A dash denotes a zero denominator. Brackets show pointwise "
+                r"\qty{95}{\percent} database-bootstrap intervals.}"
             ),
             r"\end{table}",
             "",

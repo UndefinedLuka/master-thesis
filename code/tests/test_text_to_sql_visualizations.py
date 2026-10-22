@@ -9,6 +9,7 @@ import pytest
 pytest.importorskip("pandas")
 pytest.importorskip("matplotlib")
 
+import numpy as np
 import pandas as pd
 
 from visualizations.config import (
@@ -92,6 +93,8 @@ def _record(
         "scores.rouge_l_f": rouge,
         "attempts.llm_metrics.time_to_first_token_s": attempt_ttft,
         "attempts.llm_metrics.total_generation_time_s": attempt_generation,
+        "attempts.llm_metrics.input_tokens": [input_tokens - retry_count] + [1] * retry_count,
+        "attempts.llm_metrics.output_tokens": [output_tokens - retry_count] + [1] * retry_count,
     }
 
 
@@ -177,7 +180,10 @@ def test_text_to_sql_tables_report_accuracy_execution_and_operations(tmp_path: P
 
     assert "NEM" in retrieval
     assert "BERTScore & ROUGE-L" in retrieval
-    assert "BERTScore and ROUGE-L report F1; BERTScore is raw (unrescaled)." in retrieval
+    assert "BERTScore is raw (unrescaled)." in retrieval
+    assert "F1" not in retrieval
+    assert "answerable cohort" in retrieval
+    assert "answerable cohort" in operational
     assert "Executed" in retrieval
     assert "Correct result" not in retrieval
     assert "Input tokens" in operational
@@ -227,12 +233,18 @@ def test_error_correction_table_and_figure(tmp_path: Path) -> None:
 
     assert "First attempt" in latex
     assert "Complete failure" in latex
-    assert "Added time (s)" in latex
+    assert "Mean added generation (s) / eligible run" in latex
+    assert "Recovery / initially failed runs" in latex
+    assert "Mean retries / run entering correction" in latex
     assert "Correct results" not in latex
     assert [axis.get_title() for axis in axes] == [
-        "Terminal query-execution outcome",
-        "Additional model time by retry stage",
+        "Added generation time by terminal outcome",
+        "Added generation time by retry stage",
     ]
+    # Both decompositions sum to the same added seconds per eligible run.
+    for axis in axes:
+        assert axis.get_ylabel() == "Additional seconds per answerable run"
+        assert sum(patch.get_height() for patch in axis.patches) == pytest.approx(4 / 3)
 
     table_path = generate_error_correction_table(retry_analysis, tmp_path / "tables")
     figure_path = generate_error_correction_figure(retry_analysis, tmp_path / "figures")
@@ -286,3 +298,185 @@ def test_text_to_sql_figures_show_metrics_tokens_latency_and_retries(tmp_path: P
     plt.close(accuracy_figure)
     plt.close(token_figure)
     plt.close(latency_figure)
+
+
+@pytest.mark.parametrize("column,value,message", [
+    ("input_tokens", float("inf"), "non-finite"),
+    ("query_execution_time_s", None, "missing"),
+    ("output_tokens", -1, "negative"),
+    ("retry_count", 0.5, "integer"),
+    ("retry_count", 4, "three-retry"),
+    ("execution_success", None, "boolean"),
+    ("execution_success", "False", "boolean"),
+    ("attempts.llm_metrics.total_generation_time_s", [float("inf")], "generation data"),
+    ("attempts.llm_metrics.time_to_first_token_s", [0.1, 0.2], "TTFT counts"),
+    ("attempts.llm_metrics.time_to_first_token_s", [3.0], "TTFT exceeds"),
+    ("time_to_first_token_s", 0.1, "initial TTFT"),
+    ("db_id", "", "identities"),
+    ("db_id", None, "identities"),
+    ("attempts.llm_metrics.input_tokens", [99], "accumulated input_tokens"),
+    ("attempts.llm_metrics.output_tokens", [None], "valid attempt output_tokens"),
+])
+def test_invalid_operational_measurements_stop_analysis(column, value, message) -> None:
+    row = _record()
+    row[column] = value
+    with pytest.raises(ValueError, match=message):
+        calculate_text_to_sql_analysis(pd.DataFrame([row]))
+
+
+@pytest.mark.parametrize("value", [True, False, np.bool_(True), np.bool_(False)])
+@pytest.mark.parametrize("column", [
+    "input_tokens", "output_tokens", "time_to_first_token_s", "generation_time_s",
+    "query_execution_time_s", "total_time_s", "retry_count",
+    "attempts.llm_metrics.time_to_first_token_s",
+    "attempts.llm_metrics.total_generation_time_s",
+    "attempts.llm_metrics.input_tokens", "attempts.llm_metrics.output_tokens",
+])
+def test_boolean_operational_measurements_are_rejected(column, value) -> None:
+    row = _record()
+    row[column] = [value] if column.startswith("attempts.") else value
+    with pytest.raises(ValueError, match="boolean|lack"):
+        calculate_text_to_sql_analysis(pd.DataFrame([row]))
+
+
+def test_failed_runs_keep_zero_scores_without_dropping_work_or_selecting_questions() -> None:
+    rows = [
+        _record(example_id="spider:db:empty-reference", execution_success=False,
+                exact=0, bert=0, rouge=0),
+        _record(example_id="spider:db:nonempty-reference"),
+    ]
+    rows[0]["error"] = "context_exceeded"
+    rows[0]["raw_output"] = ""
+    analysis = calculate_text_to_sql_analysis(pd.DataFrame(rows))
+    assert analysis.run_count == 2
+    assert analysis.question_counts == {"spider": 2}
+    failed = analysis.records.iloc[0]
+    assert failed["scores.normalized_exact_match"] == 0
+    assert failed["scores.bertscore_f"] == 0
+    assert failed["scores.rouge_l_f"] == 0
+    assert analysis.dataset_summary.iloc[0]["average_input_tokens"] == 100
+    assert analysis.dataset_summary.iloc[0]["average_total_latency_s"] == pytest.approx(2.1)
+
+
+def test_mixed_pipeline_boolean_column_is_validated_after_sql_selection() -> None:
+    sql = _record(execution_success=False, exact=0, bert=0, rouge=0)
+    direct = {**_record(), "pipeline": "direct", "execution_success": None}
+    analysis = calculate_text_to_sql_analysis(pd.DataFrame([sql, direct]))
+    assert analysis.run_count == 1
+    assert analysis.dataset_summary.iloc[0]["normalized_exact_match"] == 0
+
+
+def test_retry_denominators_include_early_failures_and_all_retry_costs() -> None:
+    # One success at each stage, one exhausted failure, and one fatal initial failure.
+    rows = []
+    for index, (attempts, success) in enumerate(
+        [(1, True), (2, True), (3, True), (4, True), (4, False), (1, False)]
+    ):
+        row = _record(
+            example_id=f"spider:db:{index}", execution_success=success,
+            exact=0, bert=0, rouge=0,
+            retry_count=attempts - 1, attempt_ttft=[0.1] * attempts,
+            attempt_generation=[2.0] * attempts, model_time=2.0 * attempts,
+        )
+        row["db_id"] = f"db{index % 2}"
+        rows.append(row)
+    analysis = calculate_text_to_sql_retry_analysis(
+        calculate_text_to_sql_analysis(pd.DataFrame(rows))
+    )
+    summary = analysis.gain_summary.iloc[0]
+    assert summary["run_count"] == 6
+    assert summary["initially_failed_run_count"] == 5
+    assert summary["retried_run_count"] == 4
+    assert summary["first_attempt_success_rate"] == pytest.approx(1 / 6)
+    assert summary["final_success_rate"] == pytest.approx(4 / 6)
+    assert summary["recovery_rate"] == pytest.approx(3 / 5)
+    assert summary["execution_gain_pp"] == pytest.approx(50)
+    assert summary["average_retries"] == pytest.approx(9 / 6)
+    assert summary["average_retries_per_retried_run"] == pytest.approx(9 / 4)
+    assert summary["added_seconds"] == pytest.approx(18 / 6)
+    assert summary["added_seconds_per_retried_run"] == pytest.approx(18 / 4)
+    assert summary["execution_gain_pp_low"] == pytest.approx(100 / 3)
+    assert summary["execution_gain_pp_high"] == pytest.approx(200 / 3)
+    outcomes = analysis.outcome_summary.query("dataset == 'spider'").set_index("terminal_outcome")
+    assert list(outcomes["run_count"]) == [1, 1, 1, 1, 2]
+    assert outcomes.loc["failure", "total_retry_generation_s"] == 6
+    assert outcomes.loc["failure", "total_retries"] == 3
+    assert outcomes.loc["failure", "average_retries"] == 1.5
+
+
+def test_no_initial_failures_has_undefined_conditional_rates_not_zero() -> None:
+    analysis = calculate_text_to_sql_retry_analysis(
+        calculate_text_to_sql_analysis(pd.DataFrame([_record()]))
+    )
+    summary = analysis.gain_summary.iloc[0]
+    assert summary["first_attempt_success_rate"] == 1
+    assert summary["added_seconds"] == 0
+    assert pd.isna(summary["recovery_rate"])
+    assert pd.isna(summary["added_seconds_per_retried_run"])
+    assert "---" in render_error_correction_table(analysis)
+    assert set(analysis.outcome_summary["dataset"]) == {"spider"}
+    assert set(analysis.retry_stage_summary["dataset"]) == {"spider"}
+    assert analysis.retry_stage_summary["average_generation_s_when_used"].isna().all()
+    assert analysis.retry_stage_summary["average_generation_s_per_retried_run"].isna().all()
+    absent = analysis.outcome_summary.query("terminal_outcome != 'attempt_1'")
+    assert absent["average_retries"].isna().all()
+    assert absent["average_retry_generation_s"].isna().all()
+
+
+@pytest.mark.parametrize("score", [0.5, None, float("inf")])
+def test_failure_scores_are_validated_without_rewriting_stored_scores(score) -> None:
+    row = _record(execution_success=False, exact=0, bert=0, rouge=0)
+    row["scores.bertscore_f"] = score
+    frame = pd.DataFrame([row])
+    original = frame.copy(deep=True)
+    with pytest.raises(ValueError, match="accuracy scores"):
+        calculate_text_to_sql_analysis(frame)
+    pd.testing.assert_frame_equal(frame, original)
+
+
+def test_conditional_bootstrap_keeps_databases_with_no_correction() -> None:
+    rows = []
+    for index, retries in enumerate([0, 1, 2]):
+        row = _record(
+            example_id=f"spider:db{index}:0", retry_count=retries,
+            attempt_ttft=[0.1] * (retries + 1),
+            attempt_generation=[2.0] * (retries + 1), model_time=2 * (retries + 1),
+        )
+        row["db_id"] = f"db{index}"
+        rows.append(row)
+    analysis = calculate_text_to_sql_retry_analysis(
+        calculate_text_to_sql_analysis(pd.DataFrame(rows))
+    )
+    summary = analysis.gain_summary.iloc[0]
+    assert summary["recovery_rate"] == 1
+    assert summary["average_retries_per_retried_run"] == 1.5
+    assert summary["added_seconds_per_retried_run"] == 3
+    # Resampling all three eligible clusters includes all-db0 draws with a zero
+    # denominator. Dropping db0 would incorrectly produce finite conditional CIs.
+    for metric in ("recovery_rate", "average_retries_per_retried_run",
+                   "added_seconds_per_retried_run"):
+        assert pd.isna(summary[f"{metric}_low"])
+        assert pd.isna(summary[f"{metric}_high"])
+    stage = analysis.retry_stage_summary.set_index("retry_index").loc[1]
+    assert stage["average_generation_s_per_all_runs"] == pytest.approx(4 / 3)
+    assert stage["average_generation_s_per_all_runs_low"] == 0
+    assert stage["average_generation_s_per_all_runs_high"] == 2
+    assert stage["average_generation_s_per_retried_run"] == 2
+    assert pd.isna(stage["average_generation_s_per_retried_run_low"])
+    assert pd.isna(stage["average_generation_s_per_retried_run_high"])
+
+
+def test_paired_model_effects_and_database_uncertainty_are_preserved() -> None:
+    rows = []
+    for index, baseline in enumerate([0.1, 0.5]):
+        for model, gain in [("Qwen3.5-2B-Q4.gguf", 0), ("Qwen3.5-4B-Q4.gguf", 0.2)]:
+            row = _record(example_id=f"spider:db{index}:0", model=model, exact=baseline + gain)
+            row["db_id"] = f"db{index}"
+            rows.append(row)
+    summary = calculate_text_to_sql_analysis(pd.DataFrame(rows)).model_summary
+    larger = summary.set_index("model_id").loc["Qwen3.5-4B-Q4.gguf"]
+    assert larger["normalized_exact_match_effect"] == pytest.approx(0.2)
+    assert larger["normalized_exact_match_effect_low"] == pytest.approx(0.2)
+    assert larger["normalized_exact_match_effect_high"] == pytest.approx(0.2)
+    assert larger["normalized_exact_match_low"] == pytest.approx(0.3)
+    assert larger["normalized_exact_match_high"] == pytest.approx(0.7)

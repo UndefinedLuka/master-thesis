@@ -2,27 +2,33 @@
 \begin{table}[htbp]
   \centering
   \small
-  \caption{Text-to-SQL terminal execution outcome and retry-generation overhead.}
+  \caption{Text-to-SQL execution outcomes, recovery, and retry-generation overhead on the answerable cohort.}
   \label{tab:text-to-sql-error-correction}
   \resizebox{\textwidth}{!}{%
-  \begin{tabular}{@{}llrrrr@{}}
+  \begin{tabular}{@{}lrr@{}}
     \toprule
-    Dataset & Terminal outcome & Runs & Share & Added time (s) & Mean added (s) \\
+    Outcome or measure & Spider & BIRD \\
     \midrule
-    Spider & First attempt & \num{9577} & \qty{92.62}{\percent} & \num{0.0} & \num{0.00} \\
-     & Second attempt & \num{250} & \qty{2.42}{\percent} & \num{70.9} & \num{0.28} \\
-     & Third attempt & \num{30} & \qty{0.29}{\percent} & \num{16.2} & \num{0.54} \\
-     & Fourth attempt & \num{2} & \qty{0.02}{\percent} & \num{1.0} & \num{0.48} \\
-     & Complete failure & \num{481} & \qty{4.65}{\percent} & \num{1762.4} & \num{3.66} \\
+    First attempt & \num{9116} (\qty{92.55}{\percent}) & \num{9111} (\qty{82.23}{\percent}) \\
+    Second attempt & \num{238} (\qty{2.42}{\percent}) & \num{680} (\qty{6.14}{\percent}) \\
+    Third attempt & \num{24} (\qty{0.24}{\percent}) & \num{127} (\qty{1.15}{\percent}) \\
+    Fourth attempt & \num{2} (\qty{0.02}{\percent}) & \num{26} (\qty{0.23}{\percent}) \\
+    Complete failure & \num{470} (\qty{4.77}{\percent}) & \num{1136} (\qty{10.25}{\percent}) \\
     \midrule
-    BIRD & First attempt & \num{12707} & \qty{82.84}{\percent} & \num{0.0} & \num{0.00} \\
-     & Second attempt & \num{878} & \qty{5.72}{\percent} & \num{505.4} & \num{0.58} \\
-     & Third attempt & \num{160} & \qty{1.04}{\percent} & \num{182.1} & \num{1.14} \\
-     & Fourth attempt & \num{37} & \qty{0.24}{\percent} & \num{79.1} & \num{2.14} \\
-     & Complete failure & \num{1558} & \qty{10.16}{\percent} & \num{6467.8} & \num{4.15} \\
+    Eligible runs & \num{9850} & \num{11080} \\
+    Initially failed runs & \num{734} & \num{1969} \\
+    Runs entering correction & \num{734} & \num{1969} \\
+    First-attempt execution success & \shortstack[r]{\qty{92.55}{\percent}\\{\scriptsize [\qty{89.89}{\percent}; \qty{95.28}{\percent}]}} & \shortstack[r]{\qty{82.23}{\percent}\\{\scriptsize [\qty{77.94}{\percent}; \qty{85.76}{\percent}]}} \\
+    Final execution success & \shortstack[r]{\qty{95.23}{\percent}\\{\scriptsize [\qty{93.40}{\percent}; \qty{97.05}{\percent}]}} & \shortstack[r]{\qty{89.75}{\percent}\\{\scriptsize [\qty{86.56}{\percent}; \qty{92.35}{\percent}]}} \\
+    Recovery / initially failed runs & \shortstack[r]{\qty{35.97}{\percent}\\{\scriptsize [\qty{30.66}{\percent}; \qty{41.49}{\percent}]}} & \shortstack[r]{\qty{42.31}{\percent}\\{\scriptsize [\qty{38.36}{\percent}; \qty{47.37}{\percent}]}} \\
+    Success-rate gain (percentage points) & \shortstack[r]{\num{2.68}\\{\scriptsize [\num{1.66}; \num{3.61}]}} & \shortstack[r]{\num{7.52}\\{\scriptsize [\num{6.36}; \num{8.76}]}} \\
+    Mean retries / eligible run & \shortstack[r]{\num{0.17}\\{\scriptsize [\num{0.11}; \num{0.24}]}} & \shortstack[r]{\num{0.40}\\{\scriptsize [\num{0.31}; \num{0.51}]}} \\
+    Mean retries / run entering correction & \shortstack[r]{\num{2.32}\\{\scriptsize [\num{2.21}; \num{2.42}]}} & \shortstack[r]{\num{2.24}\\{\scriptsize [\num{2.14}; \num{2.33}]}} \\
+    Mean added generation (s) / eligible run & \shortstack[r]{\num{0.18}\\{\scriptsize [\num{0.08}; \num{0.27}]}} & \shortstack[r]{\num{0.46}\\{\scriptsize [\num{0.34}; \num{0.59}]}} \\
+    Mean added generation (s) / run entering correction & \shortstack[r]{\num{2.38}\\{\scriptsize [\num{1.53}; \num{2.92}]}} & \shortstack[r]{\num{2.56}\\{\scriptsize [\num{2.21}; \num{2.96}]}} \\
     \bottomrule
   \end{tabular}%
   }
   \vspace{0.4em}
-  \parbox{\linewidth}{\scriptsize \textit{Note:} Attempt labels identify the generation on which SQL first executed successfully. Added time is model-generation time from attempts after the first; per-attempt SQL execution time was not persisted separately and is excluded.}
+  \parbox{\linewidth}{\scriptsize \textit{Note:} Attempt labels identify the generation on which SQL first executed successfully; outcome shares use all eligible runs. Recovery uses all initially failed runs, including failures that stopped before a retry. Runs entering correction have at least one retry. Success-rate gain uses all eligible runs. Added time is model-generation time from attempts after the first; per-attempt SQL execution time was not persisted separately and is excluded. Failed sequences retain their recorded costs. A dash denotes a zero denominator. Brackets show pointwise \qty{95}{\percent} database-bootstrap intervals.}
 \end{table}

@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import json
 from pathlib import Path
 
 import pytest
@@ -13,25 +12,9 @@ pytest.importorskip("matplotlib")
 import pandas as pd
 
 from visualizations.config import (
-    DIRECT_ACCURACY_FORMAT_FIGURE_FILENAME,
-    DIRECT_ACCURACY_METRIC_ORDER,
-    DIRECT_ACCURACY_MODEL_SIZE_FIGURE_FILENAME,
-    DIRECT_DATABASE_SIZE_FIGURE_FILENAMES,
-    DIRECT_LATENCY_FIGURE_FILENAME,
-    DIRECT_OPERATIONAL_TABLE_FILENAME,
-    DIRECT_TOKEN_USAGE_FIGURE_FILENAME,
-    EXPERIMENT_OUTCOMES_TABLE_FILENAME,
     SERIALIZATION_EFFICIENCY_TABLE_FILENAME,
-    TEXT_TO_SQL_ACCURACY_FIGURE_FILENAME,
-    TEXT_TO_SQL_LATENCY_FIGURE_FILENAME,
-    TEXT_TO_SQL_OPERATIONAL_TABLE_FILENAME,
-    TEXT_TO_SQL_RETRIEVAL_TABLE_FILENAME,
-    TEXT_TO_SQL_RETRY_FIGURE_FILENAME,
-    TEXT_TO_SQL_RETRY_TABLE_FILENAME,
-    TEXT_TO_SQL_TOKEN_FIGURE_FILENAME,
     TOKENIZER_COMPARISON_FIGURE_FILENAME,
 )
-from visualizations.generate_all import main
 from visualizations.serialization_data import load_token_report, validate_complete_coverage
 from visualizations.serialization_efficiency_table import (
     calculate_serialization_efficiency,
@@ -262,125 +245,6 @@ def test_artifact_generators_each_write_one_output(tmp_path: Path) -> None:
     assert table_path == tables_dir / SERIALIZATION_EFFICIENCY_TABLE_FILENAME
     assert figure_path == figures_dir / TOKENIZER_COMPARISON_FIGURE_FILENAME
     assert figure_path.stat().st_size > 0
-
-
-def test_single_orchestrator_cli_writes_every_artifact(tmp_path: Path) -> None:
-    report_path = tmp_path / "serialization_tokens_by_database.csv"
-    _complete_small_report().to_csv(report_path, index=False)
-    results_path = tmp_path / "sample.scored.ndjson"
-    direct_result = {
-        "dataset": "spider",
-        "pipeline": "direct",
-        "format": "csv",
-        "model_id": "Qwen3.5-2B-Q4_K_M.gguf",
-        "example_id": "spider:db:0",
-        "db_id": "s1",
-        "predicted_sql": None,
-        "retry_count": 0,
-        "execution_success": None,
-        "definitive_failure": None,
-        "error": None,
-        "raw_output": "answer",
-        "input_tokens": 100,
-        "output_tokens": 10,
-        "time_to_first_token_s": 1.0,
-        "generation_time_s": 3.0,
-        "total_time_s": 3.0,
-        "scores": {
-            "normalized_exact_match": 0.5,
-            "bertscore_f": 0.4,
-            "rouge_l_f": 0.6,
-        },
-    }
-    sql_result = {
-        "dataset": "spider",
-        "pipeline": "text_to_sql",
-        "format": None,
-        "model_id": "Qwen3.5-2B-Q4_K_M.gguf",
-        "example_id": "spider:db:0",
-        "db_id": "s1",
-        "predicted_sql": "SELECT 1",
-        "retry_count": 0,
-        "execution_success": True,
-        "definitive_failure": False,
-        "error": None,
-        "raw_output": "SELECT 1",
-        "input_tokens": 80,
-        "output_tokens": 5,
-        "time_to_first_token_s": 0.5,
-        "generation_time_s": 1.5,
-        "query_execution_time_s": 0.1,
-        "total_time_s": 1.6,
-        "scores": {
-            "normalized_exact_match": 0.8,
-            "bertscore_f": 0.9,
-            "rouge_l_f": 0.7,
-        },
-        "attempts": [
-            {
-                "llm_metrics": {
-                    "time_to_first_token_s": 0.5,
-                    "total_generation_time_s": 1.5,
-                }
-            }
-        ],
-    }
-    results_path.write_text(
-        "".join(json.dumps(record) + "\n" for record in (direct_result, sql_result)),
-        encoding="utf-8",
-    )
-    tables_dir = tmp_path / "tables"
-    figures_dir = tmp_path / "figures"
-
-    return_code = main(
-        [
-            "--results",
-            str(results_path),
-            "--serialization-report",
-            str(report_path),
-            "--tables-dir",
-            str(tables_dir),
-            "--figures-dir",
-            str(figures_dir),
-            "--context-window",
-            "250",
-            "--allow-incomplete",
-        ]
-    )
-
-    assert return_code == 0
-    assert (tables_dir / EXPERIMENT_OUTCOMES_TABLE_FILENAME).is_file()
-    assert (tables_dir / SERIALIZATION_EFFICIENCY_TABLE_FILENAME).is_file()
-    assert (figures_dir / TOKENIZER_COMPARISON_FIGURE_FILENAME).stat().st_size > 0
-    assert (figures_dir / DIRECT_ACCURACY_FORMAT_FIGURE_FILENAME).stat().st_size > 0
-    assert (figures_dir / DIRECT_ACCURACY_MODEL_SIZE_FIGURE_FILENAME).stat().st_size > 0
-    for metric in DIRECT_ACCURACY_METRIC_ORDER:
-        assert (figures_dir / DIRECT_DATABASE_SIZE_FIGURE_FILENAMES[metric]).stat().st_size > 0
-    assert (tables_dir / DIRECT_OPERATIONAL_TABLE_FILENAME).is_file()
-    assert (figures_dir / DIRECT_TOKEN_USAGE_FIGURE_FILENAME).stat().st_size > 0
-    assert (figures_dir / DIRECT_LATENCY_FIGURE_FILENAME).stat().st_size > 0
-    assert (tables_dir / TEXT_TO_SQL_RETRIEVAL_TABLE_FILENAME).is_file()
-    assert (figures_dir / TEXT_TO_SQL_ACCURACY_FIGURE_FILENAME).stat().st_size > 0
-    assert (tables_dir / TEXT_TO_SQL_OPERATIONAL_TABLE_FILENAME).is_file()
-    assert (figures_dir / TEXT_TO_SQL_TOKEN_FIGURE_FILENAME).stat().st_size > 0
-    assert (figures_dir / TEXT_TO_SQL_LATENCY_FIGURE_FILENAME).stat().st_size > 0
-    assert (tables_dir / TEXT_TO_SQL_RETRY_TABLE_FILENAME).is_file()
-    assert (figures_dir / TEXT_TO_SQL_RETRY_FIGURE_FILENAME).stat().st_size > 0
-
-    figure_filenames = (
-        TOKENIZER_COMPARISON_FIGURE_FILENAME,
-        DIRECT_ACCURACY_FORMAT_FIGURE_FILENAME,
-        DIRECT_ACCURACY_MODEL_SIZE_FIGURE_FILENAME,
-        *DIRECT_DATABASE_SIZE_FIGURE_FILENAMES.values(),
-        DIRECT_TOKEN_USAGE_FIGURE_FILENAME,
-        DIRECT_LATENCY_FIGURE_FILENAME,
-        TEXT_TO_SQL_ACCURACY_FIGURE_FILENAME,
-        TEXT_TO_SQL_TOKEN_FIGURE_FILENAME,
-        TEXT_TO_SQL_LATENCY_FIGURE_FILENAME,
-        TEXT_TO_SQL_RETRY_FIGURE_FILENAME,
-    )
-    for filename in figure_filenames:
-        assert (figures_dir / filename).read_bytes().startswith(b"%PDF-")
 
 
 def test_load_token_report_rejects_non_numeric_tokens(tmp_path: Path) -> None:

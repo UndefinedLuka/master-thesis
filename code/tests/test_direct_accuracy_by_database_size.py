@@ -1,4 +1,4 @@
-"""Tests for metric-specific, six-format database-size accuracy figures."""
+"""Tests for answerable database-size associations and the retained NEM figure."""
 
 from __future__ import annotations
 
@@ -12,14 +12,13 @@ pytest.importorskip("matplotlib")
 import pandas as pd
 
 from visualizations.config import (
-    DIRECT_ACCURACY_METRIC_ORDER,
     DIRECT_DATABASE_SIZE_FIGURE_FILENAMES,
     SERIALIZATION_FORMAT_ORDER,
 )
 from visualizations.direct_accuracy_by_database_size import (
     calculate_database_size_accuracy,
     generate_database_size_accuracy_figures,
-    plot_database_size_accuracy_metric,
+    plot_database_size_accuracy,
 )
 
 
@@ -107,7 +106,6 @@ def test_analysis_preserves_format_specific_size_and_accuracy() -> None:
     analysis = calculate_database_size_accuracy(
         results,
         report,
-        expected_database_counts={"spider": 2, "bird": 2},
     )
     scores = analysis.database_scores.set_index(["dataset", "db_id", "format", "metric"])
 
@@ -139,59 +137,91 @@ def test_analysis_rejects_missing_database_format_size() -> None:
         calculate_database_size_accuracy(
             results,
             report,
-            expected_database_counts={"spider": 2, "bird": 2},
         )
 
 
-def test_each_metric_plot_has_six_format_panels_and_both_datasets(tmp_path: Path) -> None:
+def test_nem_plot_has_six_format_panels_and_both_datasets(tmp_path: Path) -> None:
     results, report = _inputs()
     analysis = calculate_database_size_accuracy(
         results,
         report,
-        expected_database_counts={"spider": 2, "bird": 2},
     )
 
-    figures = [
-        plot_database_size_accuracy_metric(analysis, metric)
-        for metric in DIRECT_ACCURACY_METRIC_ORDER
+    figure, axes = plot_database_size_accuracy(analysis)
+    assert len(axes) == 6
+    assert [axis.get_title() for axis in axes] == [
+        "CSV", "TOON", "Markdown", "YAML", "JSON", "XML",
     ]
-    for (figure, axes), metric in zip(
-        figures, DIRECT_ACCURACY_METRIC_ORDER, strict=True
-    ):
-        assert len(axes) == 6
-        assert [axis.get_title() for axis in axes] == [
-            "CSV",
-            "TOON",
-            "Markdown",
-            "YAML",
-            "JSON",
-            "XML",
-        ]
-        assert all(axis.get_xscale() == "log" for axis in axes)
-        assert all(len(axis.collections) == 2 for axis in axes)
-        annotations = [text.get_text() for axis in axes for text in axis.texts]
-        assert any("Interval unavailable" in text for text in annotations)
-        assert not any("CI unavailable" in text for text in annotations)
-        assert [text.get_text() for text in figure.legends[0].get_texts()] == [
-            "Spider",
-            "BIRD",
-        ]
-        assert metric in DIRECT_DATABASE_SIZE_FIGURE_FILENAMES
+    assert all(axis.get_xscale() == "log" for axis in axes)
+    assert all(len(axis.collections) == 2 for axis in axes)
+    annotations = [text.get_text() for axis in axes for text in axis.texts]
+    assert any("Interval unavailable" in text for text in annotations)
+    assert [text.get_text() for text in figure.legends[0].get_texts()] == ["Spider", "BIRD"]
 
     outputs = generate_database_size_accuracy_figures(
         results,
         report,
         tmp_path,
         excluded_model_markers=(),
-        expected_database_counts={"spider": 2, "bird": 2},
     )
     assert outputs == [
-        tmp_path / DIRECT_DATABASE_SIZE_FIGURE_FILENAMES[metric]
-        for metric in DIRECT_ACCURACY_METRIC_ORDER
+        tmp_path / DIRECT_DATABASE_SIZE_FIGURE_FILENAMES["normalized_exact_match"]
     ]
     assert all(path.stat().st_size > 0 for path in outputs)
+    assert list(tmp_path.glob("*.pdf")) == outputs
 
     import matplotlib.pyplot as plt
 
-    for figure, _ in figures:
-        plt.close(figure)
+    plt.close(figure)
+
+
+def test_coverage_uses_answerable_databases_not_full_serialization_inventory() -> None:
+    results, report = _inputs()
+    results = results[results["db_id"].ne("large_bird")]
+    analysis = calculate_database_size_accuracy(results, report)
+    counts = analysis.correlations.groupby("dataset")["database_count"].unique()
+    assert list(counts["bird"]) == [1]
+    assert list(counts["spider"]) == [2]
+
+
+def test_coverage_rejects_missing_answerable_database_in_a_format() -> None:
+    results, report = _inputs()
+    results = results[~(results["db_id"].eq("large_bird") & results["format"].eq("xml"))]
+    with pytest.raises(ValueError, match="Answerable accuracy database coverage.*bird/xml"):
+        calculate_database_size_accuracy(results, report)
+
+
+def test_associations_include_zero_scored_context_failures() -> None:
+    results, report = _inputs()
+    failed = results["db_id"].eq("large_bird")
+    results.loc[failed, "error"] = "context_exceeded"
+    results.loc[failed, "has_answer"] = False
+    for metric in ("normalized_exact_match", "bertscore_f", "rouge_l_f"):
+        results.loc[failed, f"scores.{metric}"] = 0.0
+    analysis = calculate_database_size_accuracy(results, report)
+    database = analysis.database_scores[analysis.database_scores["db_id"].eq("large_bird")]
+    assert len(database) == 6 * 3
+    assert database["mean_score"].eq(0).all()
+    assert database["observation_count"].eq(2).all()
+    assert analysis.correlations["database_count"].eq(2).all()
+
+
+def test_all_metric_associations_have_reproducible_database_intervals() -> None:
+    results, report = _inputs()
+    # Four distinct database points allow >=95% non-degenerate bootstrap draws.
+    extra_results = results.copy()
+    extra_report = report.copy()
+    extra_results["db_id"] += "_extra"
+    extra_results["example_id"] += "_extra"
+    extra_report["database_id"] += "_extra"
+    extra_report["tokens"] *= 2
+    for metric in ("normalized_exact_match", "bertscore_f", "rouge_l_f"):
+        extra_results[f"scores.{metric}"] += 0.05
+    results = pd.concat([results, extra_results], ignore_index=True)
+    report = pd.concat([report, extra_report], ignore_index=True)
+    first = calculate_database_size_accuracy(results, report).correlations
+    second = calculate_database_size_accuracy(results, report).correlations
+    pd.testing.assert_frame_equal(first, second)
+    assert set(first["metric"]) == {"normalized_exact_match", "bertscore_f", "rouge_l_f"}
+    assert first[["pearson_log_size_low", "pearson_log_size_high"]].notna().all().all()
+    assert (first["pearson_log_size_low"] <= first["pearson_log_size_high"]).all()

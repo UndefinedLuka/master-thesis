@@ -43,7 +43,7 @@ def render_text_to_sql_retrieval_table(
             r"  \centering",
             (
                 r"  \caption{Mean Text-to-SQL retrieval scores and query-execution outcomes "
-                r"by dataset.}"
+                r"by dataset on the answerable cohort.}"
             ),
             f"  \\label{{{label}}}",
             r"  \resizebox{\linewidth}{!}{%",
@@ -57,10 +57,10 @@ def render_text_to_sql_retrieval_table(
             r"  }",
             r"  \vspace{0.4em}",
             (
-                r"  \parbox{\linewidth}{\scriptsize \textit{Note:} BERTScore and ROUGE-L "
-                r"report F1; BERTScore is raw (unrescaled). Text-similarity means include "
-                r"zero-scored failed SQL runs. Executed is the share of generated "
-                r"queries that ran successfully within the retry limit. Brackets show "
+                r"  \parbox{\linewidth}{\scriptsize \textit{Note:} "
+                r"BERTScore is raw (unrescaled). Retrieval means include "
+                r"zero-scored failed SQL runs. Executed is the share of eligible runs "
+                r"that achieved SQL execution success within the retry limit. Brackets show "
                 r"pointwise \qty{95}{\percent} "
                 r"database-bootstrap confidence intervals.}"
             ),

@@ -16,16 +16,21 @@ from pathlib import Path
 import pandas as pd
 
 from config.paths import ProjectPaths
+from visualizations.chapter5_evidence import save_chapter5_evidence
+from visualizations.cohorts import (
+    COHORT_COLUMNS,
+    AnalysisCohorts,
+    build_analysis_cohorts,
+    generate_cohort_artifacts,
+)
 from visualizations.common_cohort_data import calculate_common_cohort_analysis
 from visualizations.common_cohort_latency import generate_common_cohort_latency_figure
-from visualizations.common_cohort_latency_by_model import generate_common_cohort_model_figure
 from visualizations.common_cohort_operational_table import generate_common_cohort_table
 from visualizations.common_cohort_token_usage import generate_common_cohort_token_figure
 from visualizations.config import (
     CONTEXT_WINDOW_TOKENS,
     DATASET_LABELS,
     DATASET_ORDER,
-    EXPECTED_DATABASE_COUNTS,
 )
 from visualizations.data import load_scored_results
 from visualizations.direct_accuracy_by_database_size import (
@@ -43,7 +48,6 @@ from visualizations.direct_accuracy_data import (
 )
 from visualizations.direct_efficiency_data import (
     DIRECT_EFFICIENCY_COLUMNS,
-    DirectEfficiencyAnalysis,
     calculate_direct_efficiency,
 )
 from visualizations.direct_latency_by_format import generate_direct_latency_figure
@@ -63,6 +67,10 @@ from visualizations.experiment_outcomes import (
 from visualizations.experiment_outcomes import (
     validate_complete_coverage as validate_experiment_coverage,
 )
+from visualizations.pipeline_retrieval_comparison import (
+    calculate_pipeline_retrieval_comparison,
+    generate_pipeline_retrieval_comparison_figure,
+)
 from visualizations.serialization_data import (
     load_token_report,
 )
@@ -77,7 +85,6 @@ from visualizations.text_to_sql_accuracy_by_model_size import (
 )
 from visualizations.text_to_sql_data import (
     TEXT_TO_SQL_COLUMNS,
-    TextToSqlAnalysis,
     calculate_text_to_sql_analysis,
 )
 from visualizations.text_to_sql_error_correction import generate_error_correction_figure
@@ -105,24 +112,38 @@ def generate_all(
     excluded_model_markers: tuple[str, ...] = DEFAULT_EXCLUDED_MODEL_MARKERS,
     context_window_tokens: int = CONTEXT_WINDOW_TOKENS,
     coverage_validated: bool,
-    direct_efficiency: DirectEfficiencyAnalysis | None = None,
-    text_to_sql_analysis: TextToSqlAnalysis | None = None,
+    cohorts: AnalysisCohorts,
+    audit_dir: Path,
 ) -> list[Path]:
-    """Generate every registered artifact from already-loaded input snapshots."""
-    efficiency = direct_efficiency or calculate_direct_efficiency(
-        experiment_results,
+    """Generate artifacts using the audited, explicitly selected question populations."""
+    if excluded_model_markers != DEFAULT_EXCLUDED_MODEL_MARKERS:
+        raise ValueError("Chapter 5 requires the confirmed ten-model roster")
+    _validate_publication_cohorts(cohorts)
+    answerable = cohorts.answerable_records
+    context_fit = cohorts.context_fit_records
+    efficiency = calculate_direct_efficiency(
+        context_fit,
         excluded_model_markers=excluded_model_markers,
     )
-    sql_analysis = text_to_sql_analysis or calculate_text_to_sql_analysis(
-        experiment_results,
+    sql_analysis = calculate_text_to_sql_analysis(
+        answerable,
         excluded_model_markers=excluded_model_markers,
     )
     retry_analysis = calculate_text_to_sql_retry_analysis(sql_analysis)
     common_cohort = calculate_common_cohort_analysis(
-        experiment_results,
+        context_fit,
         excluded_model_markers=excluded_model_markers,
     )
+    retrieval = calculate_pipeline_retrieval_comparison(
+        answerable, excluded_model_markers=excluded_model_markers,
+    )
+    generate_cohort_artifacts(cohorts, tables_dir=tables_dir, audit_dir=audit_dir)
+    save_chapter5_evidence(
+        answerable, serialization_report, efficiency, sql_analysis, retry_analysis,
+        common_cohort, retrieval, audit_dir,
+    )
     return [
+        tables_dir / "analysis_cohorts.tex",
         generate_experiment_outcomes_table(
             experiment_results,
             tables_dir,
@@ -137,21 +158,20 @@ def generate_all(
         ),
         generate_tokenizer_comparison_figure(serialization_report, figures_dir),
         generate_direct_accuracy_by_format_figure(
-            experiment_results,
+            answerable,
             figures_dir,
             excluded_model_markers=excluded_model_markers,
         ),
         generate_direct_accuracy_by_model_size_figure(
-            experiment_results,
+            answerable,
             figures_dir,
             excluded_model_markers=excluded_model_markers,
         ),
         *generate_database_size_accuracy_figures(
-            experiment_results,
+            answerable,
             serialization_report,
             figures_dir,
             excluded_model_markers=excluded_model_markers,
-            expected_database_counts=EXPECTED_DATABASE_COUNTS if coverage_validated else None,
         ),
         generate_direct_operational_table(efficiency, tables_dir),
         generate_direct_token_usage_figure(efficiency, figures_dir),
@@ -163,11 +183,21 @@ def generate_all(
         generate_text_to_sql_latency_figure(sql_analysis, figures_dir),
         generate_error_correction_table(retry_analysis, tables_dir),
         generate_error_correction_figure(retry_analysis, figures_dir),
+        generate_pipeline_retrieval_comparison_figure(retrieval, figures_dir),
         generate_common_cohort_table(common_cohort, tables_dir),
         generate_common_cohort_latency_figure(common_cohort, figures_dir),
         generate_common_cohort_token_figure(common_cohort, figures_dir),
-        generate_common_cohort_model_figure(common_cohort, figures_dir),
     ]
+
+
+def _validate_publication_cohorts(cohorts: AnalysisCohorts) -> None:
+    problems = [
+        "incomplete_questions", "answerable_unknown_questions", "context_unknown_questions",
+    ]
+    if cohorts.summary.empty or cohorts.summary[problems].gt(0).any(axis=None):
+        raise ValueError(
+            "Incomplete or unknown cohort eligibility; inspect the question-level cohort audit"
+        )
 
 
 def build_parser(paths: ProjectPaths | None = None) -> argparse.ArgumentParser:
@@ -181,6 +211,18 @@ def build_parser(paths: ProjectPaths | None = None) -> argparse.ArgumentParser:
         type=Path,
         default=project_paths.results_dir,
         help="scored benchmark NDJSON file or directory (default: results/)",
+    )
+    parser.add_argument(
+        "--references-dir",
+        type=Path,
+        default=project_paths.data_dir,
+        help="directory containing stored *_references.ndjson (default: data/)",
+    )
+    parser.add_argument(
+        "--audit-dir",
+        type=Path,
+        default=project_paths.root / "analysis" / "chapter5",
+        help="cohort manifest and recalculated supporting evidence",
     )
     parser.add_argument(
         "--serialization-report",
@@ -205,15 +247,6 @@ def build_parser(paths: ProjectPaths | None = None) -> argparse.ArgumentParser:
         help="figure output directory (default: analysis/figures/)",
     )
     parser.add_argument(
-        "--exclude-model",
-        action="append",
-        default=None,
-        help=(
-            "case-insensitive model-id fragment excluded from outcome analysis; repeat for "
-            "multiple models (default: Qwen3.5-27B)"
-        ),
-    )
-    parser.add_argument(
         "--context-window",
         type=int,
         default=CONTEXT_WINDOW_TOKENS,
@@ -234,7 +267,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.context_window <= 0:
         parser.error("--context-window must be positive")
 
-    excluded_markers = tuple(args.exclude_model or DEFAULT_EXCLUDED_MODEL_MARKERS)
+    excluded_markers = DEFAULT_EXCLUDED_MODEL_MARKERS
     result_columns = tuple(
         dict.fromkeys(
             (
@@ -242,6 +275,7 @@ def main(argv: list[str] | None = None) -> int:
                 *DIRECT_ACCURACY_COLUMNS,
                 *DIRECT_EFFICIENCY_COLUMNS,
                 *TEXT_TO_SQL_COLUMNS,
+                *COHORT_COLUMNS,
             )
         )
     )
@@ -266,18 +300,6 @@ def main(argv: list[str] | None = None) -> int:
                 excluded_model_markers=excluded_markers,
             )
             serialization_coverage = validate_serialization_coverage(serialization_report)
-            direct_accuracy_count = validate_direct_accuracy_scores(
-                experiment_results,
-                excluded_model_markers=excluded_markers,
-            )
-            direct_efficiency = calculate_direct_efficiency(
-                experiment_results,
-                excluded_model_markers=excluded_markers,
-            )
-            text_to_sql_analysis = calculate_text_to_sql_analysis(
-                experiment_results,
-                excluded_model_markers=excluded_markers,
-            )
         except ValueError as exc:
             parser.error(str(exc))
         print(
@@ -288,7 +310,6 @@ def main(argv: list[str] | None = None) -> int:
                 for dataset in DATASET_ORDER
             )
         )
-        print(f"Validated retrieval-accuracy scores for {direct_accuracy_count:,} direct runs")
         print(
             f"Validated {serialization_coverage.record_count:,} serialization token counts: "
             f"{sum(serialization_coverage.database_counts.values())} databases, "
@@ -296,15 +317,18 @@ def main(argv: list[str] | None = None) -> int:
             f"{serialization_coverage.tokenizer_family_count} tokenizer families"
         )
 
-    if not coverage_validated:
-        direct_efficiency = calculate_direct_efficiency(
-            experiment_results,
-            excluded_model_markers=excluded_markers,
+    try:
+        cohorts = build_analysis_cohorts(
+            experiment_results, references_dir=args.references_dir,
         )
-        text_to_sql_analysis = calculate_text_to_sql_analysis(
-            experiment_results,
-            excluded_model_markers=excluded_markers,
-        )
+        generate_cohort_artifacts(cohorts, tables_dir=args.tables_dir, audit_dir=args.audit_dir)
+        _validate_publication_cohorts(cohorts)
+        direct_accuracy_count = validate_direct_accuracy_scores(cohorts.answerable_records)
+    except (ValueError, FileNotFoundError) as exc:
+        parser.error(str(exc))
+    print(
+        f"Validated retrieval-accuracy scores for {direct_accuracy_count:,} answerable direct runs"
+    )
 
     outputs = generate_all(
         experiment_results,
@@ -314,8 +338,8 @@ def main(argv: list[str] | None = None) -> int:
         excluded_model_markers=excluded_markers,
         context_window_tokens=args.context_window,
         coverage_validated=coverage_validated,
-        direct_efficiency=direct_efficiency,
-        text_to_sql_analysis=text_to_sql_analysis,
+        cohorts=cohorts,
+        audit_dir=args.audit_dir,
     )
     outcome_summary = calculate_outcome_summary(
         experiment_results,

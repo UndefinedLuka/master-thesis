@@ -109,13 +109,9 @@ DIRECT_LATENCY_FIGURE_FILENAME = "direct_latency_by_format.pdf"
 DIRECT_LATENCY_FIGURE_LABEL = "fig:direct-latency-by-format"
 DIRECT_DATABASE_SIZE_FIGURE_FILENAMES: dict[str, str] = {
     "normalized_exact_match": "direct_accuracy_by_database_size_nem.pdf",
-    "bertscore_f": "direct_accuracy_by_database_size_bertscore.pdf",
-    "rouge_l_f": "direct_accuracy_by_database_size_rouge_l.pdf",
 }
 DIRECT_DATABASE_SIZE_FIGURE_LABELS: dict[str, str] = {
     "normalized_exact_match": "fig:direct-accuracy-by-database-size-nem",
-    "bertscore_f": "fig:direct-accuracy-by-database-size-bertscore",
-    "rouge_l_f": "fig:direct-accuracy-by-database-size-rouge-l",
 }
 TEXT_TO_SQL_ACCURACY_FIGURE_FILENAME = "text_to_sql_accuracy_by_model_size.pdf"
 TEXT_TO_SQL_ACCURACY_FIGURE_LABEL = "fig:text-to-sql-accuracy-by-model-size"
@@ -144,7 +140,6 @@ COMMON_COHORT_TABLE_FILENAME = "common_cohort_operational_efficiency.tex"
 COMMON_COHORT_TABLE_LABEL = "tab:common-cohort-operational-efficiency"
 COMMON_COHORT_LATENCY_FIGURE_FILENAME = "common_cohort_latency.pdf"
 COMMON_COHORT_TOKENS_FIGURE_FILENAME = "common_cohort_token_usage.pdf"
-COMMON_COHORT_MODEL_FIGURE_FILENAME = "common_cohort_latency_by_model.pdf"
 RETRY_OUTCOME_ORDER: tuple[str, ...] = (
     "attempt_1",
     "attempt_2",

@@ -16,7 +16,6 @@ from visualizations.config import (
 from visualizations.plot_numbers import (
     number,
     number_formatter,
-    quantity,
     save_pgf_figure,
     tight_layout,
 )
@@ -30,7 +29,7 @@ if TYPE_CHECKING:
 def plot_error_correction_performance(
     analysis: TextToSqlRetryAnalysis,
 ) -> tuple[Figure, list[Axes]]:
-    """Plot terminal attempt distributions and aggregate generation overhead by retry stage."""
+    """Decompose added generation seconds per eligible run by outcome and retry stage."""
     import matplotlib
 
     matplotlib.use("Agg")
@@ -50,7 +49,13 @@ def plot_error_correction_performance(
         rows = analysis.outcome_summary[
             analysis.outcome_summary["dataset"].eq(dataset)
         ].set_index("terminal_outcome")
-        values = [int(rows.loc[outcome, "run_count"]) for outcome in RETRY_OUTCOME_ORDER]
+        if rows.empty:
+            continue
+        run_count = int(rows["run_count"].sum())
+        values = [
+            float(rows.loc[outcome, "total_retry_generation_s"]) / run_count
+            if run_count else 0.0 for outcome in RETRY_OUTCOME_ORDER
+        ]
         positions = [value + (dataset_index - 0.5) * width for value in x_positions]
         bars = outcome_axis.bar(
             positions,
@@ -59,15 +64,15 @@ def plot_error_correction_performance(
             color=DATASET_COLORS[dataset],
             label=DATASET_LABELS[dataset],
         )
-        outcome_axis.bar_label(bars, labels=[number(value, 0) for value in values], fontsize=8)
+        outcome_axis.bar_label(bars, labels=[number(value, 2) for value in values], fontsize=8)
     outcome_axis.set_xticks(
         x_positions,
         [RETRY_OUTCOME_LABELS[outcome] for outcome in RETRY_OUTCOME_ORDER],
         rotation=24,
         ha="right",
     )
-    outcome_axis.set_title("Terminal query-execution outcome", fontweight="bold")
-    outcome_axis.set_ylabel("Runs")
+    outcome_axis.set_title("Added generation time by terminal outcome", fontweight="bold")
+    outcome_axis.set_ylabel("Additional seconds per answerable run")
     outcome_axis.yaxis.set_major_formatter(number_formatter())
     outcome_axis.legend(title="Dataset", frameon=False)
 
@@ -78,7 +83,12 @@ def plot_error_correction_performance(
         rows = analysis.retry_stage_summary[
             analysis.retry_stage_summary["dataset"].eq(dataset)
         ].set_index("retry_index")
-        values = [float(rows.loc[index, "total_generation_s"]) for index in (1, 2, 3)]
+        if rows.empty:
+            continue
+        values = [
+            float(rows.loc[index, "average_generation_s_per_all_runs"])
+            for index in (1, 2, 3)
+        ]
         positions = [value + (dataset_index - 0.5) * retry_width for value in retry_positions]
         bars = overhead_axis.bar(
             positions,
@@ -89,12 +99,12 @@ def plot_error_correction_performance(
         )
         overhead_axis.bar_label(
             bars,
-            labels=[quantity(value / 60, "\\minute", 1) for value in values],
+            labels=[number(value, 2) for value in values],
             fontsize=8,
         )
     overhead_axis.set_xticks(retry_positions, ["Retry 1", "Retry 2", "Retry 3"])
-    overhead_axis.set_title("Additional model time by retry stage", fontweight="bold")
-    overhead_axis.set_ylabel("Aggregate generation time (seconds)")
+    overhead_axis.set_title("Added generation time by retry stage", fontweight="bold")
+    overhead_axis.set_ylabel("Additional seconds per answerable run")
     overhead_axis.yaxis.set_major_formatter(number_formatter())
 
     for axis in axes:
