@@ -63,49 +63,54 @@ experimental runs.
 \section{Analysis cohorts and experiment coverage}
 \label{sec:analysis-cohorts}
 
-Table~\ref{tab:analysis-cohorts} distinguishes the two question-level populations used below. The
-answerable cohort contains questions whose stored reference SQL executed without error and returned at
-least one row on the experimental database. A row containing zero or NULL still counts as non-empty.
-This operational definition does not guarantee question quality or model capability. All accuracy views
-use this cohort, retaining context overflows and other terminal pipeline failures with zero scores.
-Standalone Text-to-SQL efficiency and correction results use the same questions.
+Before presenting the results, we need to distinguish between questions that have a non-empty reference
+answer and questions that fit within the models' context limits. We therefore define two groups, called
+the answerable cohort and the context-fit cohort. Table~\ref{tab:analysis-cohorts} shows the number of
+questions and databases in each group.
+
+The answerable cohort contains questions whose reference SQL query executed without error and returned
+at least one row on the experimental database. This definition only establishes that a non-empty
+reference result is available. It does not guarantee that the question is well formulated or that a model
+can answer it correctly.
+
+The context-fit cohort contains questions with recorded evidence of fitting within the context limits
+across all ten retained models and all seven configurations: six Direct Context Inference formats and
+Text-to-SQL. Each question therefore requires a complete set of \num{70} run records. For Direct Context
+Inference, the initial check counted the fixed system prompt, including the serialized data, and reserved
+space for generated output. Inclusion did
+not depend on whether the reference result was empty, whether the model produced an answer, or whether
+the generated SQL executed successfully.
 
 \input{../code/analysis/tables/analysis_cohorts}
 
-The context-fit cohort requires recorded feasibility across all ten retained models and all seven
-configurations, with a complete set of \num{70} records per question. The direct runner checked the
-rendered fixed system prompt, including data, plus output headroom; it did not check the full
-question-bearing chat prompt. Eligibility used that recorded check and inference evidence, together with
-all recorded SQL attempts and any backend context errors. It did not depend on reference emptiness,
-generated-answer presence, or SQL execution success. Direct and head-to-head efficiency use this identical
-question set and include recorded work from unsuccessful runs. These are resource-use measurements on a
-shared context-feasible workload, not time per correct answer.
+Checking the reference queries revealed \num{49} empty results among \num{1034} Spider questions and
+\num{426} among \num{1534} BIRD questions. The latter represent \qty{27.77}{\percent} of the BIRD
+questions and were evaluated on the sampled databases described in Chapter~\ref{ch:implementation}.
+These counts document the empty reference results following BIRD sampling. We found no reference SQL
+errors, missing reference results, or inconsistencies in the recorded row counts.
 
-The reference audit found \num{49} empty results among \num{1034} Spider questions and \num{426} among
-\num{1534} BIRD questions (\qty{27.77}{\percent}). The latter records concern the materialized sampled
-BIRD databases from Chapter~\ref{ch:implementation}; they account for the sampling-related empty
-references promised there. Empty references were scored in the original scoring pass, but their stored
-scores are excluded from answerable-cohort reporting. No reference SQL errors, missing references, or
-inconsistent row counts were found. The cohort intersection contained \num{807} Spider and \num{244}
-BIRD questions; context-fit also included \num{45} and \num{59} empty-reference questions, respectively.
-There were no unknown eligibility cases or missing retained configurations. The BIRD context-fit workload
-covered only \texttt{student\_club} and \texttt{toxicology}, so its timing estimates and intervals describe
-those two sampled databases.
-
-The Qwen~3.5 27B runs were excluded because the reasoning trace could not be separated reliably from the
-final answer. The remaining ten models produced the full-campaign inventory in
-Table~\ref{tab:experiment-outcomes}. Its unit is a model--question--method run, and its denominators are
-descriptive campaign totals rather than the analysis populations above. Successful completion denotes
-pipeline completion, not agreement with the reference answer.
+The two cohorts overlap, but they do not contain exactly the same questions. They shared \num{807}
+Spider questions and \num{244} BIRD questions. The context-fit cohort also contained \num{45} Spider
+questions and \num{59} BIRD questions with empty reference results. Every question could be assigned or
+excluded using the recorded criteria, and no required run records were missing. For BIRD, the context-fit
+cohort covered only \texttt{student\_club} and \texttt{toxicology}, so any results based on this cohort
+describe only those two sampled databases.
 
 \input{../code/analysis/tables/experiment_outcomes}
 
-Of \num{179760} retained runs, \num{110185} completed and \num{69575} failed. Context overflow accounted
-for \num{67536} failures, or \qty{97.1}{\percent} of all failures. The inventory also includes
-\num{1984} terminal SQL execution errors and \num{55} failures to extract SQL. These counts describe
-the full campaign; the following performance estimates apply the cohorts above.
+We excluded the Qwen~3.5 27B runs because the reasoning trace could not be reliably separated from the
+final answer. Table~\ref{tab:experiment-outcomes} summarizes the outcomes for the remaining ten models
+across the full set of experiments. Each run corresponds to one model, question, and retrieval
+configuration. Unlike the cohort counts, these totals include all experimental questions. A successful
+run means that the pipeline completed, not necessarily that its answer agreed with the reference.
 
-\clearpage
+Of the \num{179760} retained runs, \num{110185} completed and \num{69575} failed. Exceeding the context
+window was the main cause of failure, accounting for \num{67536} runs, or \qty{97.1}{\percent} of all
+failures. A further \num{1984} runs failed because SQL execution errors remained after the retry limit,
+while \num{55} failed because no SQL statement could be extracted from the model output. These totals
+describe the full set of experiments; the following sections specify which cohort is used for each
+comparison.
+
 \section{Direct Context Inference}
 \label{sec:direct-results}
 
