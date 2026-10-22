@@ -60,15 +60,6 @@ def render_text_to_sql_operational_table(
             r"    \bottomrule",
             r"  \end{tabular}%",
             r"  }",
-            r"  \vspace{0.4em}",
-            (
-                r"  \parbox{\linewidth}{\scriptsize \textit{Note:} Token counts and model "
-                r"times are accumulated across the initial generation and all correction "
-                r"attempts, including terminal failures. TTFT is the sum of first-token waits "
-                r"across attempts; Generation "
-                r"is the remaining model time. Total also includes SQL execution. Brackets "
-                r"show pointwise \qty{95}{\percent} database-bootstrap confidence intervals.}"
-            ),
             r"\end{table}",
             "",
         ]

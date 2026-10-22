@@ -88,19 +88,6 @@ def render_error_correction_table(
             r"    \bottomrule",
             r"  \end{tabular}%",
             r"  }",
-            r"  \vspace{0.4em}",
-            (
-                r"  \parbox{\linewidth}{\scriptsize \textit{Note:} Attempt labels identify "
-                r"the generation on which SQL first executed successfully; outcome shares "
-                r"use all eligible runs. Recovery uses all initially failed runs, including "
-                r"failures that stopped before a retry. Runs entering correction have at least "
-                r"one retry. Success-rate gain uses all eligible runs. Added time is "
-                r"model-generation time from "
-                r"attempts after the first; per-attempt SQL execution time was not persisted "
-                r"separately and is excluded. Failed sequences retain their recorded costs. "
-                r"A dash denotes a zero denominator. Brackets show pointwise "
-                r"\qty{95}{\percent} database-bootstrap intervals.}"
-            ),
             r"\end{table}",
             "",
         ]

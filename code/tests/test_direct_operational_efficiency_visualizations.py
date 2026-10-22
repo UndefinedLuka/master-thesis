@@ -167,7 +167,7 @@ def test_duplicate_direct_identity_raises() -> None:
         calculate_direct_efficiency(pd.concat([data, data.iloc[[0]]]))
 
 
-def test_table_and_figures_contain_all_requested_metrics(tmp_path: Path) -> None:
+def test_table_contains_all_requested_metrics(tmp_path: Path) -> None:
     analysis = calculate_direct_efficiency(_complete_matrix())
     latex = render_direct_operational_table(analysis)
 
@@ -176,8 +176,16 @@ def test_table_and_figures_contain_all_requested_metrics(tmp_path: Path) -> None
     assert "TTFT (s)" in latex
     assert "Generation (s)" in latex
     assert "Total latency (s)" in latex
-    assert "Generation time is measured from the first output token" in latex
+    assert r"\parbox" not in latex
+    assert "Note:" not in latex
 
+    tables_dir = tmp_path / "tables"
+    table_path = generate_direct_operational_table(analysis, tables_dir)
+    assert table_path == tables_dir / DIRECT_OPERATIONAL_TABLE_FILENAME
+
+
+def test_figures_contain_all_requested_metrics(tmp_path: Path) -> None:
+    analysis = calculate_direct_efficiency(_complete_matrix())
     token_figure, token_axes = plot_direct_token_usage(analysis)
     latency_figure, latency_axes = plot_direct_latency(analysis)
     assert [axis.get_title() for axis in token_axes[0]] == [
@@ -190,12 +198,9 @@ def test_table_and_figures_contain_all_requested_metrics(tmp_path: Path) -> None
         "Generation after first token",
     ]
 
-    tables_dir = tmp_path / "tables"
     figures_dir = tmp_path / "figures"
-    table_path = generate_direct_operational_table(analysis, tables_dir)
     token_path = generate_direct_token_usage_figure(analysis, figures_dir)
     latency_path = generate_direct_latency_figure(analysis, figures_dir)
-    assert table_path == tables_dir / DIRECT_OPERATIONAL_TABLE_FILENAME
     assert token_path == figures_dir / DIRECT_TOKEN_USAGE_FIGURE_FILENAME
     assert latency_path == figures_dir / DIRECT_LATENCY_FIGURE_FILENAME
     assert token_path.stat().st_size > 0

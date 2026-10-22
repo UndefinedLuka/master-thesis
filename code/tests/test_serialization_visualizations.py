@@ -224,7 +224,9 @@ def test_rendered_table_contains_relative_and_fit_values() -> None:
     assert r"\label{tab:serialization-efficiency}" in latex
     assert r"at or below \num{250} tokens" in latex
     assert r"\num{1}/\num{2} (\qty{50.0}{\percent})" in latex
-    assert "Coverage validation was skipped." in latex
+    assert "% Coverage validation was skipped." in latex
+    assert r"\parbox" not in latex
+    assert "Note:" not in latex
 
 
 def test_artifact_generators_each_write_one_output(tmp_path: Path) -> None:

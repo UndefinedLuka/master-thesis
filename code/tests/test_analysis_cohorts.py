@@ -256,5 +256,6 @@ def test_manifest_and_counts_are_reproducible_under_input_permutation(tmp_path):
     generate_cohort_artifacts(two, tmp_path / "tables", tmp_path / "audit")
     assert before == [path.read_bytes() for path in files]
     assert json.loads(files[-1].read_text())["datasets"][0]["context_fit_questions"] == 1
-    assert "\\num{70}" in files[0].read_text()
+    assert r"\parbox" not in files[0].read_text()
+    assert "Answerable:" not in files[0].read_text()
     assert r"\resizebox{\linewidth}{!}" in files[0].read_text()

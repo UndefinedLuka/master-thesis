@@ -55,15 +55,6 @@ def render_text_to_sql_retrieval_table(
             r"    \bottomrule",
             r"  \end{tabular}",
             r"  }",
-            r"  \vspace{0.4em}",
-            (
-                r"  \parbox{\linewidth}{\scriptsize \textit{Note:} "
-                r"BERTScore is raw (unrescaled). Retrieval means include "
-                r"zero-scored failed SQL runs. Executed is the share of eligible runs "
-                r"that achieved SQL execution success within the retry limit. Brackets show "
-                r"pointwise \qty{95}{\percent} "
-                r"database-bootstrap confidence intervals.}"
-            ),
             r"\end{table}",
             "",
         ]

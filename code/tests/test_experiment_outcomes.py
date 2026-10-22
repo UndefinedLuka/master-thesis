@@ -235,5 +235,7 @@ def test_render_outcome_table_includes_totals_and_writes_file(tmp_path: Path) ->
     assert r"\textbf{All successful runs} & \num{4} & \num{6} & \num{10} \\" in latex
     assert r"\textbf{All failed runs} & \num{5} & \num{7} & \num{12} \\" in latex
     assert r"\textbf{Total runs} & \num{9} & \num{13} & \num{22} \\" in latex
-    assert "Complete coverage validated." in latex
-    assert "Coverage validation skipped." in output.read_text(encoding="utf-8")
+    assert "% Complete coverage validated." in latex
+    assert "% Coverage validation skipped." in output.read_text(encoding="utf-8")
+    assert r"\parbox" not in latex
+    assert "Note:" not in latex

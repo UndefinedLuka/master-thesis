@@ -6,19 +6,20 @@ This chapter reports the experiments described in Chapters~\ref{ch:methodolgy} a
 experiment coverage, Direct Context Inference, Text-to-SQL, and a comparison of the two pipelines.
 The results cover retrieval accuracy, token use, response latency, and SQL correction performance.
 Estimates retain equal weight per run within each dataset. Unless stated otherwise, intervals are pointwise
-\qty{95}{\percent} database-bootstrap intervals, following Section~\ref{sec:confidence-intervals}.
+\qty{95}{\percent} database-bootstrap intervals, following Section~\ref{sec:confidence-intervals};
+table cells show these intervals in brackets. BERTScore values are raw (unrescaled).
 Paired differences and ratios accompany the main comparisons; an ordering of observed means alone does not
 establish a reliable ranking.
 
 \section{Serialization efficiency}
 \label{sec:serialization-results}
 
+\input{../code/analysis/tables/serialization_efficiency}
+
 The payload comparison counted only serialized database contents: full Spider databases and the sampled
 BIRD databases described in Chapter~\ref{ch:implementation}. It used one representative tokenizer from each
 of the Qwen~3.5, Ministral~3, and Gemma~4 families, giving \num{558} measurements of \num{31} databases
 across six formats and three tokenizer families.
-
-\input{../code/analysis/tables/serialization_efficiency}
 
 Table~\ref{tab:serialization-efficiency} reports arithmetic means across databases and tokenizer families:
 \num{60} observations per Spider format and \num{33} per BIRD format. Relative values are ratios of these
@@ -108,7 +109,9 @@ the full campaign; the following performance estimates apply the cohorts above.
 
 On the context-fit workload from Section~\ref{sec:analysis-cohorts}, compact formats required fewer
 input tokens and had lower mean latency. Table~\ref{tab:direct-operational-efficiency} reports all five
-operational measurements. CSV used \num{5366} input tokens per Spider run and \num{31756} per BIRD run,
+operational measurements. TTFT measures the wait from request submission to the first output token;
+generation covers the remaining time to completion, and total latency spans both intervals.
+CSV used \num{5366} input tokens per Spider run and \num{31756} per BIRD run,
 compared with \num{20186} and \num{97190} for XML. The paired XML-to-CSV ratios were \num{3.76}
 (\numrange{2.84}{4.38}) and \num{3.06} (\numrange{2.94}{3.20}), respectively. These are measured prompt
 tokens on the context-fit questions, unlike the database-only payload counts in Section~\ref{sec:serialization-results}.
@@ -282,8 +285,9 @@ Lower latency therefore coincided with lower token use and fewer retries in this
 
 Spider had higher observed mean agreement on all three metrics: NEM was \num{0.634}, BERTScore \num{0.916},
 and ROUGE-L \num{0.740}, compared with \num{0.501}, \num{0.848}, and \num{0.517} on BIRD
-(Table~\ref{tab:text-to-sql-retrieval-accuracy}). Final execution success was \qty{95.23}{\percent} and
-\qty{89.75}{\percent}, respectively. The gap between execution success and NEM shows that an executable
+(Table~\ref{tab:text-to-sql-retrieval-accuracy}). The Executed column reports final execution success
+within the retry limit: \qty{95.23}{\percent} and \qty{89.75}{\percent}, respectively.
+The gap between execution success and NEM shows that an executable
 query did not necessarily return an answer agreeing with the reference.
 
 \begin{figure}[!htbp]
@@ -314,7 +318,8 @@ These within-family comparisons describe the evaluated models rather than an iso
 Under the retry policy in Section~\ref{sec:minimalist-text-to-sql}, execution success increased from
 \qty{92.55}{\percent} on the first attempt to \qty{95.23}{\percent} on Spider, and from
 \qty{82.23}{\percent} to \qty{89.75}{\percent} on BIRD. Table~\ref{tab:text-to-sql-error-correction}
-gives success counts for all four attempts and terminal failures. Retries recovered \num{264} of \num{734}
+groups successful runs by the attempt on which SQL first executed successfully and lists terminal
+failures; outcome percentages use all eligible runs. Retries recovered \num{264} of \num{734}
 initially failed Spider runs, or \qty{35.97}{\percent} (\qtyrange{30.66}{41.49}{\percent}), and \num{833}
 of \num{1969} BIRD runs, or \qty{42.31}{\percent} (\qtyrange{38.36}{47.37}{\percent}). Across all
 \num{9850} and \num{11080} eligible runs, these recoveries were paired execution-success gains of
@@ -385,8 +390,10 @@ Operational comparisons used exactly the same context-fit questions as the direc
 \num{852} questions from \num{18} Spider databases and \num{303} from two sampled BIRD databases.
 All methods retained identical question--model pairs, including \num{372} unsuccessful SQL runs on
 Spider and \num{231} on BIRD and their recorded costs. Table~\ref{tab:common-cohort-operational-efficiency}
-reports all five shared measures, SQL execution time, and mean retries. SQL tokens and timings accumulated
-all attempts, with TTFT summing first-token waits and generation measuring the remaining model time.
+reports all five shared measures and SQL execution time. SQL tokens and timings accumulated all attempts,
+with TTFT summing first-token waits and generation measuring the remaining model time.
+Mean SQL retries per run were \num{0.157} (\numrange{0.099}{0.230}) on Spider and
+\num{0.314} (\numrange{0.288}{0.337}) on BIRD.
 
 \input{../code/analysis/tables/common_cohort_operational_efficiency}
 

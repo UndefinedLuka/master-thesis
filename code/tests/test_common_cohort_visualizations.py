@@ -212,17 +212,22 @@ def test_invalid_metrics_cannot_silently_enter_means(value: float) -> None:
         calculate_common_cohort_analysis(data)
 
 
-def test_artifacts_show_all_methods_and_distinguish_log_and_linear_scales(tmp_path: Path) -> None:
-    import matplotlib.pyplot as plt
-
+def test_table_shows_all_methods_without_notes(tmp_path: Path) -> None:
     analysis = calculate_common_cohort_analysis(_matrix())
     table = render_common_cohort_table(analysis)
     assert r"\label{tab:common-cohort-operational-efficiency}" in table
     assert "recorded context-fit" in table
-    assert "SQL failures" in table
-    assert "all correction attempts" in table
+    assert r"\parbox" not in table
+    assert "Note:" not in table
     assert "Direct / CSV" in table
     assert "Text-to-SQL" in table
+    assert generate_common_cohort_table(analysis, tmp_path).name == COMMON_COHORT_TABLE_FILENAME
+
+
+def test_figures_show_all_methods_and_distinguish_log_and_linear_scales(tmp_path: Path) -> None:
+    import matplotlib.pyplot as plt
+
+    analysis = calculate_common_cohort_analysis(_matrix())
     latency = plot_common_cohort_latency(analysis)
     tokens = plot_common_cohort_token_usage(analysis)
     assert len(latency.axes) == 2
@@ -243,6 +248,5 @@ def test_artifacts_show_all_methods_and_distinguish_log_and_linear_scales(tmp_pa
         path = generator(analysis, tmp_path)
         assert path.name == filename
         assert path.read_bytes().startswith(b"%PDF-")
-    assert generate_common_cohort_table(analysis, tmp_path).name == COMMON_COHORT_TABLE_FILENAME
     for figure in (latency, tokens):
         plt.close(figure)

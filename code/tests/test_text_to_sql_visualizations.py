@@ -180,7 +180,9 @@ def test_text_to_sql_tables_report_accuracy_execution_and_operations(tmp_path: P
 
     assert "NEM" in retrieval
     assert "BERTScore & ROUGE-L" in retrieval
-    assert "BERTScore is raw (unrescaled)." in retrieval
+    for table in (retrieval, operational):
+        assert r"\parbox" not in table
+        assert "Note:" not in table
     assert "F1" not in retrieval
     assert "answerable cohort" in retrieval
     assert "answerable cohort" in operational
@@ -224,19 +226,29 @@ def test_retry_analysis_reports_terminal_stage_execution_and_added_time() -> Non
     assert retry_gain.loc["spider", "execution_gain_pp"] == pytest.approx(100 / 3)
 
 
-def test_error_correction_table_and_figure(tmp_path: Path) -> None:
+def test_error_correction_table(tmp_path: Path) -> None:
     retry_analysis = calculate_text_to_sql_retry_analysis(
         calculate_text_to_sql_analysis(_results())
     )
     latex = render_error_correction_table(retry_analysis)
-    figure, axes = plot_error_correction_performance(retry_analysis)
 
     assert "First attempt" in latex
     assert "Complete failure" in latex
     assert "Mean added generation (s) / eligible run" in latex
     assert "Recovery / initially failed runs" in latex
     assert "Mean retries / run entering correction" in latex
+    assert r"\parbox" not in latex
+    assert "Note:" not in latex
     assert "Correct results" not in latex
+    table_path = generate_error_correction_table(retry_analysis, tmp_path / "tables")
+    assert table_path.name == TEXT_TO_SQL_RETRY_TABLE_FILENAME
+
+
+def test_error_correction_figure(tmp_path: Path) -> None:
+    retry_analysis = calculate_text_to_sql_retry_analysis(
+        calculate_text_to_sql_analysis(_results())
+    )
+    figure, axes = plot_error_correction_performance(retry_analysis)
     assert [axis.get_title() for axis in axes] == [
         "Added generation time by terminal outcome",
         "Added generation time by retry stage",
@@ -246,9 +258,7 @@ def test_error_correction_table_and_figure(tmp_path: Path) -> None:
         assert axis.get_ylabel() == "Additional seconds per answerable run"
         assert sum(patch.get_height() for patch in axis.patches) == pytest.approx(4 / 3)
 
-    table_path = generate_error_correction_table(retry_analysis, tmp_path / "tables")
     figure_path = generate_error_correction_figure(retry_analysis, tmp_path / "figures")
-    assert table_path.name == TEXT_TO_SQL_RETRY_TABLE_FILENAME
     assert figure_path.name == TEXT_TO_SQL_RETRY_FIGURE_FILENAME
     assert figure_path.stat().st_size > 0
 

@@ -369,15 +369,7 @@ def generate_cohort_artifacts(
                 f"{num(row[f'{prefix}_databases'])} & {empty}" + LATEX_ROW_END
             )
     lines.extend([
-        r"    \bottomrule", r"  \end{tabular}%", r"  }", r"  \vspace{0.4em}",
-        r"  \parbox{\linewidth}{\scriptsize \textit{Answerable:} reference SQL executes "
-        r"and returns at least one row on the experimental database. Used for all retrieval "
-        r"accuracy and standalone Text-to-SQL efficiency and correction results. "
-        r"\textit{Context-fit:} recorded feasibility across all ten models and six direct "
-        r"formats plus Text-to-SQL (\num{70} records per question), independent of reference "
-        r"emptiness and SQL execution success. Used for direct and paired pipeline efficiency. "
-        r"Direct feasibility uses the runner's fixed-system-prompt check plus headroom and "
-        r"recorded inference; SQL feasibility uses all recorded attempts.}",
+        r"    \bottomrule", r"  \end{tabular}%", r"  }",
         r"\end{table}", "",
     ])
     table.write_text("\n".join(lines), encoding="utf-8")
