@@ -1,24 +1,48 @@
 \chapter{Conclusion}
 \label{ch:conclusion}
 
-In this thesis we explored how the choice of extraction method and data serialization format influences
-the performance of LLMs when working with structured data. We compared Direct Context Inference and
-Text-to-SQL using ten local open-weight models on Spider and sampled BIRD databases. Alongside retrieval
-accuracy, we considered latency and token usage, in order to understand the trade-offs involved in choosing
-an approach. Based on these results, we developed a decision framework which helps select an extraction
-method and serialization format according to the data and requirements of the system.
+\section{Conclusions and contributions}
 
-The results have shown that Text-to-SQL achieved higher overall retrieval accuracy, lower average latency,
-and lower input-token usage under the evaluated conditions. This makes it the preferred starting point
-when the data is stored in a relational form and a database engine is available. When passing the data
-directly to the model, CSV and TOON provided the best overall balance between accuracy and operational
-efficiency. Their compact representation allowed more data to fit within the context window and reduced
-the time needed to process the input. However, no format performed best across all retrieval metrics.
-These findings show that we should first consider how the information is going to be extracted, and then
-choose a suitable representation when using Direct Context Inference.
+Method selection should precede serialization optimization in LLM-based information extraction from
+structured data. A compact representation can make a direct input more practical, but the application's
+tasks and constraints determine whether the extraction method is usable.
 
-The findings are limited to the evaluated datasets, models, and experimental setup. Future work could
-extend the comparison to full-scale databases and nested data, as well as approaches which retrieve only
-the relevant parts of the data before passing them to the model. Overall, this thesis provides practical
-guidance for choosing an approach which balances retrieval accuracy, latency, and token usage when
-extracting information from structured data with LLMs.
+We contributed a controlled comparison of Direct Context Inference and Text-to-SQL and developed the
+evidence-informed decision framework in Section~\ref{sec:decision-framework}. Within the scope discussed
+in Chapter~\ref{ch:discussion}, Text-to-SQL is the preferred starting point for relational
+workloads where the tasks and infrastructure support SQL. For feasible Direct Context Inference over flat
+data, the findings favour compact representations, with CSV as a starting choice and TOON as a competitive
+alternative. This is conditional guidance, not a universal ordering of methods or formats.
+
+The framework makes the assumptions behind a starting choice explicit. It identifies candidates for
+evaluation, not a configuration that satisfies every application. Validation on representative questions
+is still required before adoption.
+
+\section{Future work}
+
+The issues discussed in Section~\ref{sec:validity-limitations} motivate three directions for further work.
+
+First, future experiments should use relationship-preserving sampling or full-scale databases to examine
+whether the conclusions hold when joins and aggregates operate on intact relationships. Comparison with
+independently sampled tables would help isolate the effects of sampling. Answer evaluation should also
+compare structured results directly, preserving
+numeric values and handling row order and duplicates according to the question's semantics. Applying this
+comparison to both pipelines would clarify how much of the observed agreement difference reflects
+correct retrieval rather than differences in answer representation.
+
+Second, the pipelines should be extended with selective retrieval, targeted metadata, and semantic
+verification. Controlled additions would show whether supplying relevant records or field descriptions,
+or checking the meaning of a generated query, addresses errors left unresolved by the baseline.
+Evaluation should account for the additional preprocessing and inference work, including how preprocessing
+is shared across repeated requests. Nested-data retrieval should also be tested with structure-preserving
+formats, including TOON, to establish whether the framework's conditional format branch provides useful
+guidance beyond flat relational inputs. These experiments would clarify when added complexity is justified.
+
+Third, the framework should be evaluated on independent application workloads by testing whether its
+suggested candidates meet the stated requirements. Accuracy and resource use should be measured on the
+same question set so that application trade-offs can be assessed directly. Realistic serving conditions,
+including concurrent requests and repeated access to data, would test whether the guidance transfers
+to deployment and identify selection rules that need revision.
+
+The thesis provides an evidence-informed starting point for choosing how LLMs extract information from
+structured data.
