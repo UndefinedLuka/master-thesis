@@ -1,0 +1,85 @@
+\begingroup
+\renewcommand{\baselinestretch}{1}
+\fontsize{10}{11.5}\selectfont
+\begin{tikzpicture}[
+    x=1cm, y=1cm,
+    font=\fontsize{10}{11.5}\selectfont,
+    every node/.style={align=center},
+    box/.style={draw, rounded corners=2pt, inner sep=5pt, text width=4.7cm},
+    stage/.style={box, fill=black!6},
+    outcome/.style={box, line width=0.8pt},
+    arrow/.style={-{Stealth[length=2mm]}, line width=0.6pt},
+    note/.style={fill=white, inner sep=2pt, font=\fontsize{9}{10.5}\selectfont}
+  ]
+  \node[box, text width=4.7cm, minimum height=0.9cm] (spider) at (-2.9,0) {
+    \textbf{Spider}\\Full tables
+  };
+  \node[box, text width=4.7cm, minimum height=0.9cm] (bird) at (2.9,0) {
+    \textbf{BIRD}\\Sample rows per table
+  };
+  \node[stage, text width=10.2cm, minimum height=0.8cm] (database) at (0,-1.55) {
+    \textbf{Shared experimental databases}
+  };
+
+  \node[stage, minimum height=2.2cm] (serialize) at (-2.9,-3.7) {
+    \textbf{Direct Context}\\\textbf{Inference}\\[3pt]
+    Serialize tables\\
+    {\fontsize{9}{10.5}\selectfont
+      JSON, XML, YAML\\
+      CSV, Markdown, TOON}
+  };
+  \node[stage, minimum height=2.2cm] (schema) at (2.9,-3.7) {
+    \textbf{Text-to-SQL}\\[3pt]
+    Extract schema
+  };
+  \node[box, minimum height=0.95cm] (directllm) at (-2.9,-5.9) {
+    \textbf{LLM}\\Data + question
+  };
+  \node[box, minimum height=0.95cm] (sqlllm) at (2.9,-5.9) {
+    \textbf{LLM}\\Schema + question
+  };
+  \node[box, minimum height=0.95cm] (execute) at (2.9,-8) {
+    \textbf{Execute SQL}\\Same database
+  };
+
+  \node[outcome, minimum height=1.1cm] (directanswer) at (-2.9,-10) {
+    \textbf{Free-text answer}
+  };
+  \node[outcome, minimum height=1.1cm] (sqlanswer) at (2.9,-10) {
+    \textbf{SQL outcome}\\Rows to text\\or final failure
+  };
+  \node[stage, text width=10.2cm, minimum height=1.9cm] (metrics) at (0,-12.1) {
+    \textbf{Calculate metrics}\\[3pt]
+    NEM $\cdot$ ROUGE-L $\cdot$ BERTScore\\
+    Input/output tokens $\cdot$ Response latency\\
+    SQL: execution success $\cdot$ Retries $\cdot$ Execution time
+  };
+
+  \node[stage, minimum height=1.4cm] (gold) at (-2.9,-14.6) {
+    \textbf{Reference generation}\\[3pt]
+    Execute gold SQL\\
+    on the same database
+  };
+  \node[outcome, minimum height=1.4cm] (reference) at (2.9,-14.6) {
+    \textbf{Reference answer}\\Rows to text
+  };
+
+  \draw[arrow] (spider.south) -- (database.north -| spider.south);
+  \draw[arrow] (bird.south) -- (database.north -| bird.south);
+  \draw[arrow] (database.south -| serialize.north) -- (serialize.north);
+  \draw[arrow] (database.south -| schema.north) -- (schema.north);
+  \draw[arrow] (database.west) -- (-6.2,-1.55) |- (gold.west);
+  \draw[arrow] (serialize.south) -- (directllm.north);
+  \draw[arrow] (schema.south) -- (sqlllm.north);
+  \draw[arrow] (sqlllm.south) -- node[note, midway] {Generated query} (execute.north);
+  \draw[arrow] (execute.west) -- (0,-8)
+    -- node[note, left, text width=2.1cm] {Error: up to\\three retries}
+    (0,-5.9) -- (sqlllm.west);
+  \draw[arrow] (execute.south) -- node[note, midway] {Success / limit} (sqlanswer.north);
+  \draw[arrow] (directllm.south) -- (directanswer.north);
+  \draw[arrow] (gold.east) -- (reference.west);
+  \draw[arrow] (directanswer.south) -- (metrics.north -| directanswer.south);
+  \draw[arrow] (sqlanswer.south) -- (metrics.north -| sqlanswer.south);
+  \draw[arrow] (reference.north) -- (metrics.south -| reference.north);
+\end{tikzpicture}
+\endgroup
