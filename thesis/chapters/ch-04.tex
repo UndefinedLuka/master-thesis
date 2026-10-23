@@ -176,8 +176,10 @@ response workflow, not preprocessing before request submission.
 
 Both pipelines use deliberately minimal prompt templates. The direct inference prompt assigns the model the
 role of a 'precise information retrieval assistant' with constraints to use only the provided data, output
-'N/A' for missing information, and avoid conversational filler. The Text-to-SQL prompt assigns the role of
-a 'precise Text-to-SQL translator' constrained to output SQLite compatible SQL.
+'N/A' for missing information, and avoid conversational filler. Its complete template is reproduced in
+Appendix~\ref{app:direct-prompt}. The Text-to-SQL prompt assigns the role of
+a 'precise Text-to-SQL translator' constrained to output SQLite compatible SQL; its complete template is
+reproduced in Appendix~\ref{app:sql-prompt}.
 Both templates inject the serialized data (or schema expressed in data definition language) at a designated
 placeholder. The prompts are
 intentionally non-leading: we avoid few-shot examples or format-specific hints so that the model's inherent
