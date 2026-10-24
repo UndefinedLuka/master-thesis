@@ -1,48 +1,63 @@
 \chapter{Conclusion}
 \label{ch:conclusion}
 
+We compared two approaches to extracting information from structured data using LLMs:
+Direct Context Inference and Text-to-SQL. We also examined how serialization format affects direct
+inference. The aim was to understand how these choices influence answer agreement, latency, and token
+usage, and to use the findings to guide the selection of an approach for a given application.
+
 \section{Conclusions and contributions}
 
-Method selection should precede serialization optimization in LLM-based information extraction from
-structured data. A compact representation can make a direct input more practical, but the application's
-tasks and constraints determine whether the extraction method is usable.
+When on presented pipelines, we should first choose the extraction method, and then consider the
+serialization format. For the relational tasks evaluated here, Text-to-SQL achieved higher agreement
+with the reference answers than Direct Context Inference. It also required fewer input tokens and had 
+lower mean latency. These findings support using
+Text-to-SQL as the starting point when an SQL engine is available and the required tasks can be
+expressed as queries.
 
-We contributed a controlled comparison of Direct Context Inference and Text-to-SQL and developed the
-evidence-informed decision framework in Section~\ref{sec:decision-framework}. Within the scope discussed
-in Chapter~\ref{ch:discussion}, Text-to-SQL is the preferred starting point for relational
-workloads where the tasks and infrastructure support SQL. For feasible Direct Context Inference over flat
-data, the findings favour compact representations, with CSV as a starting choice and TOON as a competitive
-alternative. This is conditional guidance, not a universal ordering of methods or formats.
+When SQL cannot be used, Direct Context Inference is an option if the complete request fits within the
+model's context window. In this case, format choice affects how much data we can provide and how much
+processing it requires. For flat tabular data, CSV had the lowest mean input-token use and latency,
+with TOON a close alternative. Both also achieved competitive answer scores among the direct formats.
+More verbose representations did not provide a consistent accuracy advantage that would justify
+their additional input tokens.
 
-The framework makes the assumptions behind a starting choice explicit. It identifies candidates for
-evaluation, not a configuration that satisfies every application. Validation on representative questions
-is still required before adoption.
+The main contributions are the controlled comparison of these approaches using local open-weight
+LLMs and the decision framework presented in Section~\ref{sec:decision-framework}. The framework
+connects the findings to practical choices by considering database size, SQL support, required
+accuracy, expected latency, and the available budget. As discussed in Chapter~\ref{ch:discussion},
+the recommendations depend on the data and experimental setup.
 
 \section{Future work}
 
-The issues discussed in Section~\ref{sec:validity-limitations} motivate three directions for further work.
+The limitations discussed in Section~\ref{sec:validity-limitations} point to three main directions
+for further work.
 
-First, future experiments should use relationship-preserving sampling or full-scale databases to examine
-whether the conclusions hold when joins and aggregates operate on intact relationships. Comparison with
-independently sampled tables would help isolate the effects of sampling. Answer evaluation should also
-compare structured results directly, preserving
-numeric values and handling row order and duplicates according to the question's semantics. Applying this
-comparison to both pipelines would clarify how much of the observed agreement difference reflects
-correct retrieval rather than differences in answer representation.
+\subsection{Data sampling and answer evaluation}
 
-Second, the pipelines should be extended with selective retrieval, targeted metadata, and semantic
-verification. Controlled additions would show whether supplying relevant records or field descriptions,
-or checking the meaning of a generated query, addresses errors left unresolved by the baseline.
-Evaluation should account for the additional preprocessing and inference work, including how preprocessing
-is shared across repeated requests. Nested-data retrieval should also be tested with structure-preserving
-formats, including TOON, to establish whether the framework's conditional format branch provides useful
-guidance beyond flat relational inputs. These experiments would clarify when added complexity is justified.
+Future experiments should use complete databases or sampling methods that preserve relationships
+between tables. Comparing these with independently sampled tables would help us understand how
+sampling affects the resulting answers.
 
-Third, the framework should be evaluated on independent application workloads by testing whether its
-suggested candidates meet the stated requirements. Accuracy and resource use should be measured on the
-same question set so that application trade-offs can be assessed directly. Realistic serving conditions,
-including concurrent requests and repeated access to data, would test whether the guidance transfers
-to deployment and identify selection rules that need revision.
+\subsection{Extensions to the retrieval pipelines}
 
-The thesis provides an evidence-informed starting point for choosing how LLMs extract information from
-structured data.
+The pipelines could be extended by retrieving only relevant records, providing descriptions of
+database fields, and checking whether generated queries answer the intended question. Evaluating
+these additions individually would show which errors they help resolve and whether the improvements
+justify the additional processing time and token usage. This evaluation should also include data
+preparation and account for work that can be reused across repeated requests.
+
+Another direction is retrieval from nested data using formats that preserve its structure, including
+TOON. These experiments would allow us to assess the framework's format recommendation beyond the
+flat relational data used in this study.
+
+\subsection{Evaluation on application workloads}
+
+The decision framework should be evaluated on new application workloads to determine whether its
+recommended configurations meet the required accuracy, latency, and budget. Testing concurrent requests 
+and repeated access to the same data would also show how
+the recommendations apply under realistic serving conditions and where they need to be revised.
+
+Overall, this thesis provides a starting point for choosing how to use LLMs for structured data
+extraction. The findings show the importance of considering the extraction method and serialization
+format together with the accuracy and resource requirements of the application.

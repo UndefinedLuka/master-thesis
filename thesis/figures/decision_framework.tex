@@ -1,7 +1,7 @@
 \begingroup
 \renewcommand{\baselinestretch}{1}
 \fontsize{10}{11.5}\selectfont
-% Natural size: about 13.6 cm by 16.6 cm; use \resizebox{\textwidth}{!}{...}.
+% Natural size: about 13.6 cm by 14.4 cm; use \resizebox{\textwidth}{!}{...}.
 \begin{tikzpicture}[
     x=1cm, y=1cm,
     font=\fontsize{10}{11.5}\selectfont,
@@ -12,72 +12,62 @@
     arrow/.style={-{Stealth[length=2mm]}, line width=0.6pt},
     answer/.style={fill=white, inner sep=1pt}
   ]
-  \node[gate, text width=10.2cm, minimum height=2.4cm] (sqlgate) at (0,0) {
-    \textbf{SQL prerequisites met?}\\[2pt]
-    Faithful relational representation\\
-    SQL-expressible workload\\
-    SQL engine and access available\\
-    Complete schema request + output allowance fits
+  \node[gate, text width=8.2cm, minimum height=1.4cm] (sqlgate) at (0,0) {
+    \textbf{SQL supported?}\\[2pt]
+    Engine and query access available\\
+    Data and task support the required SQL queries
   };
-  \node[box, minimum height=0.95cm] (sql) at (-3.1,-3.2) {
-    \textbf{Text-to-SQL candidate}
+  \node[box, minimum height=1.8cm] (sql) at (-3.1,-2.35) {
+    \textbf{Text-to-SQL}\\[2pt]
+    Preferred at any database size
   };
-  \node[box, minimum height=3.2cm] (format) at (3.1,-3.5) {
-    \textbf{Direct Context Inference}\\
-    \textbf{Select representation}\\[2pt]
-    Flat: CSV starting choice\\
-    Nested: preserve structure;\\
-    TOON is a candidate\\[2pt]
-    Retain existing representation\\
-    when appropriate
+  \node[box, minimum height=1.8cm] (direct) at (3.1,-2.35) {
+    \textbf{Direct Context Inference}\\[2pt]
+    Flat: \textbf{CSV}\\
+    Nested: \textbf{TOON}\\
+    Preserve required structure
   };
-  \node[gate, minimum height=1.2cm] (directfit) at (3.1,-6.3) {
-    \textbf{Complete direct request}\\
-    \textbf{+ output allowance fits?}
+  \node[gate, text width=9.6cm, minimum height=1.5cm] (fit) at (0,-4.8) {
+    \textbf{Complete request fits the context window?}\\[2pt]
+    Schema (SQL) or records (direct), plus prompt overhead\\
+    Reserve space for answer and reasoning tokens
   };
-  \node[gate, text width=9.6cm, minimum height=2.15cm] (accept) at (0,-8.65) {
+  \node[gate, text width=9.6cm, minimum height=1.5cm] (accept) at (0,-7.0) {
     \textbf{Application requirements met?}\\[2pt]
-    Answer quality on representative tasks\\
-    SQL execution reliability (if applicable)\\
-    Latency and resource use
+    Accuracy, latency and budget on representative tasks\\
+    SQL execution success checked separately
   };
-  \node[outcome, minimum height=0.9cm] (select) at (-3.1,-10.7) {
-    \textbf{Select configuration}\\
-    Method, model, representation
+  \node[outcome, minimum height=1.0cm] (select) at (-3.1,-9.0) {
+    \textbf{Select configuration}\\[2pt]
+    Pipeline, model and format
   };
-  \node[gate, minimum height=2.45cm] (reassess) at (3.3,-12.7) {
-    \textbf{Reassess candidates}\\[2pt]
-    New model or configuration\\
-    or another method\\
-    Direct option remains open\\[2pt]
-    \textbf{Untested viable candidate?}
+  \node[gate, minimum height=1.2cm] (retry) at (3.1,-10.7) {
+    \textbf{Another configuration}\\
+    \textbf{within the same pipeline?}
   };
-  \node[gate, minimum height=2.45cm] (recheck) at (-3.3,-12.7) {
-    \textbf{Repeat relevant checks}\\[2pt]
-    SQL prerequisites, or direct\\
-    representation selection;\\
-    complete request and\\
-    output allowance fit
+  \node[box, minimum height=1.45cm] (adjust) at (-3.1,-10.7) {
+    \textbf{Adjust configuration}\\[2pt]
+    Model, prompt and, for SQL,\\
+    retry limit
   };
-  \node[outcome, minimum height=0.9cm] (other) at (3.3,-14.9) {
-    \textbf{Another approach needed}
+  \node[outcome, minimum height=1.5cm] (other) at (3.1,-12.9) {
+    \textbf{Another approach needed}\\[2pt]
+    Enable SQL if unavailable,\\
+    or use selective retrieval
   };
 
   \draw[arrow] (sqlgate.south -| sql.north) -- node[answer, midway] {Yes} (sql.north);
-  \draw[arrow] (sqlgate.south -| format.north) -- node[answer, midway] {No} (format.north);
-  \draw[arrow] (format.south) -- (directfit.north);
-  \draw[arrow] (sql.south) -- (accept.north -| sql.south);
-  \draw[arrow] (directfit.south) -- node[answer, midway] {Yes} (accept.north -| directfit.south);
-  \draw[arrow] (directfit.east) -- node[answer, midway] {No}
-    (6.8,-6.3) -- (6.8,-12.7) -- (reassess.east);
+  \draw[arrow] (sqlgate.south -| direct.north) -- node[answer, midway] {No} (direct.north);
+  \draw[arrow] (sql.south) -- (fit.north -| sql.south);
+  \draw[arrow] (direct.south) -- (fit.north -| direct.south);
+  \draw[arrow] (fit.south) -- node[answer, midway] {Yes} (accept.north);
+  \draw[arrow] (fit.east) -- node[answer, midway] {No}
+    (6.8,-4.8) -- (6.8,-10.7) -- (retry.east);
   \draw[arrow] (accept.south -| select.north) -- node[answer, midway] {Pass} (select.north);
-  \draw[arrow] (accept.south -| reassess.north) -- node[answer, midway] {Fail} (reassess.north);
-  \draw[arrow] ([yshift=4mm]reassess.west) -- node[answer, midway] {Yes}
-    ([yshift=4mm]recheck.east);
-  \draw[arrow] ([yshift=-4mm]recheck.east) -- node[answer, midway] {Unfit}
-    ([yshift=-4mm]reassess.west);
-  \draw[arrow] (recheck.west) -- (-6.8,-12.7) -- (-6.8,-8.65)
-    -- node[answer, midway] {Fits} (accept.west);
-  \draw[arrow] (reassess.south) -- node[answer, midway] {No} (other.north);
+  \draw[arrow] (accept.south -| retry.north) -- node[answer, midway] {Fail} (retry.north);
+  \draw[arrow] (retry.west) -- node[answer, midway] {Yes} (adjust.east);
+  \draw[arrow] (adjust.west) -- (-6.8,-10.7) -- (-6.8,-4.8)
+    -- node[answer, midway] {Recheck} (fit.west);
+  \draw[arrow] (retry.south) -- node[answer, midway] {No} (other.north);
 \end{tikzpicture}
 \endgroup
