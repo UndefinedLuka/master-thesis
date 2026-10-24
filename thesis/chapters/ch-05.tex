@@ -36,7 +36,7 @@ mean therefore does not describe the token count of a typical database.
   \centering
   \includegraphics[width=0.8\textwidth]{../code/analysis/figures/tokenizer_family_comparison.pdf}
   \caption{Median percentage increase in token count relative to the smallest count among the three
-    tokenizer families for each database and format.}
+  tokenizer families for each database and format.}
   \label{fig:tokenizer-family-comparison}
 \end{figure}
 
@@ -195,7 +195,7 @@ runs that completed successfully.
   \centering
   \includegraphics[width=\textwidth]{../code/analysis/figures/direct_accuracy_by_model_size.pdf}
   \caption{Mean direct-context retrieval accuracy by model size and family on answerable questions,
-    averaged over all six formats. Gemma~4 26B-A4B is positioned at its total nominal parameter count.}
+  averaged over all six formats. Gemma~4 26B-A4B is positioned at its total nominal parameter count.}
   \label{fig:direct-accuracy-by-model-size}
 \end{figure}
 
@@ -230,8 +230,9 @@ on a logarithmic scale.
   \caption{Mean direct-context NEM by serialized database size and format on answerable questions.
     Each point represents one database, with point area indicating the number of questions. Size is
     the mean token count across the three tokenizer families, shown on a logarithmic scale. Trends
-    and Pearson correlations are calculated separately for each dataset. A correlation interval is omitted when more than
-    \qty{5}{\percent} of bootstrap samples have constant scores.}
+    and Pearson correlations are calculated separately for each dataset. A correlation interval is omitted
+    when more than
+  \qty{5}{\percent} of bootstrap samples have constant scores.}
   \label{fig:direct-accuracy-by-database-size-nem}
 \end{figure}
 
@@ -380,7 +381,8 @@ Spider and \qty{2.56}{\second} (\qtyrange{2.21}{2.96}{\second}) on BIRD. This me
 first-token waits during correction. It excludes SQL execution time because the stored records
 provide only aggregate database time, which cannot be separated by attempt.
 
-Most correction time was spent on runs that never produced executable SQL. These runs accounted for \qty{95.3}{\percent} of
+Most correction time was spent on runs that never produced executable SQL. These runs accounted for
+\qty{95.3}{\percent} of
 all retry-generation time on Spider and \qty{88.3}{\percent} on BIRD. All \num{470} Spider runs
 and \num{1136} BIRD runs that failed after correction used the three available retries, with mean
 additional generation times of \qty{3.54}{\second} and \qty{3.92}{\second} per failed run,
@@ -403,7 +405,7 @@ their intervals for both pipelines.
   \centering
   \includegraphics[width=\textwidth]{../code/analysis/figures/pipeline_retrieval_comparison.pdf}
   \caption{Mean NEM, BERTScore, and ROUGE-L for Text-to-SQL (blue) and the six direct formats
-    (grey) on the answerable cohort, averaged over the ten retained models. }
+  (grey) on the answerable cohort, averaged over the ten retained models. }
   \label{fig:pipeline-retrieval-comparison}
 \end{figure}
 
@@ -449,7 +451,7 @@ the pooled workload, and intervals resample databases within each tier.
   \includegraphics[width=\textwidth]{../code/analysis/figures/pipeline_retrieval_by_database_size.pdf}
   \caption{Mean retrieval accuracy by database-size tier on the answerable cohort. Small databases
     average at most \num{1500} payload tokens, medium databases more than \num{1500} and at most
-    \num{10000}, and large databases more than \num{10000}.}
+  \num{10000}, and large databases more than \num{10000}.}
   \label{fig:pipeline-retrieval-by-database-size}
 \end{figure}
 
@@ -479,20 +481,20 @@ of size.
 
 \subsection{Operational efficiency}
 
-We compared operational efficiency on the same context-fit questions used in the direct-format analysis:
-\num{852} from \num{18} Spider databases and \num{303} from two sampled BIRD databases. Both pipelines
-used identical question--model pairs, retaining the recorded costs of \num{372} unsuccessful SQL runs
-on Spider and \num{231} on BIRD. SQL token counts and timings include all initial and correction
-attempts, with total latency also including SQL execution.
-
 \begin{figure}[htb]
   \centering
   \includegraphics[width=\textwidth]{../code/analysis/figures/common_cohort_token_usage.pdf}
   \caption{Mean input and output tokens on the shared context-fit workload, including SQL failures
     and all correction attempts. Input tokens use a logarithmic scale; output tokens use a linear
-    scale. Whiskers show pointwise \qty{95}{\percent} intervals.}
+  scale. Whiskers show pointwise \qty{95}{\percent} intervals.}
   \label{fig:common-cohort-token-usage}
 \end{figure}
+
+We compared operational efficiency on the same context-fit questions used in the direct-format analysis:
+\num{852} from \num{18} Spider databases and \num{303} from two sampled BIRD databases. Both pipelines
+used identical question--model pairs, retaining the recorded costs of \num{372} unsuccessful SQL runs
+on Spider and \num{231} on BIRD. SQL token counts and timings include all initial and correction
+attempts, with total latency also including SQL execution.
 
 Text-to-SQL used fewer input tokens than every direct format
 (Figure~\ref{fig:common-cohort-token-usage}). CSV required \num{7.19} times as many input tokens
@@ -506,7 +508,7 @@ one. On BIRD, all direct formats produced more output tokens, with ratio interva
   \includegraphics[width=\textwidth]{../code/analysis/figures/common_cohort_latency.pdf}
   \caption{Mean latency components on the shared context-fit workload. SQL includes all initial
     and correction work, including unsuccessful runs. Whiskers show pointwise \qty{95}{\percent}
-    intervals for total latency.}
+  intervals for total latency.}
   \label{fig:common-cohort-latency}
 \end{figure}
 
