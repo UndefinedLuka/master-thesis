@@ -26,7 +26,6 @@ from visualizations.common_cohort_token_usage import (
 )
 from visualizations.config import (
     COMMON_COHORT_LATENCY_FIGURE_FILENAME,
-    COMMON_COHORT_METHOD_LABELS,
     COMMON_COHORT_METHOD_ORDER,
     COMMON_COHORT_TABLE_FILENAME,
     COMMON_COHORT_TOKENS_FIGURE_FILENAME,
@@ -239,7 +238,7 @@ def test_figures_show_all_methods_and_distinguish_log_and_linear_scales(tmp_path
     for axis in latency.axes:
         assert len(axis.containers) == 3
         assert [tick.get_text() for tick in axis.get_yticklabels()] == [
-            COMMON_COHORT_METHOD_LABELS[method] for method in COMMON_COHORT_METHOD_ORDER
+            "Text-to-SQL", "CSV", "TOON", "Markdown", "YAML", "JSON", "XML",
         ]
     for generator, filename in (
         (generate_common_cohort_latency_figure, COMMON_COHORT_LATENCY_FIGURE_FILENAME),

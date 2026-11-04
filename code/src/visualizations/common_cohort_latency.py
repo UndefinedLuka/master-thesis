@@ -15,8 +15,8 @@ from visualizations.common_cohort_plotting import (
 )
 from visualizations.config import (
     COMMON_COHORT_LATENCY_FIGURE_FILENAME,
-    COMMON_COHORT_METHOD_LABELS,
     COMMON_COHORT_SQL_METHOD,
+    FORMAT_LABELS,
     TEXT_TO_SQL_LATENCY_PHASE_COLORS,
 )
 from visualizations.plot_numbers import number_formatter, quantity, tight_layout
@@ -35,6 +35,7 @@ def plot_common_cohort_latency(analysis: CommonCohortAnalysis) -> Figure:
 
     datasets = cohort_datasets(analysis)
     figure, axes = plt.subplots(1, len(datasets), figsize=(12.2, 5.1), squeeze=False)
+    method_labels = {COMMON_COHORT_SQL_METHOD: "Text-to-SQL", **FORMAT_LABELS}
     phases = (
         ("average_ttft_s", "ttft", "TTFT (cumulative for SQL)"),
         ("average_generation_time_s", "generation", "Generation after first tokens"),
@@ -72,20 +73,21 @@ def plot_common_cohort_latency(analysis: CommonCohortAnalysis) -> Figure:
             )
         axis.axhspan(-0.45, 0.45, color="#EEF2F5", zorder=0)
         axis.axhline(0.5, color="#AAB2B9", linewidth=0.8)
-        axis.set_yticks(positions, [COMMON_COHORT_METHOD_LABELS[m] for m in methods])
+        axis.set_yticks(positions, [method_labels[m] for m in methods])
         axis.invert_yaxis()
         axis.set_xlim(0, maximum * 1.44)
         axis.set_title(panel_title(analysis, dataset), fontweight="bold", pad=14)
-        axis.set_xlabel("Mean total latency (seconds)")
         axis.xaxis.set_major_formatter(number_formatter())
         style_axis(axis)
+        axis.tick_params(axis="both", labelsize=12)
+    figure.supxlabel("Mean total latency (seconds)", fontsize=14)
     handles, labels = axes[0, 0].get_legend_handles_labels()
     figure.legend(
         handles,
         labels,
         loc="upper center",
         bbox_to_anchor=(0.5, 1.0),
-        ncol=2,
+        ncol=len(handles),
         frameon=False,
     )
     tight_layout(figure, rect=(0, 0, 1, 0.85), w_pad=2.5)

@@ -16,10 +16,10 @@ from visualizations.common_cohort_plotting import (
     style_axis,
 )
 from visualizations.config import (
-    COMMON_COHORT_METHOD_LABELS,
     COMMON_COHORT_SQL_METHOD,
     COMMON_COHORT_TOKENS_FIGURE_FILENAME,
     FORMAT_COLORS,
+    FORMAT_LABELS,
 )
 from visualizations.plot_numbers import number, number_formatter, tight_layout
 from visualizations.uncertainty import interval_marks
@@ -39,6 +39,7 @@ def plot_common_cohort_token_usage(analysis: CommonCohortAnalysis) -> Figure:
     datasets = cohort_datasets(analysis)
     figure, axes = plt.subplots(2, len(datasets), figsize=(12.2, 8.2), squeeze=False)
     colors = {COMMON_COHORT_SQL_METHOD: "#374151", **FORMAT_COLORS}
+    labels = {COMMON_COHORT_SQL_METHOD: "Text-to-SQL", **FORMAT_LABELS}
     for column_index, dataset in enumerate(datasets):
         methods = cohort_methods(analysis, dataset)
         panel = analysis.summary[analysis.summary["dataset"].eq(dataset)].set_index("method")
@@ -65,7 +66,7 @@ def plot_common_cohort_token_usage(analysis: CommonCohortAnalysis) -> Figure:
                 )
             axis.axhspan(-0.45, 0.45, color="#EEF2F5", zorder=0)
             axis.axhline(0.5, color="#AAB2B9", linewidth=0.8)
-            axis.set_yticks(positions, [COMMON_COHORT_METHOD_LABELS[m] for m in methods])
+            axis.set_yticks(positions, [labels[m] for m in methods])
             axis.invert_yaxis()
             if row_index == 0:
                 axis.set_xscale("log")
@@ -78,16 +79,25 @@ def plot_common_cohort_token_usage(analysis: CommonCohortAnalysis) -> Figure:
                     )
                 )
                 axis.xaxis.set_minor_formatter(NullFormatter())
-                axis.set_xlabel("Mean input tokens (log scale)")
                 axis.set_title(
                     panel_title(analysis, dataset), fontweight="bold", pad=14
                 )
             else:
                 axis.set_xlim(0, max(upper) * 1.25)
                 axis.xaxis.set_major_formatter(number_formatter())
-                axis.set_xlabel("Mean output tokens (linear scale)")
             style_axis(axis)
+            axis.tick_params(axis="both", labelsize=12)
+    for row, label in zip(
+        axes,
+        ("Mean input tokens (log scale)", "Mean output tokens (linear scale)"),
+        strict=True,
+    ):
+        row[0].set_xlabel(label, fontsize=14, labelpad=10)
     tight_layout(figure, rect=(0, 0, 1, 1), w_pad=2.5, h_pad=2.2)
+    for row in axes:
+        # Center each row's single label across the figure after layout places the axes.
+        bounds = row[0].get_position()
+        row[0].xaxis.label.set_x((0.5 - bounds.x0) / bounds.width)
     return figure
 
 
