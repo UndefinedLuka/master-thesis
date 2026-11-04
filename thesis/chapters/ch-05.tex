@@ -98,8 +98,9 @@ describe only those two sampled databases.
 
 \input{../code/analysis/tables/experiment_outcomes}
 
-We excluded the Qwen~3.5 27B runs because the reasoning trace could not be reliably separated from the
-final answer. Table~\ref{tab:experiment-outcomes} summarizes the outcomes for the remaining ten models
+We excluded the Qwen~3.5 27B runs because opening and closing reasoning tags were inconsistently generated, 
+preventing reliable separation of the reasoning trace from the final answer. Table~\ref{tab:experiment-outcomes} 
+summarizes the outcomes for the remaining ten models
 across the full set of experiments. Each run corresponds to one model, question, and retrieval
 configuration. Unlike the cohort counts, these totals include all experimental questions. A successful
 run means that the pipeline completed, not necessarily that its answer agreed with the reference.
@@ -262,10 +263,6 @@ serialized database size and retrieval accuracy in the evaluated databases.
 
 \section{Text-to-SQL}
 \label{sec:text-to-sql-results}
-
-All results in this section use the answerable cohort from Section~\ref{sec:analysis-cohorts}:
-\num{985} Spider and \num{1108} sampled-BIRD questions, giving \num{9850} and \num{11080} model--question runs.
-Failed runs retain their recorded operational costs and zero retrieval scores.
 
 \subsection{Operational efficiency}
 

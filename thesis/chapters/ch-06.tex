@@ -66,14 +66,20 @@ difference occurred in TTFT, indicating that the main benefit of compact formats
 the input. These operational comparisons use the same question--model pairs across formats, although
 the BIRD context-fit cohort covers only two sampled databases.
 
-The retrieval accuracy results in Figure~\ref{fig:direct-accuracy-by-format} also support choosing these compact
-formats. On Spider, JSON had the highest mean NEM at \num{0.169}, followed by TOON at \num{0.166}
-and CSV at \num{0.163}. However, JSON's paired advantage over CSV was only \num{0.57} percentage
-points, with a \qty{95}{\percent} interval of \numrange{-1.21}{2.34}, which did not establish a clear
-improvement. CSV had the highest mean BERTScore and ROUGE-L, at \num{0.812} and \num{0.336}.
-TOON's BERTScore was also close to CSV, with a paired difference of \num{-0.0004}
-(\numrange{-0.0020}{0.0011}). Thus, the additional input tokens required by JSON did not provide a
-consistent advantage across the three metrics.
+While NEM differed only slightly among JSON, TOON, and CSV on Spider, BERTScore showed a
+clearer separation across formats, favouring CSV and TOON
+(Figure~\ref{fig:direct-accuracy-by-format}). CSV had the highest mean BERTScore at
+\num{0.812}, with TOON close behind: the paired TOON-minus-CSV difference was only
+\num{-0.0004} (\numrange{-0.0020}{0.0011}). JSON had a lower mean BERTScore of
+\num{0.714}, with a paired CSV-minus-JSON difference of \num{0.098}
+(\numrange{0.002}{0.269}). The gap to XML was similar, with CSV exceeding XML by
+\num{0.099} (\numrange{0.003}{0.269}). This supports a clearer BERTScore advantage for CSV over more verbose formats.
+In contrast, mean NEM was \num{0.169} for JSON, \num{0.166} for TOON, and
+\num{0.163} for CSV. JSON's paired advantage over CSV was only \num{0.57} percentage
+points, with a \qty{95}{\percent} interval of \numrange{-1.21}{2.34}, which did not
+establish a clear improvement. CSV also had the highest mean ROUGE-L at \num{0.336}.
+The BERTScore results therefore provide additional support for choosing CSV and TOON,
+alongside their lower input-token requirements.
 
 On BIRD, CSV had the highest mean scores on all three measures: \num{0.054} for NEM,
 \num{0.463} for BERTScore, and \num{0.079} for ROUGE-L, with TOON close behind. The paired
@@ -242,7 +248,7 @@ executable query can still return an incorrect result.
 When a configuration does not meet the requirements, the model, prompt, and retry limit can be adjusted
 and evaluated again within the preferred pipeline. If SQL is unavailable and direct inference cannot fit
 the data or meet the required accuracy within the latency and token budgets, changing serialization alone
-may be insufficient. The application would then need SQL support or an alternative retrieval approach, discussed in \label{sec:sota-text-to-sql}.
+may be insufficient. The application would then need SQL support or an alternative retrieval approach, discussed in \ref{sec:sota-text-to-sql}.
 
 \section{Threats to validity and study limitations}
 \label{sec:validity-limitations}

@@ -35,8 +35,12 @@ range while remaining recent enough to reflect current architectural advances:
   \item \textbf{Qwen~3.5} \cite{yang2025qwen3} - available at \num{0.8}B, \num{2}B, \num{4}B, \num{9}B, and \num{27}B
     parameters. Qwen~3.5 models feature hybrid thinking capabilities with explicit reasoning traces enclosed
     in \texttt{<think>} blocks.
-  \item \textbf{Gemma~4} \cite{gemmateam2026gemma4technicalreport} - a recently released family of lightweight open
-    models designed for efficient on-device and server-side deployment.
+  \item \textbf{Gemma~4} \cite{gemmateam2026gemma4technicalreport} - a family of
+    open-weight models designed for efficient on-device and server-side deployment.
+    We evaluate the E2B and E4B variants, with effective parameter counts of
+    \num{2.3}B and \num{4.5}B, respectively; the dense \num{12}B model; and the
+    26B-A4B mixture-of-experts model, with \num{26}B total parameters and
+    \num{3.8}B activated per token.
 \end{itemize}
 
 Together, these three families give us eleven distinct model sizes ranging from sub-\num{1}B to \num{27}B parameters,
