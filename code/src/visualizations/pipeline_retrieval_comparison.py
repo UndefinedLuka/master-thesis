@@ -139,7 +139,7 @@ def calculate_pipeline_retrieval_comparison(
 
 
 def plot_pipeline_retrieval_comparison(analysis: PipelineRetrievalComparison) -> Figure:
-    """Compare absolute mean scores, highlighting SQL above the six direct formats."""
+    """Compare SQL and direct formats with metric rows and dataset columns."""
     import matplotlib
 
     matplotlib.use("Agg")
@@ -155,11 +155,12 @@ def plot_pipeline_retrieval_comparison(analysis: PipelineRetrievalComparison) ->
     labels = ["Text-to-SQL", *(FORMAT_LABELS[fmt] for fmt in SERIALIZATION_FORMAT_ORDER)]
     sql_color, direct_color = "#0072B2", "#707070"
     figure, axes = plt.subplots(
-        len(datasets), len(DIRECT_ACCURACY_METRIC_ORDER),
-        figsize=(9, 2.9 * len(datasets)), squeeze=False, sharex="col", sharey=True,
+        len(DIRECT_ACCURACY_METRIC_ORDER), len(datasets),
+        figsize=(3.0 * len(datasets), 2.9 * len(DIRECT_ACCURACY_METRIC_ORDER)),
+        squeeze=False, sharex="row", sharey=True,
     )
-    for row, dataset in enumerate(datasets):
-        for col, metric in enumerate(DIRECT_ACCURACY_METRIC_ORDER):
+    for col, dataset in enumerate(datasets):
+        for row, metric in enumerate(DIRECT_ACCURACY_METRIC_ORDER):
             axis = axes[row, col]
             panel = summary.loc[summary["dataset"].eq(dataset) & summary["metric"].eq(metric)]
             panel = panel.set_index("method").loc[list(methods)]
@@ -171,7 +172,7 @@ def plot_pipeline_retrieval_comparison(analysis: PipelineRetrievalComparison) ->
                 axis.plot(mean, position, "o", color=color, markersize=4, zorder=6)
                 axis.annotate(number(mean, 3), (mean, position), xytext=(0, 5),
                               textcoords="offset points", ha="center", va="bottom",
-                              fontsize=8, color=color)
+                              color=color)
             axis.axhline(0.7, color="#dddddd", linewidth=0.6)
             axis.set_yticks(positions, labels)
             axis.set_ylim(positions[-1] + 0.5, -0.9)
@@ -184,18 +185,17 @@ def plot_pipeline_retrieval_comparison(analysis: PipelineRetrievalComparison) ->
             axis.set_xlim(lower - 0.025, upper + 0.025)
             axis.set_xticks(np.linspace(0, 1, 5))
             if row == 0:
-                axis.set_title(METRIC_TITLES[metric], fontsize=11, pad=12)
+                axis.set_title(DATASET_LABELS[dataset], pad=12)
             if col == 0:
-                axis.set_ylabel(DATASET_LABELS[dataset], fontsize=11, labelpad=12)
+                axis.set_ylabel(METRIC_TITLES[metric], labelpad=12)
                 axis.get_yticklabels()[0].set_color(sql_color)
             axis.xaxis.set_major_formatter(number_formatter())
-            axis.tick_params(axis="y", length=0, labelsize=9)
-            axis.tick_params(axis="x", labelsize=9)
+            axis.tick_params(axis="y", length=0)
             axis.spines[["top", "right", "left"]].set_visible(False)
             axis.spines["bottom"].set_color("#aaaaaa")
             axis.set_axisbelow(True)
             axis.grid(axis="x", color="#e8e8e8", linewidth=0.6)
-    figure.supxlabel("Mean score (higher is better)", fontsize=10)
+    figure.supxlabel("Mean score")
     tight_layout(figure, h_pad=1.8, w_pad=1.5)
     return figure
 

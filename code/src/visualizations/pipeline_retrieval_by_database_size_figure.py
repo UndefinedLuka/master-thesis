@@ -30,7 +30,7 @@ PIPELINE_SIZE_RETRIEVAL_FIGURE_FILENAME = "pipeline_retrieval_by_database_size.p
 
 
 def plot_pipeline_size_retrieval_comparison(analysis: PipelineSizeRetrievalAnalysis) -> Figure:
-    """Show all seven methods on one pooled, three-tier question population."""
+    """Show pooled size-tier accuracy in two top panels and one centered bottom panel."""
     import matplotlib
 
     matplotlib.use("Agg")
@@ -43,19 +43,22 @@ def plot_pipeline_size_retrieval_comparison(analysis: PipelineSizeRetrievalAnaly
     methods = COMMON_COHORT_METHOD_ORDER
     colors = {COMMON_COHORT_SQL_METHOD: "#222222", **FORMAT_COLORS}
     offsets = dict(zip(methods, np.linspace(-0.27, 0.27, len(methods)), strict=True))
-    figure, axes = plt.subplots(
-        1, len(DIRECT_ACCURACY_METRIC_ORDER),
-        figsize=(10, 3.8), squeeze=False, sharex=True, sharey=True,
+    figure = plt.figure(figsize=(7.2, 7.2))
+    grid = figure.add_gridspec(2, 4)
+    axes = [figure.add_subplot(grid[0, :2])]
+    axes.extend(
+        figure.add_subplot(position, sharex=axes[0], sharey=axes[0])
+        for position in (grid[0, 2:], grid[1, 1:3])
     )
-    for col, metric in enumerate(DIRECT_ACCURACY_METRIC_ORDER):
-        axis = axes[0, col]
+    axes[1].tick_params(axis="y", labelleft=False)
+    for index, (axis, metric) in enumerate(zip(axes, DIRECT_ACCURACY_METRIC_ORDER, strict=True)):
         panel = summary.loc[summary["metric"].eq(metric)]
         for position, tier in enumerate(SIZE_TIER_ORDER):
             tier_rows = panel.loc[panel["size_tier"].eq(tier)].set_index("method")
             if tier_rows.empty:
                 axis.axvspan(position - 0.4, position + 0.4, color="#f2f2f2", zorder=0)
                 axis.text(position, 0.5, "No databases", ha="center", va="center",
-                          rotation=90, color="#777777", fontsize=9)
+                          rotation=90, color="#777777")
                 continue
             for method in methods:
                 point = position + offsets[method]
@@ -74,25 +77,24 @@ def plot_pipeline_size_retrieval_comparison(analysis: PipelineSizeRetrievalAnaly
                         [SIZE_TIER_LABELS[tier] for tier in SIZE_TIER_ORDER])
         axis.set_yticks(np.linspace(0, 1, 5))
         axis.yaxis.set_major_formatter(number_formatter())
-        axis.tick_params(axis="both", labelsize=9)
         axis.tick_params(axis="x", labelbottom=True, length=0)
         axis.spines[["top", "right"]].set_visible(False)
         axis.spines[["left", "bottom"]].set_color("#aaaaaa")
         axis.set_axisbelow(True)
         axis.grid(axis="y", color="#e8e8e8", linewidth=0.6)
-        axis.set_title(METRIC_TITLES[metric], fontsize=11, pad=9)
-        if col == 0:
-            axis.set_ylabel("Mean score", fontsize=10)
+        axis.set_title(METRIC_TITLES[metric], pad=9)
+        if index != 1:
+            axis.set_ylabel("Mean score")
     handles = [
         Line2D([], [], color=colors[method], marker="D" if method == COMMON_COHORT_SQL_METHOD
                else "o", linestyle="none", markersize=5,
                label="Text-to-SQL" if method == COMMON_COHORT_SQL_METHOD else FORMAT_LABELS[method])
         for method in methods
     ]
-    figure.legend(handles=handles, loc="upper center", ncol=len(methods), frameon=False,
-                  fontsize=9, handletextpad=0.4, columnspacing=1.3)
-    figure.supxlabel("Database-size tier (mean serialized payload tokens)", fontsize=10)
-    tight_layout(figure, rect=(0, 0.025, 1, 0.90), w_pad=1.2)
+    figure.legend(handles=handles, loc="upper center", ncol=4, frameon=False,
+                  handletextpad=0.4, columnspacing=1.3)
+    figure.supxlabel("Database-size tier (mean serialized payload tokens)")
+    tight_layout(figure, rect=(0, 0.025, 1, 0.88), h_pad=2.0, w_pad=1.2)
     return figure
 
 

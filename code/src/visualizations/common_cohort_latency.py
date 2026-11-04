@@ -68,7 +68,6 @@ def plot_common_cohort_latency(analysis: CommonCohortAnalysis) -> Figure:
                 position,
                 quantity(total, "\\second", 3),
                 va="center",
-                fontsize=8.5,
                 fontweight="bold" if method == COMMON_COHORT_SQL_METHOD else "normal",
             )
         axis.axhspan(-0.45, 0.45, color="#EEF2F5", zorder=0)
@@ -76,8 +75,8 @@ def plot_common_cohort_latency(analysis: CommonCohortAnalysis) -> Figure:
         axis.set_yticks(positions, [COMMON_COHORT_METHOD_LABELS[m] for m in methods])
         axis.invert_yaxis()
         axis.set_xlim(0, maximum * 1.44)
-        axis.set_title(panel_title(analysis, dataset), fontsize=11, fontweight="bold", pad=14)
-        axis.set_xlabel("Mean total latency (seconds)", fontsize=10)
+        axis.set_title(panel_title(analysis, dataset), fontweight="bold", pad=14)
+        axis.set_xlabel("Mean total latency (seconds)")
         axis.xaxis.set_major_formatter(number_formatter())
         style_axis(axis)
     handles, labels = axes[0, 0].get_legend_handles_labels()
@@ -86,11 +85,10 @@ def plot_common_cohort_latency(analysis: CommonCohortAnalysis) -> Figure:
         labels,
         loc="upper center",
         bbox_to_anchor=(0.5, 1.0),
-        ncol=3,
+        ncol=2,
         frameon=False,
-        fontsize=9,
     )
-    tight_layout(figure, rect=(0, 0, 1, 0.93), w_pad=2.5)
+    tight_layout(figure, rect=(0, 0, 1, 0.85), w_pad=2.5)
     return figure
 
 

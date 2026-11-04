@@ -31,7 +31,7 @@ if TYPE_CHECKING:
 def plot_direct_accuracy_by_model_size(
     summary: pd.DataFrame,
 ) -> tuple[Figure, list[list[Axes]]]:
-    """Plot format-averaged scores against nominal model size for each family."""
+    """Plot family scaling curves with metric rows and dataset columns."""
     required = {
         "dataset",
         "model_id",
@@ -65,19 +65,19 @@ def plot_direct_accuracy_by_model_size(
         for metric in metrics
     }
     figure, axes_array = plt.subplots(
-        nrows=len(datasets),
-        ncols=len(metrics),
-        figsize=(5.4 * len(metrics), 4.2 * len(datasets)),
+        nrows=len(metrics),
+        ncols=len(datasets),
+        figsize=(5.4 * len(datasets), 4.2 * len(metrics)),
         sharex=True,
-        sharey="col",
+        sharey="row",
         squeeze=False,
     )
     axes = [list(row) for row in axes_array]
 
     all_sizes = sorted(float(value) for value in summary["model_size_b"].unique())
-    for row_index, dataset in enumerate(datasets):
+    for column_index, dataset in enumerate(datasets):
         dataset_rows = summary[summary["dataset"].eq(dataset)]
-        for column_index, metric in enumerate(metrics):
+        for row_index, metric in enumerate(metrics):
             axis = axes[row_index][column_index]
             panel = dataset_rows[dataset_rows["metric"].eq(metric)]
             for family in families:
@@ -106,12 +106,12 @@ def plot_direct_accuracy_by_model_size(
             axis.set_axisbelow(True)
             axis.spines["top"].set_visible(False)
             axis.spines["right"].set_visible(False)
-            axis.set_title(METRIC_TITLES.get(metric, metric), fontweight="bold")
+            if row_index == 0:
+                axis.set_title(DATASET_LABELS.get(dataset, dataset), fontweight="bold")
             if column_index == 0:
-                axis.set_ylabel(f"{DATASET_LABELS.get(dataset, dataset)}\nMean score")
-            if row_index == len(datasets) - 1:
-                axis.set_xlabel("Nominal model size (billions of parameters, log scale)")
-                axis.tick_params(axis="x", labelrotation=35, labelsize=8.5)
+                axis.set_ylabel(f"{METRIC_TITLES.get(metric, metric)}\nMean score")
+            if row_index == len(metrics) - 1:
+                axis.tick_params(axis="x", labelrotation=60)
 
             low, high = metric_limits[metric]
             if "mean_score_high" in summary:
@@ -120,6 +120,9 @@ def plot_direct_accuracy_by_model_size(
                 high = max(high, float(all_metric["mean_score_high"].max()) * 1.08)
             axis.set_ylim(low, high)
 
+    figure.supxlabel(
+        "Nominal model size (billions of parameters, log scale)",
+    )
     legend_handles = [
         Line2D(
             [0],

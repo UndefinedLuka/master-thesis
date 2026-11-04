@@ -31,7 +31,7 @@ if TYPE_CHECKING:
 def plot_direct_accuracy_by_format(
     summary: pd.DataFrame,
 ) -> tuple[Figure, list[list[Axes]]]:
-    """Plot mean scores in a dataset-by-metric grid with one bar per format."""
+    """Plot mean scores with metric rows, dataset columns, and one bar per format."""
     required = {
         "dataset",
         "format",
@@ -65,18 +65,18 @@ def plot_direct_accuracy_by_format(
         for metric in metrics
     }
     figure, axes_array = plt.subplots(
-        nrows=len(datasets),
-        ncols=len(metrics),
-        figsize=(5.4 * len(metrics), 4.2 * len(datasets)),
+        nrows=len(metrics),
+        ncols=len(datasets),
+        figsize=(5.4 * len(datasets), 4.2 * len(metrics)),
         sharex=True,
-        sharey="col",
+        sharey="row",
         squeeze=False,
     )
     axes = [list(row) for row in axes_array]
 
-    for row_index, dataset in enumerate(datasets):
+    for column_index, dataset in enumerate(datasets):
         dataset_rows = summary[summary["dataset"].eq(dataset)]
-        for column_index, metric in enumerate(metrics):
+        for row_index, metric in enumerate(metrics):
             axis = axes[row_index][column_index]
             panel = dataset_rows[dataset_rows["metric"].eq(metric)].set_index("format")
             panel = panel.reindex(formats)
@@ -96,11 +96,12 @@ def plot_direct_accuracy_by_format(
             axis.set_axisbelow(True)
             axis.spines["top"].set_visible(False)
             axis.spines["right"].set_visible(False)
-            axis.set_title(METRIC_TITLES.get(metric, metric), fontweight="bold")
+            if row_index == 0:
+                axis.set_title(DATASET_LABELS.get(dataset, dataset), fontweight="bold")
             axis.yaxis.set_major_formatter(number_formatter())
             if column_index == 0:
-                axis.set_ylabel(f"{DATASET_LABELS.get(dataset, dataset)}\nMean score")
-            if row_index == len(datasets) - 1:
+                axis.set_ylabel(f"{METRIC_TITLES.get(metric, metric)}\nMean score")
+            if row_index == len(metrics) - 1:
                 axis.set_xticks(
                     range(len(formats)),
                     [FORMAT_LABELS.get(value, "Text-to-SQL") for value in formats],

@@ -94,7 +94,6 @@ def plot_direct_latency(
                 quantity(total, "\\second", 2),
                 ha="center",
                 va="bottom",
-                fontsize=8.5,
                 fontweight="bold",
             )
         axis.grid(axis="y", color="#D0D0D0", linewidth=0.8)

@@ -71,6 +71,6 @@ def tight_layout(figure: Figure, **kwargs) -> None:
 
 
 def save_pgf_figure(figure: Figure, path: Path) -> None:
-    """Save a PDF through PGF/LaTeX without enabling usetex for normal canvas rendering."""
+    """Save the full PDF canvas so thesis inclusion preserves the intended font sizes."""
     with _pgf_rc_context():
-        figure.savefig(path, backend="pgf", dpi=300, bbox_inches="tight", facecolor="white")
+        figure.savefig(path, backend="pgf", dpi=300, bbox_inches=None, facecolor="white")

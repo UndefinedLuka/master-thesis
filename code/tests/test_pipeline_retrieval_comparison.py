@@ -184,8 +184,8 @@ def test_display_covers_both_datasets_all_metrics_and_formats(tmp_path) -> None:
         assert len(axis.get_yticklabels()) == 7 or not axis.get_yticklabels()
         assert len(axis.collections) == 7  # absolute mean interval for SQL and each format
         points = [line for line in axis.lines if line.get_marker() == "o"]
-        dataset = ("spider", "bird")[index // 3]
-        metric = DIRECT_ACCURACY_METRIC_ORDER[index % 3]
+        dataset = ("spider", "bird")[index % 2]
+        metric = DIRECT_ACCURACY_METRIC_ORDER[index // 2]
         panel = analysis.summary.loc[
             analysis.summary["dataset"].eq(dataset) & analysis.summary["metric"].eq(metric)
         ]

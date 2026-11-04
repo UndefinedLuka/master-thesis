@@ -36,7 +36,7 @@ def style_axis(axis: Axes, *, grid_axis: str = "x") -> None:
     axis.set_axisbelow(True)
     for side in ("top", "right", "left"):
         axis.spines[side].set_visible(False)
-    axis.tick_params(axis="both", labelsize=9, length=0)
+    axis.tick_params(axis="both", length=0)
 
 
 def save_figure(figure: Figure, output_dir: Path, filename: str) -> Path:

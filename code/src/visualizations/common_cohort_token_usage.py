@@ -61,7 +61,6 @@ def plot_common_cohort_token_usage(analysis: CommonCohortAnalysis) -> Figure:
                     position,
                     label,
                     va="center",
-                    fontsize=8.5,
                     fontweight="bold" if method == COMMON_COHORT_SQL_METHOD else "normal",
                 )
             axis.axhspan(-0.45, 0.45, color="#EEF2F5", zorder=0)
@@ -79,14 +78,14 @@ def plot_common_cohort_token_usage(analysis: CommonCohortAnalysis) -> Figure:
                     )
                 )
                 axis.xaxis.set_minor_formatter(NullFormatter())
-                axis.set_xlabel("Mean input tokens (log scale)", fontsize=10)
+                axis.set_xlabel("Mean input tokens (log scale)")
                 axis.set_title(
-                    panel_title(analysis, dataset), fontsize=11, fontweight="bold", pad=14
+                    panel_title(analysis, dataset), fontweight="bold", pad=14
                 )
             else:
                 axis.set_xlim(0, max(upper) * 1.25)
                 axis.xaxis.set_major_formatter(number_formatter())
-                axis.set_xlabel("Mean output tokens (linear scale)", fontsize=10)
+                axis.set_xlabel("Mean output tokens (linear scale)")
             style_axis(axis)
     tight_layout(figure, rect=(0, 0, 1, 1), w_pad=2.5, h_pad=2.2)
     return figure

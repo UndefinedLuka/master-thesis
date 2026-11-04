@@ -156,7 +156,7 @@ def calculate_database_size_accuracy(
 def plot_database_size_accuracy(
     analysis: DatabaseSizeAnalysis,
 ) -> tuple[Figure, list[Axes]]:
-    """Plot the retained NEM figure with six format panels and both datasets."""
+    """Plot NEM in three rows of two format panels, each showing both datasets."""
     metric = "normalized_exact_match"
     data = analysis.database_scores
     required = {
@@ -192,9 +192,9 @@ def plot_database_size_accuracy(
         )
     }
     figure, axes_array = plt.subplots(
-        nrows=2,
-        ncols=3,
-        figsize=(16.8, 10.0),
+        nrows=3,
+        ncols=2,
+        figsize=(11.2, 15.0),
         sharex=True,
         sharey=True,
         squeeze=False,
@@ -255,7 +255,6 @@ def plot_database_size_accuracy(
             transform=axis.transAxes,
             ha="right",
             va="top",
-            fontsize=8.2,
             color="#333333",
         )
         for correlation_index, dataset in enumerate(DATASET_ORDER):
@@ -276,18 +275,18 @@ def plot_database_size_accuracy(
                 transform=axis.transAxes,
                 ha="right",
                 va="top",
-                fontsize=8.2,
                 color=DATASET_COLORS[dataset],
                 fontweight="bold",
             )
 
     for axis in axes[len(formats) :]:
         axis.set_visible(False)
-    for axis in axes[3:6]:
+    figure.supxlabel(
+        "Serialized database size (tokens, log scale)",
+    )
+    for axis in axes[::2]:
         if axis.get_visible():
-            axis.set_xlabel("Serialized database size (tokens, log scale)")
-    axes[0].set_ylabel("Mean NEM")
-    axes[3].set_ylabel("Mean NEM")
+            axis.set_ylabel("Mean NEM")
 
     handles = [
         Line2D(

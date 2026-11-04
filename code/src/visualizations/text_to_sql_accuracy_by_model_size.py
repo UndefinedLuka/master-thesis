@@ -29,7 +29,7 @@ if TYPE_CHECKING:
 def plot_text_to_sql_accuracy(
     analysis: TextToSqlAnalysis,
 ) -> tuple[Figure, list[list[Axes]]]:
-    """Plot Text-to-SQL metric means against model size for each dataset and family."""
+    """Plot Text-to-SQL family scaling curves with metric rows and dataset columns."""
     summary = analysis.model_summary
     if summary.empty:
         raise ValueError("No Text-to-SQL model accuracy values are available to plot")
@@ -41,11 +41,11 @@ def plot_text_to_sql_accuracy(
     from matplotlib.lines import Line2D
 
     figure, axes_array = plt.subplots(
-        nrows=len(DATASET_ORDER),
-        ncols=len(DIRECT_ACCURACY_METRIC_ORDER),
-        figsize=(16.2, 8.4),
+        nrows=len(DIRECT_ACCURACY_METRIC_ORDER),
+        ncols=len(DATASET_ORDER),
+        figsize=(10.8, 12.6),
         sharex=True,
-        sharey="col",
+        sharey="row",
         squeeze=False,
     )
     axes = [list(row) for row in axes_array]
@@ -54,9 +54,9 @@ def plot_text_to_sql_accuracy(
         metric: _score_limits(summary[metric]) for metric in DIRECT_ACCURACY_METRIC_ORDER
     }
 
-    for row_index, dataset in enumerate(DATASET_ORDER):
+    for column_index, dataset in enumerate(DATASET_ORDER):
         dataset_rows = summary[summary["dataset"].eq(dataset)]
-        for column_index, metric in enumerate(DIRECT_ACCURACY_METRIC_ORDER):
+        for row_index, metric in enumerate(DIRECT_ACCURACY_METRIC_ORDER):
             axis = axes[row_index][column_index]
             for family in TOKENIZER_FAMILY_ORDER:
                 family_rows = dataset_rows[
@@ -82,18 +82,21 @@ def plot_text_to_sql_accuracy(
             axis.set_axisbelow(True)
             axis.spines["top"].set_visible(False)
             axis.spines["right"].set_visible(False)
-            axis.set_title(METRIC_TITLES[metric], fontweight="bold")
+            if row_index == 0:
+                axis.set_title(DATASET_LABELS[dataset], fontweight="bold")
             low, high = metric_limits[metric]
             if f"{metric}_high" in summary:
                 low = min(low, float(summary[f"{metric}_low"].min()))
                 high = max(high, float(summary[f"{metric}_high"].max()) * 1.08)
             axis.set_ylim(low, high)
             if column_index == 0:
-                axis.set_ylabel(f"{DATASET_LABELS[dataset]}\nMean score")
-            if row_index == len(DATASET_ORDER) - 1:
-                axis.set_xlabel("Nominal model size (billions, log scale)")
-                axis.tick_params(axis="x", labelrotation=35, labelsize=8.5)
+                axis.set_ylabel(f"{METRIC_TITLES[metric]}\nMean score")
+            if row_index == len(DIRECT_ACCURACY_METRIC_ORDER) - 1:
+                axis.tick_params(axis="x", labelrotation=60)
 
+    figure.supxlabel(
+        "Nominal model size (billions of parameters, log scale)",
+    )
     handles = [
         Line2D(
             [0],

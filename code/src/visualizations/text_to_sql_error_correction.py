@@ -64,7 +64,7 @@ def plot_error_correction_performance(
             color=DATASET_COLORS[dataset],
             label=DATASET_LABELS[dataset],
         )
-        outcome_axis.bar_label(bars, labels=[number(value, 2) for value in values], fontsize=8)
+        outcome_axis.bar_label(bars, labels=[number(value, 2) for value in values])
     outcome_axis.set_xticks(
         x_positions,
         [RETRY_OUTCOME_LABELS[outcome] for outcome in RETRY_OUTCOME_ORDER],
@@ -100,7 +100,6 @@ def plot_error_correction_performance(
         overhead_axis.bar_label(
             bars,
             labels=[number(value, 2) for value in values],
-            fontsize=8,
         )
     overhead_axis.set_xticks(retry_positions, ["Retry 1", "Retry 2", "Retry 3"])
     overhead_axis.set_title("Added generation time by retry stage", fontweight="bold")

@@ -226,15 +226,16 @@ def test_format_and_model_size_figures_have_dataset_metric_grid(tmp_path: Path) 
         calculate_model_size_accuracy(results)
     )
 
-    assert len(format_axes) == 2
-    assert all(len(row) == 3 for row in format_axes)
-    assert [axis.get_title() for axis in format_axes[0]] == [
-        "NEM",
-        "BERTScore",
-        "ROUGE-L",
+    assert len(format_axes) == 3
+    assert all(len(row) == 2 for row in format_axes)
+    assert [axis.get_title() for axis in format_axes[0]] == ["Spider", "BIRD"]
+    assert [row[0].get_ylabel() for row in format_axes] == [
+        "NEM\nMean score",
+        "BERTScore\nMean score",
+        "ROUGE-L\nMean score",
     ]
-    assert len(size_axes) == 2
-    assert all(len(row) == 3 for row in size_axes)
+    assert len(size_axes) == 3
+    assert all(len(row) == 2 for row in size_axes)
     assert all(axis.get_xscale() == "log" for row in size_axes for axis in row)
     for row in size_axes:
         for axis in row:

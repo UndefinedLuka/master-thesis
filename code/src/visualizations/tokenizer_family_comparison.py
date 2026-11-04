@@ -170,7 +170,6 @@ def plot_tokenizer_comparison(summary: pd.DataFrame) -> Figure:
         axis.set_title(
             f"{DATASET_LABELS.get(dataset, dataset)} "
             f"({number(database_count, 0)} databases per format)",
-            fontsize=13,
             fontweight="bold",
         )
         axis.yaxis.set_major_formatter(number_formatter())
@@ -179,8 +178,8 @@ def plot_tokenizer_comparison(summary: pd.DataFrame) -> Figure:
         x_positions,
         [FORMAT_LABELS.get(value, value) for value in formats],
     )
-    axes[-1, 0].set_xlabel("Serialization format", fontsize=12)
-    figure.supylabel("Excess tokens over best tokenizer (%)", fontsize=12)
+    axes[-1, 0].set_xlabel("Serialization format")
+    figure.supylabel("Excess tokens over best tokenizer (%)")
     handles, labels = axes[0, 0].get_legend_handles_labels()
     figure.legend(
         handles,
@@ -191,7 +190,7 @@ def plot_tokenizer_comparison(summary: pd.DataFrame) -> Figure:
         ncol=max(1, len(families)),
         frameon=False,
     )
-    tight_layout(figure, rect=(0.04, 0, 1.0, 0.94))
+    tight_layout(figure, rect=(0.04, 0, 1.0, 0.88))
     return figure
 
 

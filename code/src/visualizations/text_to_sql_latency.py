@@ -92,13 +92,12 @@ def plot_text_to_sql_latency(
                 f"{latency_label}\n{number(retries, 2)} retries",
                 ha="center",
                 va="bottom",
-                fontsize=7.5,
             )
         labels = [
             text_to_sql_model_label(row.model_family, row.size_label)
             for row in rows.itertuples()
         ]
-        axis.set_xticks(positions, labels, rotation=40, ha="right", fontsize=7.5)
+        axis.set_xticks(positions, labels, rotation=65, ha="right")
         axis.set_ylabel(f"{DATASET_LABELS[dataset]}\nAverage seconds")
         axis.grid(axis="y", color="#D0D0D0", linewidth=0.8)
         axis.set_axisbelow(True)
@@ -113,10 +112,10 @@ def plot_text_to_sql_latency(
         title="Latency phase",
         loc="upper center",
         bbox_to_anchor=(0.5, 1.0),
-        ncol=3,
+        ncol=2,
         frameon=False,
     )
-    tight_layout(figure, rect=(0.03, 0, 1.0, 0.94))
+    tight_layout(figure, rect=(0.03, 0, 1.0, 0.84))
     return figure, axes
 
 

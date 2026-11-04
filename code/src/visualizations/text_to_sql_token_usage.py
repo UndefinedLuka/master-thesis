@@ -67,7 +67,7 @@ def plot_text_to_sql_token_usage(
             axis.set_title(title, fontweight="bold")
             axis.set_ylabel(DATASET_LABELS[dataset] if column_index == 0 else "")
             axis.yaxis.set_major_formatter(number_formatter())
-            axis.set_xticks(range(len(rows)), labels, rotation=45, ha="right", fontsize=7.5)
+            axis.set_xticks(range(len(rows)), labels, rotation=65, ha="right")
             maximum = max(values)
             if f"{metric}_high" in rows:
                 maximum = max(maximum, float(rows[f"{metric}_high"].max()))

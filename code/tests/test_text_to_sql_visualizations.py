@@ -274,12 +274,13 @@ def test_text_to_sql_figures_show_metrics_tokens_latency_and_retries(tmp_path: P
     token_figure, token_axes = plot_text_to_sql_token_usage(analysis)
     latency_figure, latency_axes = plot_text_to_sql_latency(analysis)
 
-    assert len(accuracy_axes) == 2
-    assert all(len(row) == 3 for row in accuracy_axes)
-    assert [axis.get_title() for axis in accuracy_axes[0]] == [
-        "NEM",
-        "BERTScore",
-        "ROUGE-L",
+    assert len(accuracy_axes) == 3
+    assert all(len(row) == 2 for row in accuracy_axes)
+    assert [axis.get_title() for axis in accuracy_axes[0]] == ["Spider", "BIRD"]
+    assert [row[0].get_ylabel() for row in accuracy_axes] == [
+        "NEM\nMean score",
+        "BERTScore\nMean score",
+        "ROUGE-L\nMean score",
     ]
     assert [axis.get_title() for axis in token_axes[0]] == [
         "Average input tokens",
