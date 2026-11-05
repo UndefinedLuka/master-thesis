@@ -4,7 +4,7 @@
 This chapter reports the experiments described in Chapters~\ref{ch:methodolgy} and
 \ref{ch:implementation}. Serialization efficiency is presented first, followed by analysis cohorts and
 experiment coverage, Direct Context Inference, Text-to-SQL, and a comparison of the two pipelines.
-The results operational efficiency and retrieval accuracy as described in \ref{sec:evaluation-metrics-implementation}.
+The results cover operational efficiency and retrieval accuracy as described in Section~\ref{sec:evaluation-metrics-implementation}.
 Estimates retain equal weight per run within each reported analysis group. Intervals are pointwise
 \qty{95}{\percent} database-bootstrap intervals, as presented in Section~\ref{sec:confidence-intervals}
 (table cells show these intervals in brackets).
@@ -17,7 +17,7 @@ Estimates retain equal weight per run within each reported analysis group. Inter
 To measure the serialization efficiency of each format, we tokenized the serialized database contents
 without questions or additional prompt context. This allows us to compare the number of tokens needed to
 represent the same data in different formats. We used the full Spider databases and the sampled BIRD
-databases described in Chapter~\ref{ch:implementation}, with one representative tokenizer from each of
+databases described in Chapter~\ref{ch:implementation}, with one representative tokenizer from each of the
 Qwen~3.5, Ministral~3, and Gemma~4 families. This gave us \num{558} measurements across \num{31}
 databases, six formats, and three tokenizer families.
 
@@ -112,7 +112,7 @@ while \num{55} failed because no SQL statement could be extracted from the model
 describe the full set of experiments; the following sections specify which cohort is used for each
 comparison.
 
-\section{Direct Context Inference}
+\section{Direct context inference}
 \label{sec:direct-results}
 
 \subsection{Operational efficiency}
@@ -128,7 +128,7 @@ counts in Section~\ref{sec:serialization-results}, the input counts here include
 rather than only the serialized database contents.
 
 CSV required the fewest input tokens on average, with \num{5366} per run on Spider and \num{31756} on
-BIRD. XML required the most, with \num{20186} and \num{97190}, respectively. Comparing the same
+BIRD. XML required the most, with \num{20186} and \num{97190}, respectively. For the same
 question--model pairs, the XML-to-CSV ratios of mean input tokens were \num{3.76}
 (\numrange{2.84}{4.38}) on Spider and \num{3.06} (\numrange{2.94}{3.20}) on BIRD. TOON was close to
 CSV, with ratios of \num{1.07} (\numrange{1.04}{1.12}) and \num{1.03} (\numrange{1.02}{1.04}).
@@ -174,10 +174,10 @@ in Section~\ref{sec:reference-answer-metrics}.
 \end{figure}
 
 On Spider, JSON had the highest mean NEM score at \num{0.169}, followed by TOON at \num{0.166} and
-CSV at \num{0.163}. These differences were small. Comparing the same question--model pairs, JSON
+CSV at \num{0.163}. These differences were small. For the same question--model pairs, JSON
 exceeded CSV by \num{0.57} percentage points, but the interval (\numrange{-1.21}{2.34}) included zero,
 so this comparison does not establish a clear advantage for JSON. CSV had the highest mean BERTScore
-and ROUGE-L scores, at \num{0.812} and \num{0.336}, respectively. Its BERTScore exceeded XML by
+and ROUGE-L scores, at \num{0.812} and \num{0.336}, respectively. Its BERTScore exceeded XML's by
 \num{0.099} (\numrange{0.003}{0.269}), while the difference between TOON and CSV was only
 \num{-0.0004} (\numrange{-0.0020}{0.0011}). These comparisons show similar BERTScore results for
 CSV and TOON, but a clearer difference between CSV and XML.
@@ -185,7 +185,7 @@ CSV and TOON, but a clearer difference between CSV and XML.
 On BIRD, CSV had the highest mean scores on all three measures: NEM was \num{0.054}, BERTScore was
 \num{0.463}, and ROUGE-L was \num{0.079}, with TOON close behind. XML had the lowest means, at
 \num{0.026}, \num{0.185}, and \num{0.042}, respectively. XML's NEM score was \num{2.75} percentage
-points below CSV, with a paired XML-minus-CSV difference of \num{-2.75}
+points below CSV's, with a paired XML-minus-CSV difference of \num{-2.75}
 (\numrange{-5.12}{-0.82}). TOON was only \num{0.31} percentage points below CSV, and its difference
 of \num{-0.31} (\numrange{-0.79}{0.14}) did not establish a clear separation between the two formats.
 Because failed runs retain zero scores, these results reflect both agreement with the reference answer
@@ -287,8 +287,8 @@ first-token waits of \qty{0.084}{\second} and \qty{0.176}{\second}, respectively
 contributed a much smaller amount: \qty{0.010}{\second} on Spider and \qty{0.008}{\second} on BIRD.
 Mean retries per run were also higher on BIRD, at \num{0.399}, compared with \num{0.173} on Spider.
 
-The smallest model did not necessarily require the fewest tokens across the complete run. Comparing
-Qwen~3.5 2B with 0.8B on the same questions, the 2B-to-0.8B ratios of mean input tokens were
+The smallest model did not necessarily require the fewest tokens across the complete run. When
+Qwen~3.5 2B was compared with 0.8B on the same questions, the 2B-to-0.8B ratios of mean input tokens were
 \num{0.589} (\numrange{0.490}{0.699}) on Spider and \num{0.556} (\numrange{0.484}{0.621}) on BIRD.
 The corresponding output-token ratios were \num{0.379} (\numrange{0.184}{0.614}) and \num{0.293}
 (\numrange{0.207}{0.400}). All four intervals were below one, showing that 2B required fewer input
@@ -297,7 +297,7 @@ outputs.
 
 Qwen~3.5 2B also had lower mean total latency than 0.8B. The 0.8B model averaged
 \qty{1.662}{\second} and \num{0.990} retries per run on Spider, and \qty{3.754}{\second} and
-\num{1.819} retries on BIRD. Comparing the same questions, the 2B-to-0.8B ratios of mean total
+\num{1.819} retries on BIRD. On the same questions, the 2B-to-0.8B ratios of mean total
 latency were \num{0.432} (\numrange{0.207}{0.702}) on Spider and \num{0.333}
 (\numrange{0.233}{0.457}) on BIRD. Both intervals were below one. Lower latency therefore
 coincided with lower token use and fewer retries in this comparison; it does not show that a
@@ -465,7 +465,7 @@ mean NEM there.
 
 The other metrics showed a different pattern in the size of the gap. The
 highest-scoring direct format's BERTScore was about \numrange{0.053}{0.054} below SQL in
-the small and medium tiers, compared with \num{0.345} below SQL in the large tier. The
+the small and medium tiers, compared with \num{0.345} in the large tier. The
 corresponding ROUGE-L gaps were \num{0.356}, \num{0.366}, and \num{0.445}. These contrasts
 describe observed gaps rather than establishing differences between tiers, and the direct
 format with the highest mean varied by metric and tier.
@@ -477,6 +477,7 @@ including context failures, rather than accuracy only among completed runs or a 
 of size.
 
 \subsection{Operational efficiency}
+\label{sec:pipeline-operational-efficiency}
 
 \begin{figure}[htb]
   \centering

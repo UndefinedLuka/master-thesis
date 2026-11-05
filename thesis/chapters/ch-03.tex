@@ -2,10 +2,10 @@
 \label{ch:methodolgy}
 
 In this chapter we are going to be presenting the experimental setup, which will be used to evaluate two
-distinct information retrieval workflows, Direct Context Inference and Text-to-SQL. The primary goal these
-experiments is to collect empirical data which will be used as base for our final decision framework.
+distinct information retrieval workflows, Direct Context Inference and Text-to-SQL. The primary goal of these
+experiments is to collect empirical data which will be used as a base for our final decision framework.
 
-\section{Conceptual Framework}
+\section{Conceptual framework}
 \label{sec:pipeline-comparison}
 
 The experiment compares two information-extraction pipelines:
@@ -33,7 +33,7 @@ Figure~\ref{fig:experimental-workflow} summarizes the workflow from dataset prep
   \label{fig:experimental-workflow}
 \end{figure}
 
-\subsection{Text-to-SQL Pipeline}
+\subsection{Text-to-SQL pipeline}
 \label{sec:minimalist-text-to-sql}
 
 We use a deliberately minimalist Text-to-SQL architecture under the controlled local inference setup. If a
@@ -48,7 +48,7 @@ failures rather than relying on user intervention.
 
 The architectures reviewed in Section~\ref{sec:sota-text-to-sql} introduce additional sources of performance
 variation. Adopting ideas presented in these papers would require evaluating their retrieval quality,
-prompts, candidate budgets, and verification policies alongside the variables studied here. Holding the
+prompts, candidate budgets, and verification policies alongside the variables studied here. Keeping the
 surrounding workflow simple makes differences between the selected models and data-access approaches easier
 to interpret.
 
@@ -71,48 +71,48 @@ Accordingly, we distinguish three meanings of state of the art:
     setup rather than state-of-the-art performance under official leaderboard protocols.
 \end{itemize}
 
-\section{Dataset Justification}
+\section{Dataset justification}
 
 We are going to be using two of the most prominent Text-to-SQL datasets in our experiments, Spider
 \cite{yu2018spider} and BIRD \cite{li2023can}.
 This section will outline our reasoning for choosing these two datasets.
 
-Utilization of both these datasets we plan to achieve a wide variety of domains with real-world data complexities.
+By utilizing both these datasets, we plan to achieve a wide variety of domains with real-world data complexities.
 
 \subsubsection{Spider}
-Spider data set was selected because it contains a diverse range of databases which span multiple domains.
+The Spider dataset was selected because it contains a diverse range of databases which span multiple domains.
 This ensures that the models are actually extracting information from the provided data, and not relying on
 the memorized knowledge from the training data. We plan to use all the databases in their entirety without any
-sub-sampling, following the pipeline and answer-comparison protocol defined in
+subsampling, following the pipeline and answer-comparison protocol defined in
 Section~\ref{sec:pipeline-comparison}.
 
-Spider dataset has one notable limitation, and that is that data is artificially clean, all data types are
-correct, and columns names are descriptive. This is not something we can expect to encounter in real world.
+The Spider dataset has one notable limitation, and that is that data is artificially clean, all data types are
+correct, and column names are descriptive. This is not something we can expect to encounter in the real world.
 
 \subsubsection{BIRD}
 
-To counteract the clean nature of the Spider dataset we are going to utilize BIRD. It provides unsanitized
-real world data, which requires external knowledge and deeper logical deduction for information retrieval.
-Because BIRD databases are too large to fit into context window of LLM in their entirety, we are going to
-sub-sample them. For
-each table $n$ random rows are going to be extracted, to maintain level playing field the same data is going
+To counteract the clean nature of the Spider dataset, we are going to utilize BIRD. It provides unsanitized
+real-world data, which requires external knowledge and deeper logical deduction for information retrieval.
+Because BIRD databases are too large to fit into context window of an LLM in their entirety, we are going to
+subsample them. For
+each table $n$ random rows are going to be extracted; to maintain a level playing field, the same data is going
 to be used for both pipelines.
 
-\subsection{Structural Integrity}
-While deeply nested relational data would provide closer simulation of complex real world data, constructing
-such data would introduce significant technical trade offs. Generating such data through table joins often
-leads to dropped rows, compromising datasets integrity. We are going to prioritize data integrity over its
-complexity, thus when serializing databases into a specific format, each format is going to be transformed
-and appended sequentially into list structure. One more thing to note is that some serialization formats
-don't support deeply nested data and this would provide additional concerns for integrity of our experiments.
+\subsection{Structural integrity}
+While deeply nested relational data would provide a closer simulation of complex real world data, constructing
+such data would introduce significant technical trade-offs. Generating such data through table joins often
+leads to dropped rows, compromising datasets' integrity. We are going to prioritize data integrity over its
+complexity; thus, when serializing databases into a specific format, each format is going to be transformed
+and appended sequentially to a list structure. One more thing to note is that some serialization formats
+don't support deeply nested data and this would raise additional concerns for the integrity of our experiments.
 
-\subsection{Excluded Datasets}
+\subsection{Excluded datasets}
 
 \begin{itemize}
-  \item \textbf{Struct-Text-Eval:} The main reason for excluding this dataset is that it is entirely
-    synthetic, and it does not accurately present the real world challenges. Furthermore converting its
-    synthetic data into databases compatible with SQL engines, would present a significant technical
-    challenge. Also a significant factor, is that the it generates inconsistent data across different formats
+  \item \textbf{StrucText-Eval:} The main reason for excluding this dataset is that it is entirely
+    synthetic, and it does not accurately present the real-world challenges. Furthermore, converting its
+    synthetic data into databases compatible with SQL engines would present a significant technical
+    challenge. Also a significant factor is that the it generates inconsistent data across different formats
     which would prevent a level playing field between different formats.
   \item \textbf{Spider 2.0:} This benchmark evaluates enterprise-scale workflows involving large schemas,
     multiple SQL dialects, and external documentation \cite{lei2025spider}. These tasks would require a
@@ -121,76 +121,76 @@ don't support deeply nested data and this would provide additional concerns for 
     and schema-driven SQL generation within the selected context budget.
 \end{itemize}
 
-\section{Data Serialization Formats}
+\section{Data serialization formats}
 
 This section presents data serialization formats selected for the experiment. Choosing an optimal format
-requires balancing model's familiarity with the structure against token efficiency and character overhead.
+requires balancing the model's familiarity with the structure against token efficiency and character overhead.
 For the experiments we have chosen six different serialization formats, applying the distinction between
 structural and positional representations introduced in Chapter~\ref{ch:related_work}.
 
-\subsection{Structural Formats}
+\subsection{Structural formats}
 
 \begin{itemize}
   \item \textbf{JSON:} As the primary exchange format on the internet, JSON is
-    abundant in LLM training data, giving it the edge over the other formats. JSON utilizes explicit key
-    value pairs, and it supports deeply nested structures. On the other hand, it is highly verbose, repeating
+    abundant in LLM training data, giving it the edge over the other formats. JSON utilizes explicit key-value 
+    pairs, and it supports deeply nested structures. On the other hand, it is highly verbose, repeating
     key names for every single entry, thus inflating the character count.
 
-  \item \textbf{XML:} It is still used across legacy and enterprise systems,
-    same as JSON it supports deeply nested data. It is even more verbose than JSON, because it requires
+  \item \textbf{XML:} It is still used across legacy and enterprise systems;
+    like JSON, it supports deeply nested data. It is even more verbose than JSON, because it requires
     explicit opening and closing tags for every data entry.
 
-  \item \textbf{YAML:} It is commonly used for configuration files, it is
-    intended to be human readable superset of JSON. Instead of relying on braces and brackets, YAML uses
-    indentation to define the hierarchy. This significantly reduces the character count compared to other two formats.
+  \item \textbf{YAML:} It is commonly used for configuration files; it is
+    intended to be a human readable superset of JSON. Instead of relying on braces and brackets, YAML uses
+    indentation to define the hierarchy. This significantly reduces the character count compared to the other two formats.
 \end{itemize}
 
-\subsection{Positional Formats}
+\subsection{Positional formats}
 
 \begin{itemize}
-  \item \textbf{CSV:} It is very simple and easy to parse format, with minimal
-    overhead. Unlike JSON, column headers are only written once at the top of the file. Format relies on the
+  \item \textbf{CSV:} It is a very simple and easy to parse format, with minimal
+    overhead. Unlike JSON, column headers are only written once at the top of the file. The format relies on the
     positional convention, assuming the reader knows to map the $n$-th value in a row to the $n$-th header
-    column. But it has one significant limitation, it cannot support deeply nested data.
+    column. But it has one significant limitation: it cannot support deeply nested data.
   \item \textbf{Markdown:} Markdown is included due to its widespread presence and the preference that the
     LLMs show during the text generation. While the Markdown standard does not explicitly define tables, many
     variations of it have introduced table layouts, which have become the norm.
 \end{itemize}
 
-\subsection{Token Optimized Formats}
+\subsection{Token-optimized formats}
 
 \begin{itemize}
-  \item \textbf{TOON:} TOON presents a direct response to the need for token
-    efficient data serialization format in LLM context. It minimizes character overhead by separating the schema
+  \item \textbf{TOON:} TOON presents a direct response to the need for a token-efficient data serialization 
+    format in the LLM context. It minimizes character overhead by separating the schema
     from the records, thus compressing redundant keys.
     \begin{itemize}
       \item TOON was selected over ONTO because tools supporting its implementation were already available.
-      \item \emph{Consideration:} Because token optimized formats are a new invention, they are yet to enter the
-        standard training corpus for LLMs. This may impair LLMs ability for inference because of the lack of
+      \item \emph{Consideration:} Because token-optimized formats are a new invention, they are yet to enter the
+        standard training corpus for LLMs. This may impair LLMs' ability to perform inference because of the lack of
         representation.
     \end{itemize}
 \end{itemize}
 
-\section{Information Extraction}
+\section{Information extraction}
 
 The pipelines defined in Section~\ref{sec:pipeline-comparison} impose different constraints on information
 extraction. The following considerations guide the experimental design.
 
-\subsubsection{Direct Context Inference}
+\subsubsection{Direct context inference}
 
 \begin{itemize}
-  \item \textbf{Context Length Constraint:} The primary challenge of this approach is context over saturation.
-    When the input becomes too large, models frequently suffer from the lost in the middle phenomenon
+  \item \textbf{Context length constraint:} The primary challenge of this approach is context oversaturation.
+    When the input becomes too large, models frequently suffer from the lost-in-the-middle phenomenon
     \cite{liu2024lost}, where the models struggle to retrieve the information present in the central part of the
     provided paragraphs.
   \item \textbf{Output formatting constraints:} LLMs typically experience degraded performance when
     being forced to conform output to highly rigid data schemas \cite{tam2024let}. To mitigate this drop in
     performance, we
-    will not be enforcing strict data formatting on the output, instead we will be utilizing flexible
+    will not be enforcing strict data formatting on the output; instead, we will be utilizing flexible
     verification metrics during the evaluation part of the experiment.
 \end{itemize}
 
-\subsubsection{Text-to-SQL Inference}
+\subsubsection{Text-to-SQL inference}
 
 \begin{itemize}
   \item \textbf{Scalability advantage:} Because a database schema is inherently much smaller than the
@@ -198,11 +198,11 @@ extraction. The following considerations guide the experimental design.
     times larger than the context window of the model.
   \item \textbf{Semantic Limitations:} Because the model does not have access to real data examples, it must
     infer the content of the tables entirely from its schema architecture, column names and their types.
-    Consequently, if table or column names are poorly named, or non descriptive, we can expect the models
-    ability to produce correct query to degrade.
+    Consequently, if table or column names are poorly named or non-descriptive, we can expect the model's
+    ability to produce a correct query to degrade.
 \end{itemize}
 
-\section{Evaluation Metrics}
+\section{Evaluation metrics}
 \label{sec:evaluation-metrics-implementation}
 
 When evaluating the two ways of retrieving information, we are going to be measuring their operational
@@ -210,15 +210,15 @@ efficiency (resource utilization and time required), and retrieval accuracy (acc
 the reference answer). This will allow us to consider both economic viability and information correctness
 when designing our decision framework.
 
-\subsubsection{Operational Efficiency}
+\subsubsection{Operational efficiency}
 We measure token consumption and response latency using the concepts introduced in
 Section~\ref{sec:operational-metrics}. These measurements describe inference workload and waiting time.
 
-\textbf{Token Consumption:} We record input and output token counts. Output counts cover the complete model
+\textbf{Token consumption:} We record input and output token counts. Output counts cover the complete model
 completion, including any reasoning trace; reasoning tokens are not counted separately. The token measures
 therefore distinguish prompt consumption from total generated output, not visible answer tokens from reasoning.
 
-\textbf{System Latency:} Measured model time starts at request submission and ends when the streamed completion
+\textbf{System latency:} Measured model time starts at request submission and ends when the streamed completion
 finishes. It includes both \emph{Time to First Token (TTFT)}, from submission to the first output token, and
 the remaining post-first-token generation interval. The first token can belong to a reasoning trace, and
 subsequent reasoning is included in the generation interval. For Text-to-SQL, measured total response latency
@@ -226,7 +226,7 @@ sums model time and SQL execution time across the initial attempt and all correc
 time needed to retrieve the answer after generation. These measurements exclude preprocessing before request
 submission, such as database sampling, reference generation, and serialization preparation.
 
-\subsubsection{Retrieval Accuracy}
+\subsubsection{Retrieval accuracy}
 
 Reference answers for the comparison defined in Section~\ref{sec:pipeline-comparison} are obtained by
 executing the gold SQL queries on the databases used in the experiment. For BIRD, the queries are executed on
@@ -239,7 +239,7 @@ For Text-to-SQL, we use execution success as defined in Section~\ref{sec:sql-exe
 We record the number of retries and the final execution outcome under the correction policy defined in
 Section~\ref{sec:minimalist-text-to-sql}.
 
-\subsection{Confidence Intervals and Effect Sizes}
+\subsection{Confidence intervals and effect sizes}
 \label{sec:confidence-intervals}
 
 Alongside the reported metrics, we plan to include \qty{95}{\percent} confidence intervals and effect sizes. These
@@ -254,7 +254,7 @@ preserving dependence among observations from the same database. Means will be r
 observations, giving each observation equal weight.
 
 Pointwise \qty{95}{\percent} confidence intervals will be calculated using the percentile
-method: the lower and upper bounds will be set at \num{2.5}th and \num{97.5}th percentiles of the bootstrap estimates.
+method: the lower and upper bounds will be the \num{2.5}th and \num{97.5}th percentiles of the bootstrap estimates.
 
 Tokenizer comparisons will instead use the median of database-wise paired token-count ratios within each
 dataset and format.
@@ -267,27 +267,27 @@ For the exploratory database-size analysis, Pearson's $r$ is computed across dat
 the base-\num{10} logarithm of each database-format's mean serialized token count. Each database contributes one
 unweighted observation.
 
-\section{LLM Selection}
+\section{LLM selection}
 
-When choosing the models for our experiment we are going to take three key aspects into consideration,
+When choosing the models for our experiment we are going to take three key aspects into consideration:
 reproducibility, quantization, and parameter scale.
 
-\emph{Open weight models} will allow us to have reproducible experiment results, as compared to proprietary
-cloud based models. This mitigates the risk of unannounced upstream model updates.
+\emph{Open-weight models} will allow us to have reproducible experiment results, as compared to proprietary
+cloud-based models. This mitigates the risk of unannounced upstream model updates.
 
-\emph{Quantization Level}, model quantization is highly effective for reducing memory usage, but it can
+\emph{Quantization level}: model quantization is highly effective for reducing memory usage, but it can
 introduce variation in reasoning performance. To prevent quantization from acting as a variable between our
-models we plan to run all our experiments on models with the same level of quantization. This isolates
+models, we plan to run all our experiments on models with the same level of quantization. This isolates
 architecture and size of the model as the primary performance variables.
 
-\emph{Parameter scale}, we plan to include wide variety of models at different parameter scales. This should
-allow us to defined a point where local models go from being unusable to highly effective for information
+\emph{Parameter scale}: we plan to include wide variety of models at different parameter scales. This should
+allow us to define a point where local models go from being unusable to highly effective for information
 extraction from structured data.
 
 \section{Summary}
 
 This chapter establishes the experimental design to evaluate and compare direct context inference
-and Text-to-SQL workflows using local, open weight LLMs. By benchmarking these models across six distinct
+and Text-to-SQL workflows using local, open-weight LLMs. By benchmarking these models across six distinct
 serialization formats using the Spider and BIRD datasets, the study isolates how data presentation and
 parameter scale influence extraction performance.
 

@@ -5,7 +5,7 @@ This chapter describes how the experimental design introduced in Chapter~\ref{ch
 end to end. We will cover the infrastructure, model selection (selection criteria), result evaluation, and
 test reproducibility.
 
-\section{Computational Infrastructure}
+\section{Computational infrastructure}
 
 All experiments are executed on the FRIDA \cite{ulfri_rdc} high-performance computing cluster operated by the
 Research Data
@@ -15,7 +15,7 @@ preemption. The primary compute target is a single NVIDIA H100 GPU with \qty{80}
 provides sufficient capacity to hold even the largest quantized model (\num{27} billion parameters) entirely in GPU
 memory while maintaining a \num{128}K-token key--value (KV) cache.
 
-\subsection{Container Environment}
+\subsection{Container environment}
 
 FRIDA does not expose a traditional module system. Instead, all software environments are packaged as Enroot
 containers managed through the Pyxis Slurm plugin. Our container image is based on the NVIDIA GPU Cloud image
@@ -24,13 +24,13 @@ image, we add \texttt{llama.cpp}. The scoring dependencies (PyTorch,
 Transformers, rouge-score, bert-score) are co-installed as optional package extras. The
 fully built container is exported as a squashfs image (\texttt{.sqsh}).
 
-\section{Model Selection and Quantization}
+\section{Model selection and quantization}
 
 We evaluate three families of open-weight instruction-tuned language models, chosen to span a wide parameter
 range while remaining recent enough to reflect current architectural advances:
 
 \begin{itemize}
-  \item \textbf{Ministral~3} \cite{liu2026ministral} - available at \num{8}B, and \num{14}B parameters.
+  \item \textbf{Ministral~3} \cite{liu2026ministral} - available at \num{8}B and \num{14}B parameters.
     This family uses a sliding-window attention mechanism and is optimized for low-latency deployment.
   \item \textbf{Qwen~3.5} \cite{yang2025qwen3} - available at \num{0.8}B, \num{2}B, \num{4}B, \num{9}B, and \num{27}B
     parameters. Qwen~3.5 models feature hybrid thinking capabilities with explicit reasoning traces enclosed
@@ -46,7 +46,7 @@ range while remaining recent enough to reflect current architectural advances:
 Together, these three families give us eleven distinct model sizes ranging from sub-\num{1}B to \num{27}B parameters,
 enabling fine-grained analysis of the relationship between model scale and information extraction accuracy.
 
-\subsection{Quantization Strategy}
+\subsection{Quantization strategy}
 
 All models are served in the GGUF format \cite{llamacpp} using the \textbf{Q4\_K\_M} quantization
 scheme. Q4\_K\_M belongs to the k-quant family introduced in the \texttt{llama.cpp} \cite{llamacpp}
@@ -59,7 +59,7 @@ baseline. Second, it enables us to fit models up to \num{27}B parameters on a si
 \num{128}K-token KV cache. Third, applying the same quantization scheme uniformly across all models ensures that
 architecture and parameter count remain the only variables under test.
 
-\subsection{Inference Configuration}
+\subsection{Inference configuration}
 
 The following parameters are held constant across all models and experiments:
 
@@ -72,11 +72,11 @@ The following parameters are held constant across all models and experiments:
     preventing any information leakage or prefix-caching effects that could distort timing measurements.
 \end{itemize}
 
-\section{Software Architecture}
+\section{Software architecture}
 
 The benchmark system is implemented as a Python package, structured using a standard \texttt{src} layout.
 
-\subsection{Command-Line Pipeline}
+\subsection{Command-line pipeline}
 
 The evaluation workflow is divided into six sequential stages, each exposed as an independent command-line entry point:
 
@@ -94,13 +94,13 @@ The evaluation workflow is divided into six sequential stages, each exposed as a
     deferred pass over the benchmark outputs.
 \end{enumerate}
 
-\subsection{LLM Interface}
+\subsection{LLM interface}
 
-As LLM interface we have decided to use Llama Cpp, which allows us to load GGUF models directly into process memory via
-the exposed bindings. This interface allows us fine grained control over all the model parameters, so we can ensure
+For LLM interface we have decided to use Llama Cpp, which allows us to load GGUF models directly into process memory via
+the exposed bindings. This interface allows us fine-grained control over all the model parameters, so we can ensure
 the same conditions during all the experiment runs.
 
-\subsection{Streaming and Timing Measurement}
+\subsection{Streaming and timing measurement}
 
 The backend always streams its responses (token by token). Streaming allows TTFT to be measured from request
 submission until the first output token arrives. Total model time runs from submission through completion, so it
@@ -112,16 +112,16 @@ downstream evaluation. Output-token counts and total model time cover the comple
 \subsection{Serialization}
 
 The six serialization formats defined in Chapter~\ref{ch:methodolgy} are implemented as encoder
-functions, each accepting a database contents and returning a formatted string. Tables are serialized
+functions, each accepting database's contents and returning a formatted string. Tables are serialized
 independently and concatenated for the final output, which is used in the later stages.
 
-\section{Dataset Preparation}
+\section{Dataset preparation}
 
 \subsection{Spider}
 
 The Spider dataset is obtained from its official distribution
 page\footnote{\url{https://yale-lily.github.io/spider}} maintained by the Yale LILY lab. We use the complete
-dataset without modification: all database tables retain their full row sets, since most of the Spider's databases are
+dataset without modification: all database tables retain their full row sets, since most of Spider's databases are
 small enough to fit within the \num{128}K context window when serialized in any of the six formats.
 
 \subsection{BIRD}
@@ -144,8 +144,8 @@ therefore arise from the removal of rows needed to satisfy query filters or join
 answers in the original dataset. We expand on the analysis of these sampling-induced empty results and
 their implications for the evaluation in Chapter~\ref{ch:results}.
 
-The sampled databases are materialized as standalone SQLite files written to disk. It guarantees that three
-consumers (the serialization encoders, the reference answer generator, and the Text-to-SQL query executor),
+The sampled databases are materialized as standalone SQLite files written to disk. This guarantees that three
+consumers (the serialization encoders, the reference answer generator, and the Text-to-SQL query executor)
 all operate on exactly the same data.
 
 Reducing the cap from \num{500} to \num{100} rows made more databases fit, but increased the number of empty reference
@@ -156,14 +156,14 @@ databases for every tokenizer, compared with \num{6} at \num{500} rows: \texttt{
 These measurements support \num{500} rows as a practical compromise between retaining data and context-window
 feasibility, but do not establish an optimal cap.
 
-\section{Benchmark Execution}
+\section{Benchmark execution}
 
-\subsection{Direct Context Inference}
+\subsection{Direct context inference}
 
 For the direct pipeline, the runner iterates over formats and questions. Before dispatching each question, the
 runner tokenizes the complete prompt (system message plus serialized data plus user question) and checks
-whether the token count exceeds the available context window  Examples that do not
-fit are recorded with an explicit context exceeded marker and skipped, keeping track of which examples were attempted.
+whether the token count exceeds the available context window. Examples that do not
+fit are recorded with an explicit context-exceeded marker and skipped, keeping track of which examples were attempted.
 
 \subsection{Text-to-SQL}
 
@@ -176,20 +176,20 @@ model time accumulate across all attempts; model time includes TTFT and post-fir
 attempt, and total Text-to-SQL response latency also includes query-execution time. These measurements cover the
 response workflow, not preprocessing before request submission.
 
-\subsection{Prompt Design}
+\subsection{Prompt design}
 
 Both pipelines use deliberately minimal prompt templates. The direct inference prompt assigns the model the
-role of a 'precise information retrieval assistant' with constraints to use only the provided data, output
-'N/A' for missing information, and avoid conversational filler. Its complete template is reproduced in
+role of a `precise information retrieval assistant' with constraints to use only the provided data, output
+`N/A' for missing information, and avoid conversational filler. Its complete template is reproduced in
 Appendix~\ref{app:direct-prompt}. The Text-to-SQL prompt assigns the role of
-a 'precise Text-to-SQL translator' constrained to output SQLite compatible SQL; its complete template is
+a `precise Text-to-SQL translator' constrained to output SQLite-compatible SQL; its complete template is
 reproduced in Appendix~\ref{app:sql-prompt}.
 Both templates inject the serialized data (or schema expressed in data definition language) at a designated
 placeholder. The prompts are
 intentionally non-leading: we avoid few-shot examples or format-specific hints so that the model's inherent
 capability remains the variable under test.
 
-\section{Scoring Pass}
+\section{Scoring pass}
 \label{sec:scoring-pass}
 
 Accuracy metrics are computed in a separate pass. We read the raw benchmark NDJSON, join each record with its
