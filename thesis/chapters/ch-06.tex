@@ -25,12 +25,15 @@ retrieval, joins, and aggregation to the database engine produced closer agreeme
 answers than deriving them directly from serialized records. The choice of extraction method should
 therefore come before optimizing the serialization format.
 
-Operational efficiency results also favour SQL. On the shared context-fit workload, it required fewer input tokens
-and had lower mean total latency than every direct format, including all SQL correction attempts and
-execution time (Figures~\ref{fig:common-cohort-token-usage} and~\ref{fig:common-cohort-latency}). Supplying
-the schema instead of the complete database contents reduced the input-processing work. This provides
-additional support for choosing Text-to-SQL when an SQL engine is available and the task can be expressed
-as a query.
+Operational efficiency results also favour SQL. On the shared context-fit workload, it required fewer
+input tokens and had lower mean total latency than every direct format, including all SQL correction
+attempts and execution time (Figures~\ref{fig:common-cohort-token-usage}
+and~\ref{fig:common-cohort-latency}). A limited exception concerned speed in the small-database tier
+defined in Section~\ref{sec:pipeline-accuracy-by-database-size}, where CSV was faster in most
+question--model pairs, although its mean latency advantage remained uncertain. Across the shared
+workload, SQL's larger latency savings on larger databases outweighed this advantage on small inputs.
+Considering latency and input-token use together, the results therefore reinforce the preference for
+Text-to-SQL when an SQL engine is available and the task can be expressed as a query.
 
 For small databases, Direct Context Inference remains worth considering because the records can be
 supplied within the model's context window, particularly when an SQL engine is unavailable. However, the
@@ -213,8 +216,10 @@ If SQL cannot be used, Direct Context Inference can be considered when the compl
 the model's context window. Database size becomes especially important here because the records must
 be supplied to the model. The fit check should include the serialized data, instructions, question, and
 chat-template overhead, while reserving space for the answer and any reasoning tokens. For Text-to-SQL,
-the corresponding check uses the schema rather than the database contents. A small database makes direct
-inference more practical, but does not change the preference for SQL when it is supported.
+the corresponding check uses the schema rather than the database contents. Text-to-SQL remains the preferred 
+approach overall when SQL is supported. However, the small Spider comparison in 
+Section~\ref{sec:pipeline-operational-efficiency} suggests that CSV may be worth considering when response 
+time is the main priority.
 
 For direct inference, CSV is the preferred format for flat data when minimizing input tokens and latency.
 TOON is the preferred starting format for potentially nested data, provided that its representation

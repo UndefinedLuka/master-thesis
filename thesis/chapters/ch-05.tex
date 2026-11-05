@@ -521,6 +521,18 @@ Spider, while all direct formats had longer mean generation times than SQL on BI
 contributed only \qty{0.005}{\second} per run on Spider and \qty{0.007}{\second} on BIRD.
 
 Lower mean latency did not mean faster responses in every case: SQL was faster than CSV in
-\qty{58.9}{\percent} of Spider pairs and \qty{98.8}{\percent} of BIRD pairs. The BIRD results cover
-only two sampled databases. Since accuracy and efficiency use different cohorts, these results do not
-establish a joint cost--accuracy trade-off on the same question set.
+\qty{58.9}{\percent} of Spider pairs (\qtyrange{43.9}{72.3}{\percent}) and
+\qty{98.78}{\percent} of BIRD pairs (\qtyrange{98.73}{98.83}{\percent}). The small
+Spider tier, defined in Section~\ref{sec:pipeline-accuracy-by-database-size},
+contained \num{273} context-fit questions across eight databases. CSV was faster
+in \qty{68.2}{\percent} of its question--model pairs
+(\qtyrange{61.8}{75.2}{\percent}), averaging \qty{0.261}{\second} compared with
+\qty{0.298}{\second} for SQL. However, its mean advantage of
+\qty{0.037}{\second} (\qtyrange{-0.030}{0.121}{\second}) remained uncertain. 
+SQL's lower overall mean was driven mainly by
+large-database pairs: they represented only \qty{20.2}{\percent} of the Spider
+workload, but their larger latency differences in SQL's favour outweighed CSV's
+smaller advantages elsewhere. The narrow BIRD interval reflects similar win
+rates in only two sampled databases. Since accuracy and efficiency use different
+cohorts, these results do not establish a joint cost--accuracy trade-off on the
+same question set.
