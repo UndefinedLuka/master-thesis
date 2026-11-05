@@ -1,4 +1,4 @@
- %---------------------------------------------------------------
+%---------------------------------------------------------------
 % SLO: angleški povzetek
 % ENG: english abstract
 %---------------------------------------------------------------
@@ -9,22 +9,14 @@
 \noindent\textbf{Title:} \ttitleEn
 \bigskip
 
-Extracting information from structured data using large language models requires balancing answer quality,
-response latency, and resource consumption. This thesis investigates how the extraction method and data
-serialization format influence these requirements. We compared direct context inference, in which models
-answer questions from serialized database contents, with text-to-SQL, in which models generate queries
-executed by a database engine. The evaluation used \num{10} locally deployed open-weight models,
-\num{6} serialization formats, and databases from Spider and a subsampled version of BIRD. We measured
-reference-answer agreement, token consumption, and response latency. Text-to-SQL achieved higher mean
-agreement than every direct-inference format, exceeding the strongest direct format in normalized exact
-match by \num{46.5} percentage points on Spider and \num{44.7} percentage points on sampled BIRD.
-In separate comparisons on shared context-fit workloads, it also required fewer input tokens and had
-lower mean response latency. For direct inference on flat relational tables, CSV required the fewest
-input tokens and had the lowest mean latency, with Token-Oriented Object Notation (TOON) a close
-alternative; more verbose formats offered no consistent advantage in answer agreement. These findings
-inform a decision framework that prioritizes extraction-method selection before serialization
-optimization and supports text-to-SQL as the preferred method when SQL execution is available and
-the task can be expressed as a query.
+This thesis compares direct context inference and text-to-SQL for extracting information from structured
+data using large language models. We evaluated \num{10} locally deployed open-weight models and
+\num{6} serialization formats on Spider and subsampled BIRD databases. Text-to-SQL exceeded the
+strongest direct format in mean normalized exact match by \num{46.5} and \num{44.7} percentage points,
+respectively. Separate context-fit comparisons showed lower input-token consumption and mean latency
+for text-to-SQL. Among direct formats, CSV was the most efficient, with Token-Oriented Object Notation
+(TOON) a close alternative. These findings inform a decision framework that prioritizes extraction-method
+selection before serialization and favours text-to-SQL when SQL execution is available and applicable.
 
 \subsection*{Keywords}
 \textit{\tkeywordsEn}

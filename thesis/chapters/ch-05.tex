@@ -4,7 +4,8 @@
 This chapter reports the experiments described in Chapters~\ref{ch:methodolgy} and
 \ref{ch:implementation}. Serialization efficiency is presented first, followed by analysis cohorts and
 experiment coverage, direct context inference, text-to-SQL, and a comparison of the two pipelines.
-The results cover operational efficiency and retrieval accuracy as described in Section~\ref{sec:evaluation-metrics-implementation}.
+The results cover operational efficiency and retrieval accuracy as described in
+Section~\ref{sec:evaluation-metrics-implementation}.
 Estimates retain equal weight per run within each reported analysis group. Intervals are pointwise
 \qty{95}{\percent} database-bootstrap intervals, as presented in Section~\ref{sec:confidence-intervals}
 (table cells show these intervals in brackets).
@@ -98,8 +99,8 @@ describe only those two sampled databases.
 
 \input{../code/analysis/tables/experiment_outcomes}
 
-We excluded the Qwen~3.5 27B runs because opening and closing reasoning tags were inconsistently generated, 
-preventing reliable separation of the reasoning trace from the final answer. Table~\ref{tab:experiment-outcomes} 
+We excluded the Qwen~3.5 27B runs because opening and closing reasoning tags were inconsistently generated,
+preventing reliable separation of the reasoning trace from the final answer. Table~\ref{tab:experiment-outcomes}
 summarizes the outcomes for the remaining ten models
 across the full set of experiments. Each run corresponds to one model, question, and retrieval
 configuration. Unlike the cohort counts, these totals include all experimental questions. A successful
@@ -166,7 +167,7 @@ retained with zero scores. Figure~\ref{fig:direct-accuracy-by-format} shows the 
 and ROUGE-L scores, which measure different aspects of agreement with the reference answer as described
 in Section~\ref{sec:reference-answer-metrics}.
 
-\begin{figure}[htb]
+\begin{figure}[htbp]
   \centering
   \includegraphics[width=\textwidth]{../code/analysis/figures/direct_accuracy_by_format.pdf}
   \caption{Mean direct-context NEM, BERTScore, and ROUGE-L by format on answerable questions.}
@@ -192,7 +193,7 @@ Because failed runs retain zero scores, these results reflect both agreement wit
 and the ability to process the request within the context limit. They do not measure accuracy only among
 runs that completed successfully.
 
-\begin{figure}[htb]
+\begin{figure}[htbp]
   \centering
   \includegraphics[width=\textwidth]{../code/analysis/figures/direct_accuracy_by_model_size.pdf}
   \caption{Mean direct-context retrieval accuracy by model size and family on answerable questions,
@@ -225,7 +226,7 @@ scores were averaged across the retained question--model runs for that database.
 Figure~\ref{fig:direct-accuracy-by-database-size-nem} shows this comparison for NEM, with database size
 on a logarithmic scale.
 
-\begin{figure}[htb]
+\begin{figure}[htbp]
   \centering
   \includegraphics[width=\textwidth]{../code/analysis/figures/direct_accuracy_by_database_size_nem.pdf}
   \caption{Mean direct-context NEM by serialized database size and format on answerable questions.
@@ -325,7 +326,7 @@ We also compared model sizes within each family.
 Figure~\ref{fig:text-to-sql-accuracy-by-model-size} shows the mean scores for each model on the same
 answerable questions, including zero scores for failed runs.
 
-\begin{figure}[htb]
+\begin{figure}[htbp]
   \centering
   \includegraphics[width=\textwidth]{../code/analysis/figures/text_to_sql_accuracy_by_model_size.pdf}
   \caption{Mean text-to-SQL NEM, BERTScore, and ROUGE-L by model size and family on the answerable cohort.}
@@ -501,7 +502,7 @@ Output differences were less consistent on Spider: the CSV-to-SQL output-token r
 (\numrange{0.65}{1.12}) did not establish a clear difference, and only XML's ratio interval excluded
 one. On BIRD, all direct formats produced more output tokens, with ratio intervals above one.
 
-\begin{figure}[htb]
+\begin{figure}[htbp]
   \centering
   \includegraphics[width=\textwidth]{../code/analysis/figures/common_cohort_latency.pdf}
   \caption{Mean latency components on the shared context-fit workload. SQL includes all initial
@@ -529,7 +530,7 @@ contained \num{273} context-fit questions across eight databases. CSV was faster
 in \qty{68.2}{\percent} of its question--model pairs
 (\qtyrange{61.8}{75.2}{\percent}), averaging \qty{0.261}{\second} compared with
 \qty{0.298}{\second} for SQL. However, its mean advantage of
-\qty{0.037}{\second} (\qtyrange{-0.030}{0.121}{\second}) remained uncertain. 
+\qty{0.037}{\second} (\qtyrange{-0.030}{0.121}{\second}) remained uncertain.
 SQL's lower overall mean was driven mainly by
 large-database pairs: they represented only \qty{20.2}{\percent} of the Spider
 workload, but their larger latency differences in SQL's favour outweighed CSV's
