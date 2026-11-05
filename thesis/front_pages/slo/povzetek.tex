@@ -9,7 +9,27 @@
 \noindent\textbf{Naslov:} \ttitle
 \bigskip
 
-V vzorcu je predstavljen postopek priprave magistrskega dela z uporabo okolja \LaTeX. Vaš povzetek mora sicer vsebovati približno \num{100} besed, ta tukaj je odločno prekratek. Dober povzetek vključuje: (1) kratek opis obravnavanega problema, (2) kratek opis vašega pristopa za reševanje tega problema in (3) (najbolj uspešen) rezultat ali prispevek magistrske naloge.
+Pridobivanje informacij iz strukturiranih podatkov z uporabo velikih jezikovnih modelov zahteva
+uravnoteženje kakovosti odgovorov, odzivnega časa in porabe virov. V magistrskem delu raziskujemo,
+kako metoda pridobivanja informacij in format serializacije podatkov vplivata na te zahteve.
+Primerjali smo neposredno sklepanje na podlagi konteksta, pri katerem modeli odgovarjajo na vprašanja
+na podlagi serializirane vsebine podatkovnih baz, s pretvarjanjem besedila v SQL
+(angl.\ text-to-SQL), pri katerem modeli ustvarjajo poizvedbe, ki jih izvede sistem za upravljanje
+podatkovnih baz. Vrednotenje je vključevalo \num{10} lokalno izvajanih modelov z javno dostopnimi
+utežmi, \num{6} formatov serializacije ter podatkovne baze iz zbirke Spider in podvzorčene različice
+zbirke BIRD. Merili smo ujemanje z referenčnimi odgovori, porabo žetonov in odzivni čas. Pristop
+text-to-SQL je dosegel višje povprečno ujemanje kot neposredno sklepanje v katerem koli izmed
+preizkušenih formatov. Pri normaliziranem natančnem ujemanju je presegel najuspešnejši format
+neposrednega sklepanja za \num{46.5} odstotne točke na zbirki Spider in za \num{44.7} odstotne točke
+na podvzorčeni zbirki BIRD. V ločenih primerjavah na skupnih naborih vprašanj, pri katerih so se
+zahteve pri vseh konfiguracijah prilegale kontekstnim oknom modelov, je zahteval tudi manj vhodnih
+žetonov in dosegel krajši povprečni odzivni čas. Pri neposrednem sklepanju na ploskih relacijskih
+tabelah je format CSV zahteval najmanj vhodnih žetonov in dosegel najkrajši povprečni odzivni čas,
+format Token-Oriented Object Notation (TOON) pa je dosegel podobne rezultate; obsežnejši formati
+niso zagotavljali dosledne prednosti pri ujemanju odgovorov. Te ugotovitve so podlaga za odločitveni
+okvir, ki daje prednost izbiri metode pridobivanja informacij pred optimizacijo serializacije in
+priporoča text-to-SQL kot prednostno metodo, kadar je izvajanje poizvedb SQL na voljo in je nalogo
+mogoče izraziti s poizvedbo.
 
 \subsection*{Ključne besede}
 \textit{\tkeywords}
