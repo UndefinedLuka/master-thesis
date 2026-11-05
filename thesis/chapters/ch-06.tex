@@ -9,9 +9,9 @@ extraction method and, where needed, a serialization format.
 \subsection{Pipeline selection and database size}
 \label{sec:pipeline-size-interpretation}
 
-The results in Section~\ref{sec:common-cohort-comparison} support Text-to-SQL as the preferred pipeline for
+The results in Section~\ref{sec:common-cohort-comparison} support text-to-SQL as the preferred pipeline for
 the evaluated relational tasks. On the same answerable question--model pairs, it achieved higher mean NEM,
-BERTScore, and ROUGE-L than every Direct Context Inference format. On Spider, mean NEM was \num{0.634}
+BERTScore, and ROUGE-L than every direct context inference format. On Spider, mean NEM was \num{0.634}
 for SQL, compared with \num{0.169} for JSON, the highest-scoring direct format on this measure. On sampled
 BIRD, the corresponding scores were \num{0.501} for SQL and \num{0.054} for CSV. These represent paired
 gains of \num{46.5} percentage points (\numrange{42.2}{50.7}) and \num{44.7} percentage points
@@ -33,9 +33,9 @@ defined in Section~\ref{sec:pipeline-accuracy-by-database-size}, where CSV was f
 question--model pairs, although its mean latency advantage remained uncertain. Across the shared
 workload, SQL's larger latency savings on larger databases outweighed this advantage on small inputs.
 Considering latency and input-token use together, the results therefore reinforce the preference for
-Text-to-SQL when an SQL engine is available and the task can be expressed as a query.
+text-to-SQL when an SQL engine is available and the task can be expressed as a query.
 
-For small databases, Direct Context Inference remains worth considering because the records can be
+For small databases, direct context inference remains worth considering because the records can be
 supplied within the model's context window, particularly when an SQL engine is unavailable. However, the
 size-tier comparison in Section~\ref{sec:pipeline-accuracy-by-database-size} still favoured SQL. In the small
 tier, defined by at most \num{1500} payload tokens averaged across formats and tokenizer families, mean
@@ -50,12 +50,12 @@ capture both reference-answer agreement and the ability to process the request. 
 schema, domain, and questions: all small and medium databases came from Spider, while all BIRD
 databases belonged to the large tier. The results consequently do not establish a size threshold at which
 the preferred pipeline changes. Small inputs make direct inference feasible, but the measured advantage
-of Text-to-SQL supports retaining it as the first choice wherever SQL is applicable, as reflected in
+of text-to-SQL supports retaining it as the first choice wherever SQL is applicable, as reflected in
 Section~\ref{sec:decision-framework}.
 
 \subsection{Serialization trade-offs}
 
-When Direct Context Inference is used, the results support CSV and TOON as the preferred serialization
+When direct context inference is used, the results support CSV and TOON as the preferred serialization
 formats. They required the fewest input tokens and had the lowest mean total latency on the shared
 context-fit workload (Table~\ref{tab:direct-operational-efficiency}). On Spider, CSV and TOON used
 \num{5366} and \num{5758} input tokens on average, with mean latencies of \qty{1.25}{\second} and
@@ -101,16 +101,16 @@ task; retrieval from nested data was not evaluated here.
 \subsection{Model effects}
 
 Model choice affected retrieval accuracy in both pipelines, with larger variants generally achieving
-higher scores. In Text-to-SQL, Qwen~3.5 9B exceeded 0.8B by \num{44.06} NEM percentage points on
+higher scores. In text-to-SQL, Qwen~3.5 9B exceeded 0.8B by \num{44.06} NEM percentage points on
 Spider and \num{46.03} on BIRD, with most of the observed improvement occurring by 4B
 (Figure~\ref{fig:text-to-sql-accuracy-by-model-size}). Gemma~4 26B-A4B had the highest observed mean
 NEM, at \num{0.774} and \num{0.669}, respectively. These results show that model selection remains
 important even when the database engine performs the retrieval.
 
-The gains were less consistent in Direct Context Inference
+The gains were less consistent in direct context inference
 (Figure~\ref{fig:direct-accuracy-by-model-size}). Averaged across formats, Gemma~4 26B-A4B exceeded
-E2B by \num{15.52} NEM percentage points on Spider, but only \num{1.58} on BIRD. The latter
-\qty{95}{\percent} interval, \numrange{-0.02}{3.29}, included zero. Increasing model size therefore
+E2B by \num{15.52} NEM percentage points on Spider, but only \num{1.58} on BIRD. The 
+\qty{95}{\percent} interval for the latter difference, \numrange{-0.02}{3.29}, included zero. Increasing model size therefore
 did not consistently establish better retrieval accuracy across datasets. These comparisons also
 reflect differences in architecture and training, so the gains cannot be attributed to parameter count
 alone.
@@ -137,13 +137,13 @@ data structure, serializer, and tokenizer.
 Research on long contexts shows that fitting data within the context window does not guarantee that
 an LLM will use it reliably \cite{liu2024lost}. Our results support the same practical conclusion:
 larger databases generally had lower direct-inference scores, while even small databases had higher
-scores with Text-to-SQL. However, these observations do not establish the lost-in-the-middle effect
+scores with text-to-SQL. However, these observations do not establish the lost-in-the-middle effect
 studied in that work, since we did not vary the position of relevant information. Context failures
 and differences in schemas and questions also contributed to the observed results. The context limit
 therefore determines whether direct inference is possible, while its accuracy needs to be evaluated
 on the intended task.
 
-Recent Text-to-SQL systems also suggest ways to extend the pipeline used here. Metadata enrichment
+Recent text-to-SQL systems also suggest ways to extend the pipeline used here. Metadata enrichment
 \cite{shkapenyuk2025metadata}, generating and selecting among several candidate queries
 \cite{wang2025agentar}, and targeted query checks \cite{li2026deepeyesql} provide additional support
 for query generation beyond correcting execution errors. Our simpler pipeline, described in
@@ -206,18 +206,18 @@ input consists of flat tables or contains nested relationships.
 \subsection{Selection rules}
 
 The first decision is whether the environment supports SQL execution as defined above. If it does,
-Text-to-SQL is the preferred pipeline, regardless of database size. The comparisons in
+text-to-SQL is the preferred pipeline, regardless of database size. The comparisons in
 Section~\ref{sec:pipeline-size-interpretation} support this choice even for small databases, where all
 direct formats had lower mean retrieval scores. The separate operational comparisons also showed lower
 mean input-token use and latency for SQL. It is therefore the recommended starting point when high
 accuracy, low latency, and low token consumption are all important.
 
-If SQL cannot be used, Direct Context Inference can be considered when the complete request fits within
+If SQL cannot be used, direct context inference can be considered when the complete request fits within
 the model's context window. Database size becomes especially important here because the records must
 be supplied to the model. The fit check should include the serialized data, instructions, question, and
-chat-template overhead, while reserving space for the answer and any reasoning tokens. For Text-to-SQL,
+chat-template overhead, while reserving space for the answer and any reasoning tokens. For text-to-SQL,
 the corresponding check uses the schema rather than the database contents. Text-to-SQL remains the preferred 
-approach overall when SQL is supported. However, the small Spider comparison in 
+approach overall when SQL is supported. However, the comparison for Spider's small database 
 Section~\ref{sec:pipeline-operational-efficiency} suggests that CSV may be worth considering when response 
 time is the main priority.
 
@@ -263,7 +263,7 @@ discussed in Section~\ref{sec:sota-text-to-sql}.
 
 The accuracy measures compare answers through their textual representation, as described in
 Section~\ref{sec:reference-answer-metrics}. Direct inference produces a free-text answer, while
-Text-to-SQL returns database rows that are converted to text. Differences in row order, additional
+text-to-SQL returns database rows that are converted to text. Differences in row order, additional
 explanations, repeated values, or numeric formatting can affect the scores without necessarily changing
 the correctness of the answer. Using NEM, BERTScore, and ROUGE-L provides different views of agreement,
 but all three remain sensitive to how the answer is written.

@@ -355,7 +355,7 @@ def generate_cohort_artifacts(
         r"  \label{tab:analysis-cohorts}",
         r"  \resizebox{\linewidth}{!}{%",
         r"  \begin{tabular}{@{}llrrr@{}}", r"    \toprule",
-        "    Dataset & Cohort & Questions & Databases & Excluded empty" + LATEX_ROW_END,
+        "    Dataset & Cohort & Questions & Databases & Excluded empty references" + LATEX_ROW_END,
         r"    \midrule",
     ]
     for row in cohorts.summary.to_dict("records"):

@@ -2,7 +2,7 @@
 \label{ch:implementation}
 
 This chapter describes how the experimental design introduced in Chapter~\ref{ch:methodolgy} is implemented
-end to end. We will cover the infrastructure, model selection (selection criteria), result evaluation, and
+end to end. We cover the infrastructure, model selection (selection criteria), result evaluation, and
 test reproducibility.
 
 \section{Computational infrastructure}
@@ -13,16 +13,15 @@ Centre at the Faculty of Computer and Information Science, University of Ljublja
 managed by the Slurm workload scheduler, which provides GPU allocation and walltime-based job
 preemption. The primary compute target is a single NVIDIA H100 GPU with \qty{80}{\giga\byte} of high-bandwidth memory, which
 provides sufficient capacity to hold even the largest quantized model (\num{27} billion parameters) entirely in GPU
-memory while maintaining a \num{128}K-token key--value (KV) cache.
+memory while maintaining a \num{128}K-token key-value (KV) cache.
 
 \subsection{Container environment}
 
 FRIDA does not expose a traditional module system. Instead, all software environments are packaged as Enroot
 containers managed through the Pyxis Slurm plugin. Our container image is based on the NVIDIA GPU Cloud image
 \texttt{pytorch:25.06-py3}, which provides CUDA, cuDNN, and Python~3.12 out of the box. On top of this base
-image, we add \texttt{llama.cpp}. The scoring dependencies (PyTorch,
-Transformers, rouge-score, bert-score) are co-installed as optional package extras. The
-fully built container is exported as a squashfs image (\texttt{.sqsh}).
+image, we add \texttt{llama.cpp}. The scoring dependencies (PyTorch, Transformers, rouge-score, bert-score) 
+are co-installed as optional package extras. The fully built container is exported as a squashfs image (\texttt{.sqsh}).
 
 \section{Model selection and quantization}
 
@@ -30,12 +29,12 @@ We evaluate three families of open-weight instruction-tuned language models, cho
 range while remaining recent enough to reflect current architectural advances:
 
 \begin{itemize}
-  \item \textbf{Ministral~3} \cite{liu2026ministral} - available at \num{8}B and \num{14}B parameters.
+  \item \textbf{Ministral~3} \cite{liu2026ministral} : available at \num{8}B and \num{14}B parameters.
     This family uses a sliding-window attention mechanism and is optimized for low-latency deployment.
-  \item \textbf{Qwen~3.5} \cite{qwen3.5} - available at \num{0.8}B, \num{2}B, \num{4}B, \num{9}B, and \num{27}B
+  \item \textbf{Qwen~3.5} \cite{qwen3.5} : available at \num{0.8}B, \num{2}B, \num{4}B, \num{9}B, and \num{27}B
     parameters. Qwen~3.5 models feature hybrid thinking capabilities with explicit reasoning traces enclosed
     in \texttt{<think>} blocks.
-  \item \textbf{Gemma~4} \cite{gemmateam2026gemma4technicalreport} - a family of
+  \item \textbf{Gemma~4} \cite{gemmateam2026gemma4technicalreport} : a family of
     open-weight models designed for efficient on-device and server-side deployment.
     We evaluate the E2B and E4B variants, with effective parameter counts of
     \num{2.3}B and \num{4.5}B, respectively; the dense \num{12}B model; and the
@@ -81,22 +80,22 @@ The benchmark system is implemented as a Python package, structured using a stan
 The evaluation workflow is divided into six sequential stages, each exposed as an independent command-line entry point:
 
 \begin{enumerate}
-  \item \textbf{Download} - fetches the Spider and BIRD dataset archives from their official distribution channels.
-  \item \textbf{Sample} - materializes sub-sampled BIRD databases to disk as standalone SQLite files,
+  \item \textbf{Download} : fetches the Spider and BIRD dataset archives from their official distribution channels.
+  \item \textbf{Sample} : materializes subsampled BIRD databases to disk as standalone SQLite files,
     ensuring all downstream consumers read identical data.
-  \item \textbf{References} - executes each example's gold SQL query against the appropriate database,
+  \item \textbf{References} : executes each example's gold SQL query against the appropriate database,
     producing reference answer rows persisted as newline-delimited JSON (NDJSON).
-  \item \textbf{Convert} - optionally serializes all databases into all six formats and writes them to disk
+  \item \textbf{Convert} : optionally serializes all databases into all six formats and writes them to disk
     for inspection and debugging.
-  \item \textbf{Benchmark} - runs one slice of the experiment (a specific model, dataset, pipeline, and set
+  \item \textbf{Benchmark} : runs one slice of the experiment (a specific model, dataset, pipeline, and set
     of formats), recording raw model outputs and timing metrics.
-  \item \textbf{Score} - computes NEM, ROUGE-L, and BERTScore in a
+  \item \textbf{Score} : computes NEM, ROUGE-L, and BERTScore in a
     deferred pass over the benchmark outputs.
 \end{enumerate}
 
 \subsection{LLM interface}
 
-For LLM interface we have decided to use Llama Cpp, which allows us to load GGUF models directly into process memory via
+For the LLM interface we have decided to use \texttt{llama.cpp}, which allows us to load GGUF models directly into process memory via
 the exposed bindings. This interface allows us fine-grained control over all the model parameters, so we can ensure
 the same conditions during all the experiment runs.
 
@@ -132,7 +131,7 @@ with tables spanning tens of thousands of rows, far exceeding the context capaci
 We therefore subsample each table to a maximum of \num{500} rows using deterministic random sampling.
 Tables with fewer rows are retained in full. The cap balances two competing requirements: retaining
 enough data for the reference queries to return informative results and keeping serialized databases small
-enough for Direct Context Inference within the \num{128}K-token window.
+enough for direct context inference within the \num{128}K-token window.
 
 Rows are sampled independently in each table, so foreign-key relationships are not guaranteed to be
 preserved. We therefore execute the unchanged gold SQL queries against the sampled databases to obtain
@@ -145,7 +144,7 @@ answers in the original dataset. We expand on the analysis of these sampling-ind
 their implications for the evaluation in Chapter~\ref{ch:results}.
 
 The sampled databases are materialized as standalone SQLite files written to disk. This guarantees that three
-consumers (the serialization encoders, the reference answer generator, and the Text-to-SQL query executor)
+consumers (the serialization encoders, the reference answer generator, and the text-to-SQL query executor)
 all operate on exactly the same data.
 
 Reducing the cap from \num{500} to \num{100} rows made more databases fit, but increased the number of empty reference
@@ -167,13 +166,13 @@ fit are recorded with an explicit context-exceeded marker and skipped, keeping t
 
 \subsection{Text-to-SQL}
 
-For the Text-to-SQL pipeline, the model receives the database schema as data definition language statements
+For the text-to-SQL pipeline, the model receives the database schema as data definition language statements
 and must produce a valid SQLite query. The runner implements the correction policy in
 Section~\ref{sec:minimalist-text-to-sql} by appending the failed response and error feedback to the conversation
 as assistant and user messages, respectively. All attempts are recorded with their individual timing and
 token metrics. Reported token counts and
 model time accumulate across all attempts; model time includes TTFT and post-first-token generation on each
-attempt, and total Text-to-SQL response latency also includes query-execution time. These measurements cover the
+attempt, and total text-to-SQL response latency also includes query-execution time. These measurements cover the
 response workflow, not preprocessing before request submission.
 
 \subsection{Prompt design}
@@ -181,7 +180,7 @@ response workflow, not preprocessing before request submission.
 Both pipelines use deliberately minimal prompt templates. The direct inference prompt assigns the model the
 role of a `precise information retrieval assistant' with constraints to use only the provided data, output
 `N/A' for missing information, and avoid conversational filler. Its complete template is reproduced in
-Appendix~\ref{app:direct-prompt}. The Text-to-SQL prompt assigns the role of
+Appendix~\ref{app:direct-prompt}. The text-to-SQL prompt assigns the role of
 a `precise Text-to-SQL translator' constrained to output SQLite-compatible SQL; its complete template is
 reproduced in Appendix~\ref{app:sql-prompt}.
 Both templates inject the serialized data (or schema expressed in data definition language) at a designated
@@ -205,7 +204,7 @@ Section~\ref{sec:reference-answer-metrics}:
 \end{itemize}
 
 SQL results and references are rendered with one row per line and cells separated by a vertical bar in column
-order. Empty result sets render as empty text. For Direct Context Inference, an empty reference is instead
+order. Empty result sets render as empty text. For direct context inference, an empty reference is instead
 represented as \texttt{N/A}, matching the prompt's requested no-answer response. Before BERTScore evaluation,
 blank candidate or reference texts are replaced with a full stop, to handle empty inputs in the
 scoring library. This bypasses an empty-input tokenizer call that is unavailable in newer Transformers

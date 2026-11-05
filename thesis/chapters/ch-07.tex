@@ -2,20 +2,20 @@
 \label{ch:conclusion}
 
 We compared two approaches to extracting information from structured data using LLMs:
-Direct Context Inference and Text-to-SQL. We also examined how serialization format affects direct
+direct context inference and text-to-SQL. We also examined how serialization format affects direct
 inference. The aim was to understand how these choices influence answer agreement, latency, and token
 usage, and to use the findings to guide the selection of an approach for a given application.
 
 \section{Conclusions and contributions}
 
 When deciding on the presented pipelines, we should first choose the extraction method, and then consider the
-serialization format. For the relational tasks evaluated here, Text-to-SQL achieved higher agreement
-with the reference answers than Direct Context Inference. It also required fewer input tokens and had 
+serialization format. For the relational tasks evaluated here, text-to-SQL achieved higher agreement
+with the reference answers than direct context inference. It also required fewer input tokens and had 
 lower mean latency. These findings support using
-Text-to-SQL as the starting point when an SQL engine is available and the required tasks can be
+text-to-SQL as the starting point when an SQL engine is available and the required tasks can be
 expressed as queries.
 
-When SQL cannot be used, Direct Context Inference is an option if the complete request fits within the
+When SQL cannot be used, direct context inference is an option if the complete request fits within the
 model's context window. In this case, format choice affects how much data we can provide and how much
 processing it requires. For flat tabular data, CSV had the lowest mean input-token use and latency,
 with TOON a close alternative. Both also achieved competitive answer scores among the direct formats.

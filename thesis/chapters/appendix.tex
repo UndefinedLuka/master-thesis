@@ -1,14 +1,14 @@
 \appendix
 
-\chapter{Experimental Prompt Templates}
+\chapter{Experimental prompt templates}
 \label{app:prompts}
 
 The following system prompt templates are reproduced verbatim from the implementation. The
-\texttt{<data>} placeholder is replaced with the serialized database for Direct Context Inference
-or the database schema expressed as data definition language statements for Text-to-SQL. In both
+\texttt{<data>} placeholder is replaced with the serialized database for direct context inference
+or the database schema expressed as data definition language statements for text-to-SQL. In both
 pipelines, the question is supplied separately as a user message.
 
-\section{Direct Context Inference}
+\section{Direct context inference}
 \label{app:direct-prompt}
 
 \lstinputlisting[basicstyle=\ttfamily\footnotesize,breaklines=true,columns=fullflexible,keepspaces=true,showstringspaces=false]{../code/src/prompts/direct_answer.md}

@@ -236,7 +236,7 @@ def test_error_correction_table(tmp_path: Path) -> None:
     assert "Complete failure" in latex
     assert "/ eligible run" not in latex
     assert "Mean added generation (s) / run entering correction" in latex
-    assert "Recovery / initially failed runs" in latex
+    assert "Recovered / initially failed runs" in latex
     assert "Mean retries / run entering correction" in latex
     assert r"\parbox" not in latex
     assert "Note:" not in latex

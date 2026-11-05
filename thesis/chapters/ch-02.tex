@@ -1,41 +1,41 @@
 \chapter{Related work}
 \label{ch:related_work}
 
-The research into the relationship between data serialization and performance of LLMs has grown from a prompt
-engineering concern to the important questions a lot of experts are asking. As LLMs are increasingly
+The research into the relationship between data serialization and performance of LLMs has expanded from a narrow 
+concern in prompt engineering into a broader research topic. As LLMs are increasingly
 integrated into enterprise pipelines, the way data is structured, be it as JSON, XML, CSV, or Markdown, has been
 shown to hold a significant influence over the overall performance of the models (cost, accuracy,
 latency). This is not a mere question of our format preference. The benchmarks such as StrucText-Eval
-\cite{struct-text-eval} has given us insight into how such formats influence the overall accuracy of the models.
+\cite{struct-text-eval} have given us insight into how such formats influence the overall accuracy of the models.
 
-We are going to review structured data representations and their implications for token efficiency.
-Then we examine Text-to-SQL as an alternative approach to information retrieval, before discussing the
+We review structured data representations and their implications for token efficiency.
+Then we examine text-to-SQL as an alternative approach to information retrieval, before discussing the
 benchmarks and metrics used to evaluate these approaches.
 
 \section{A survey of structured data representations}
 
-To understand how format influences models, it's paramount to have a way of organizing structured data
-representations that we are going to be using. We can identify several main categories of data representation, as
-shown by the StrucText-Eval \cite{struct-text-eval}. These categories show the range of data formats, from
+To understand how format influences models, it is important to classify structured data
+representations used in this thesis. We can identify several main categories of data representation, as
+shown by StrucText-Eval \cite{struct-text-eval}. These categories show the range of data formats, from
 those that are strictly structured to those that are semi-structured. Structured data is consistent and
 organized. This makes it easy for computers
 to process, but it also creates some overhead during information tokenization. We can divide these formats into
 the following three categories.
 
 \begin{itemize}
-  \item \textbf{Positional Formats:} These include CSV \cite{shafranovich2005common} files and custom
+  \item \textbf{Positional formats:} These include CSV \cite{shafranovich2005common} files and custom
     hierarchical notation. In these formats, relationships are defined either by positional alignment (as in
     CSV) or explicit pointers (as in tree structures). However, CSV fundamentally cannot represent nested
     structures, limiting its applicability to flat tabular data. These also include semi-structured data
     types like Markdown \cite{macfarlane2024commonmark}, and LaTeX \cite{lamport1994latex}, which represent
     information in a human-readable form while embedding structural metadata (headings, lists, and semantic tags).
-  \item \textbf{Structural Formats:} This category represents the most common data interchange languages in
+  \item \textbf{Structural formats:} This category represents the most common data interchange languages in
     software development, notably JSON \cite{bray2017javascript}, YAML (YAML Ain't Markup Language)
     \cite{benkiki2009yaml}, TOML \cite{preston2021toml}, HTML \cite{whatwghtml}, SVG
     \cite{ferajoli2011svg}, and XML \cite{bray1998xml}. These formats rely on key-value pairs and nesting to
     represent multi-dimensional data.
 
-  \item \textbf{Token-Optimized Formats:} This category represents a newly forming group of formats which are
+  \item \textbf{Token-optimized formats:} This category represents a newly forming group of formats which are
     specifically being developed to minimize the number of tokens being used when providing information in this format
     to an LLM. In this group we can identify Token-Oriented Object Notation (TOON) \cite{toon-format-2025}
     and Object Notation for Token Optimization (ONTO) \cite{onto-serialization-format}.
@@ -45,7 +45,7 @@ These differences in representation matter both for how data is organized, and f
 models interpret it. Results point to the most common formats (CSV and JSON) performing the best over different
 models. For example, Llama-3.1-405B in \cite{struct-text-eval} achieves the highest accuracies for CSV and
 JSON (respectively, \qty{96.6}{\percent} and \qty{82.0}{\percent}), while all the other formats record a significant drop-off in
-accuracy. These results point that LLMs' understanding of the structured data remains tied to patterns
+accuracy. These results indicate that LLMs' understanding of the structured data remains tied to patterns
 present in the training data rather than a true grasp of the data structure.
 
 Accuracy is only one aspect of format choice. Different representations also require different numbers of
@@ -56,7 +56,7 @@ tokens to encode the same data, affecting the resources needed to process it.
 
 Since serialization format has a direct influence on how many characters are used to represent the data, it
 has a direct knock-on effect on LLMs' performance \cite{liu2024lost}. Format verbosity determines
-token usage of the model, and this has a knock on effect for other factors, such as latency, cost, and accuracy,
+token usage of the model, and this influences other factors, such as latency, cost, and accuracy,
 as well as the effective context window.
 
 Formats like JSON and XML tend to be more verbose, which leads to a higher token usage, as they have been
@@ -66,7 +66,7 @@ verbosity. These formats are designed in such a way that each field carries its 
 \cite{bray1998xml, bray2017javascript}, through
 repeated keywords, which create overhead when working with LLMs. The experiments performed in
 \cite{onto-serialization-format} were
-carried out across \num{1000} Internet of Things telemetry records. They have shown that majority of the tokens used for
+carried out across \num{1000} Internet of Things telemetry records. They have shown that the majority of the tokens used for
 encoding data in the JSON format are used up by field names and punctuation (\num{60500} tokens), while the
 actual semantic values take up only \num{14274} tokens, out of \num{79774} tokens. This overhead proves to be
 problematic, as most pricing is done based on the input and output tokens used, with this higher token
@@ -78,11 +78,11 @@ In order to address these inefficiencies, there have been multiple efforts aimed
 \cite{onto-serialization-format} and TOON \cite{toon-format-2025}. Both formats are
 aimed at fixing the problem of repeated schema for each record; they fix this by declaring all the fields
 only once at the top of the record, and values are arranged in pipe-delimited rows with indentation-based
-hierarchy. Both of these models claim to use significantly fewer tokens (TOON \qty{39.9}{\percent} fewer tokens compared
-to JSON~\cite{toon-format-2025}, and ONTO \qtyrange{46}{51}{\percent} compared to JSON\cite{onto-serialization-format}) while
+hierarchy. Both of these formats claim to use significantly fewer tokens (TOON \qty{39.9}{\percent} fewer tokens compared
+to JSON~\cite{toon-format-2025}, and ONTO \qtyrange{46}{51}{\percent} compared to JSON~\cite{onto-serialization-format}) while
 stating they have minimal impact on the accuracy.
 
-Compact formats reduce the amount of text supplied to the model, but direct-context inference still
+Compact formats reduce the amount of text supplied to the model, but direct context inference still
 requires the relevant records to be included in its input. Text-to-SQL offers another approach: the model
 generates a query, while the database engine retrieves the requested information.
 
@@ -91,36 +91,36 @@ generates a query, while the database engine retrieves the requested information
 Translating natural language to executable SQL is a long-standing problem. The
 first attempts at this problem operated primarily on rigid, handcrafted grammar rules and pattern-matching
 frameworks \cite{woods1972lunar, warren1982efficient} which worked reasonably well on a narrow domain, but each
-new schema required a new set of rules. With the rise of neural networks they started being used for this
-task, through methods based on long short-term memory networks \cite{graves2012long} and Transformers
+new schema required a new set of rules. With the rise of neural networks researchers began applying them for this
+task, through methods based on long short-term memory networks \cite{graves2012long} and transformers
 \cite{vaswani2017attention}. But
 these two methods faced similar problems that they could not generalize to unseen schemas. State-of-the-art
-Text-to-SQL systems use LLMs as query generators, often within larger workflows that retrieve relevant
+text-to-SQL systems use LLMs as query generators, often within larger workflows that retrieve relevant
 context, generate alternative queries, and verify their outputs \cite{hong2025next}. Their performance
 therefore depends on both the underlying language model and the architecture surrounding it.
 
-When optimizing for Text-to-SQL accuracy, there are multiple strategies to achieve it \cite{zhu2024large}:
+When optimizing for text-to-SQL accuracy, there are multiple strategies to achieve it \cite{zhu2024large}:
 \begin{itemize}
   \item \textbf{Prompt:} By utilizing a well crafted prompt, we attempt to guide LLMs to generate more
-    accurate queries: zero-shot\cite{rajkumar2022evaluating, liu2023comprehensive}, or few-shot
+    accurate queries: zero-shot~\cite{rajkumar2022evaluating, liu2023comprehensive}, or few-shot
     \cite{brown2020language, lee2025mcs} prompting.
   \item \textbf{Fine-tuning:} the LLMs to adapt to the text-to-SQL task, including full-parameter fine-tuning
     \cite{hong2024knowledge, zhang2024structure} and parameter-efficient fine-tuning \cite{song2022learning,
     gao2023text}.
-  \item \textbf{Task-training:} They train a task-specific text-to-SQL model with training strategies similar
-    to those used for LLMs, such as Transformers \cite{li2024codes, fu2023miga} and mixture of experts \cite{pourreza2024sql}.
-  \item \textbf{LLM Agent:} They collaborate with multiple intelligences, dynamically generate and correct
+  \item \textbf{Task-training:} A task-specific text-to-SQL model is trained with training strategies similar
+    to those used for LLMs, such as transformers \cite{li2024codes, fu2023miga} and mixture of experts \cite{pourreza2024sql}.
+  \item \textbf{LLM agent:} Agents collaborate with with other agents and use external tools, dynamically generate and correct
     SQL queries, handle database matching issues, and improve query accuracy and execution through external
     tools \cite{wang2025mac, wang2024tool}.
 \end{itemize}
 
-\subsection{State-of-the-Art text-to-SQL architectures}
+\subsection{State-of-the-art text-to-SQL architectures}
 \label{sec:sota-text-to-sql}
 
 Recent work extends the basic sequence of providing a schema, generating SQL, and executing the query.
 The following papers illustrate complementary directions: metadata enrichment, test-time scaling,
 structured query verification, and broader agent-based data analysis.
-The systems reviewed below report results on BIRD \cite{li2023can}, a Text-to-SQL benchmark involving large
+The systems reviewed below report results on BIRD \cite{li2023can}, a text-to-SQL benchmark involving large
 databases and real-world data challenges, discussed further in the following section.
 
 \textbf{Automatic Metadata Extraction for Text-to-SQL.} Shkapenyuk et~al.~\cite{shkapenyuk2025metadata} address
@@ -143,7 +143,7 @@ A task-understanding stage retrieves relevant database values and few-shot examp
 generators then produce
 candidates: a reinforcement-learning-trained SQL reasoner using a data schema, and an
 in-context-learning generator using a compact Markdown schema. Syntax repair and semantic revision refine
-these candidates. Queries with identical execution results are grouped, and a reinforcement learning trained
+these candidates. Queries with identical execution results are grouped, and a reinforcement-learning-trained
 selector compares representatives in a pairwise tournament. The paper reports \qty{81.67}{\percent} execution accuracy
 on BIRD-Test. This architecture explicitly trades additional generation, refinement, and selection work for
 higher accuracy, rather than relying on a single model response.
@@ -172,20 +172,20 @@ The resulting workflows produce outputs such as dashboards and reports.
 
 \section{Overview of evaluation datasets}
 
-There has been a lot of effort in the recent years to curate datasets which can be utilized for testing
-(and training) models on the task of SQL generation. First notable datasets came onto the scene 
+There has been a lot of effort in recent years to curate datasets which can be utilized for testing
+(and training) models on the task of SQL generation. The first notable datasets came onto the scene 
 in \num[group-digits=none]{2017}. For WikiSQL
 \cite{zhong2017seq2sql} researchers annotated data based on Wikipedia. It covers \num{24241} database
 tables, and has more than
 \num{80000} pairs of natural language questions and corresponding queries.
 
 WikiSQL has a problem: it only involves one table per question and only supports simple SQL operations, which
-is not representative of expectations we have of these system when deployed in the real world. In order to
+is not representative of expectations we have of these systems when deployed in the real world. In order to
 overcome these challenges, the Spider \cite{yu2018spider} dataset was introduced, which is one of the most
-complex Text-to-SQL
-datasets. Same as WikiSQL it is multi domain, it covers more than \num{100} domains with over \num{200} databases,
+complex text-to-SQL
+datasets. Like WikiSQL it is multi domain, it covers more than \num{100} domains with over \num{200} databases,
 where each database has \num{5.1} tables on average. One more feature is that the tables appearing in the test
-set are distinct from the ones that appear in the train set. Compared with those in the datasets available at 
+set are distinct from the ones that appear in the training set. Compared with those in the datasets available at 
 that time, the queries were more complex, including aggregate functions, ordering of the results, and nested
 queries, which were divided into \num{4} levels of difficulty, based on their complexity. This is important to
 consider because all the questions present in the WikiSQL dataset were classified as EASY.
@@ -218,9 +218,9 @@ When evaluating structured data extraction, we are interested in several questio
 with its reference, whether the retrieval pipeline completes successfully, and how much time and computation
 it requires. Text-based measures capture different aspects of answer agreement, but their scores do not
 necessarily reflect factual correctness \cite{novikova2017we}. Execution and resource measurements therefore
-provide complementary information when comparing Direct Context Inference with Text-to-SQL.
+provide complementary information when comparing direct context inference with text-to-SQL.
 
-This thesis evaluates reference-answer agreement using Normalized Exact Match (NEM), ROUGE-L F1, and
+This thesis evaluates reference-answer agreement using normalized exact match (NEM), ROUGE-L F1, and
 BERTScore F1. For conciseness, subsequent references to \emph{ROUGE-L} and \emph{BERTScore} denote these F1
 measures unless stated otherwise. The following subsections introduce these measures alongside execution
 reliability, token consumption, latency, and context-window feasibility.
@@ -229,7 +229,7 @@ reliability, token consumption, latency, and context-window feasibility.
 \label{sec:reference-answer-metrics}
 
 The two pipelines can be compared at the answer level by evaluating their outputs against a common reference.
-For Direct Context Inference, this output is the model's answer; for Text-to-SQL, it is a textual
+For direct context inference, this output is the model's answer; for text-to-SQL, it is a textual
 representation of the rows returned by the generated query. Strict equality, lexical overlap, and contextual
 similarity offer progressively more flexible ways of comparing these texts.
 
@@ -237,7 +237,7 @@ similarity offer progressively more flexible ways of comparing these texts.
 
 Exact match is a binary measure widely used in question-answering benchmarks such as SQuAD
 \cite{rajpurkar2016squad}. Given a candidate answer $c$, a reference $r$, and a normalization function $n$,
-Normalized Exact Match is defined as
+normalized exact match is defined as
 \begin{equation}
   \operatorname{NEM}(c,r) =
   \begin{cases}
@@ -304,10 +304,10 @@ SQL evaluation distinguishes the ability to execute a query from agreement with 
 empty result. Its mean is the execution-success rate. A query can nevertheless execute successfully while
 using an incorrect join, filter, or aggregation, so this rate describes operational reliability.
 
-\emph{Execution accuracy}, used in Text-to-SQL benchmarks \cite{yu2018spider,li2023can}, instead compares
+\emph{Execution accuracy}, used in text-to-SQL benchmarks \cite{yu2018spider,li2023can}, instead compares
 the results of the generated and reference queries on the same database. Matching results provide stronger
 evidence than execution success, although agreement on one database instance does not prove equivalence on
-all possible data. The execution-accuracy figures cited earlier for Text-to-SQL architectures use this
+all possible data. The execution-accuracy figures cited earlier for text-to-SQL architectures use this
 benchmark notion. In this thesis, execution success is reported alongside text-based agreement with the
 reference result.
 
@@ -359,5 +359,5 @@ cost of recovery. Chapter~\ref{ch:methodolgy} defines these measurements, and
 Chapter~\ref{ch:implementation} describes their implementation.
 
 The studies reviewed in this chapter show how data representation and query generation affect information
-retrieval. The next chapter builds on this work by defining a comparison of Direct Context Inference and
-Text-to-SQL in terms of answer agreement, execution reliability, token consumption, and latency.
+retrieval. The next chapter builds on this work by defining a comparison of direct context inference and
+text-to-SQL in terms of answer agreement, execution reliability, token consumption, and latency.

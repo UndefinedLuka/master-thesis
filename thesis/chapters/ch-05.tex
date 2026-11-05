@@ -3,7 +3,7 @@
 
 This chapter reports the experiments described in Chapters~\ref{ch:methodolgy} and
 \ref{ch:implementation}. Serialization efficiency is presented first, followed by analysis cohorts and
-experiment coverage, Direct Context Inference, Text-to-SQL, and a comparison of the two pipelines.
+experiment coverage, direct context inference, text-to-SQL, and a comparison of the two pipelines.
 The results cover operational efficiency and retrieval accuracy as described in Section~\ref{sec:evaluation-metrics-implementation}.
 Estimates retain equal weight per run within each reported analysis group. Intervals are pointwise
 \qty{95}{\percent} database-bootstrap intervals, as presented in Section~\ref{sec:confidence-intervals}
@@ -74,9 +74,9 @@ reference result is available. It does not guarantee that the question is well f
 can answer it correctly.
 
 The context-fit cohort contains questions with recorded evidence of fitting within the context limits
-across all ten retained models and all seven configurations: six Direct Context Inference formats and
-Text-to-SQL. Each question therefore requires a complete set of \num{70} run records. For Direct Context
-Inference, the initial check counted the fixed system prompt, including the serialized data, and reserved
+across all ten retained models and all seven configurations: six direct context inference formats and
+text-to-SQL. Each question therefore requires a complete set of \num{70} run records. For direct context
+inference, the initial check counted the fixed system prompt, including the serialized data, and reserved
 space for generated output. Inclusion did
 not depend on whether the reference result was empty, whether the model produced an answer, or whether
 the generated SQL executed successfully.
@@ -134,7 +134,7 @@ question--model pairs, the XML-to-CSV ratios of mean input tokens were \num{3.76
 CSV, with ratios of \num{1.07} (\numrange{1.04}{1.12}) and \num{1.03} (\numrange{1.02}{1.04}).
 Markdown, YAML, and JSON fell between TOON and XML in mean input token use.
 
-Output token counts varied much less across formats. The means ranged from \numrange{81.2}{119.6}
+Output token counts varied much less across formats. The means spanned \numrange{81.2}{119.6}
 tokens on Spider and \numrange{219.6}{260.5} on BIRD, including both reasoning traces and final
 answers. Formats that required more input tokens did not always produce more output tokens. For
 example, YAML had the highest mean output count on both datasets, even though JSON and XML required
@@ -150,7 +150,7 @@ again close to CSV, with latency ratios of \num{1.09} (\numrange{1.04}{1.16}) on
 Most of the latency difference between CSV and XML occurred before the first output token. Mean TTFT
 increased from \qty{0.78}{\second} for CSV to \qty{6.45}{\second} for XML on Spider, and from
 \qty{6.32}{\second} to \qty{46.87}{\second} on BIRD. Generation after the first token varied less,
-ranging from \qtyrange{0.48}{0.97}{\second} across formats on Spider and
+ranging from \qty{0.48}{\second} to \qty{0.97}{\second} across formats on Spider and
 \qtyrange{1.70}{4.00}{\second} on BIRD. These results show that compact formats were associated with
 lower token use and shorter response times on the shared question set. However, the BIRD results cover
 only the two sampled databases in its context-fit cohort, so the narrow intervals do not imply the same
@@ -243,15 +243,15 @@ For CSV, the Pearson correlation between NEM and the logarithm of database token
 (\numrange{-0.93}{-0.64}). Both intervals were below zero, supporting a negative association in
 these comparisons. The figure shows the NEM results for the other formats.
 
-BERTScore and ROUGE-L showed the same general pattern. Across formats, BERTScore correlations ranged
-from \numrange{-0.86}{-0.85} on Spider and \numrange{-0.84}{-0.60} on BIRD. ROUGE-L correlations
+BERTScore and ROUGE-L showed the same general pattern. Across formats, BERTScore correlations spanned
+\numrange{-0.86}{-0.85} on Spider and \numrange{-0.84}{-0.60} on BIRD. ROUGE-L correlations
 ranged from \numrange{-0.83}{-0.78} on Spider and \numrange{-0.82}{-0.60} on BIRD. For CSV, the
 BERTScore correlation intervals were \numrange{-0.97}{-0.63} on Spider and
 \numrange{-0.95}{-0.71} on BIRD. The corresponding ROUGE-L intervals were
 \numrange{-0.94}{-0.52} and \numrange{-0.96}{-0.71}, respectively.
 
-These results include zero scores from runs that exceeded the context limit. All Direct Context
-Inference runs for Spider's \texttt{wta\_1} and five BIRD databases exceeded this limit in every
+These results include zero scores from runs that exceeded the context limit. All direct context
+inference runs for Spider's \texttt{wta\_1} and five BIRD databases exceeded this limit in every
 format. The negative associations therefore reflect both answer agreement and the inability to
 process some larger databases, rather than accuracy only among completed runs. For XML on BIRD, only
 two databases had positive scores. Too many bootstrap samples had constant scores to report a
@@ -266,7 +266,7 @@ serialized database size and retrieval accuracy in the evaluated databases.
 
 \subsection{Operational efficiency}
 
-We measured the tokens and time required per Text-to-SQL run on the answerable cohort.
+We measured the tokens and time required per text-to-SQL run on the answerable cohort.
 Table~\ref{tab:text-to-sql-operational-efficiency} shows the mean input and output token counts, Time to
 First Token (TTFT), generation time after the first token, SQL execution time, total latency, and retries.
 For each run, we added the tokens and times across the initial attempt and any correction attempts,
@@ -305,7 +305,7 @@ single generation attempt was faster for the larger model.
 
 \subsection{Retrieval accuracy}
 
-We evaluated Text-to-SQL answers by comparing the textual query results with the reference answers
+We evaluated text-to-SQL answers by comparing the textual query results with the reference answers
 using NEM, BERTScore, and ROUGE-L. Table~\ref{tab:text-to-sql-retrieval-accuracy} shows the mean scores
 on the answerable cohort alongside the proportion of runs whose generated SQL executed successfully
 within the retry limit. These measurements distinguish agreement with the reference answer from the
@@ -328,7 +328,7 @@ answerable questions, including zero scores for failed runs.
 \begin{figure}[htb]
   \centering
   \includegraphics[width=\textwidth]{../code/analysis/figures/text_to_sql_accuracy_by_model_size.pdf}
-  \caption{Mean Text-to-SQL NEM, BERTScore, and ROUGE-L by model size and family on the answerable cohort.}
+  \caption{Mean text-to-SQL NEM, BERTScore, and ROUGE-L by model size and family on the answerable cohort.}
   \label{fig:text-to-sql-accuracy-by-model-size}
 \end{figure}
 
@@ -393,7 +393,7 @@ generation time was spent on unsuccessful attempts.
 
 To compare retrieval accuracy between the two pipelines, we used the same \num{985} answerable Spider
 questions and \num{1108} answerable sampled BIRD questions across all ten retained models. Each of the
-six Direct Context Inference formats was compared with Text-to-SQL on the same question--model pairs.
+six direct context inference formats was compared with text-to-SQL on the same question--model pairs.
 Runs that exceeded the context limit or failed to complete were retained with zero scores.
 Figure~\ref{fig:pipeline-retrieval-comparison} shows the mean NEM, BERTScore, and ROUGE-L scores and
 their intervals for both pipelines.
@@ -401,18 +401,18 @@ their intervals for both pipelines.
 \begin{figure}[htbp]
   \centering
   \includegraphics[width=\textwidth]{../code/analysis/figures/pipeline_retrieval_comparison.pdf}
-  \caption{Mean NEM, BERTScore, and ROUGE-L for Text-to-SQL (blue) and the six direct formats
+  \caption{Mean NEM, BERTScore, and ROUGE-L for text-to-SQL (blue) and the six direct formats
   (grey) on the answerable cohort, averaged over the ten retained models. }
   \label{fig:pipeline-retrieval-comparison}
 \end{figure}
 
-On Spider, Text-to-SQL had a mean NEM score of \num{0.634}, compared with \num{0.169} for JSON,
+On Spider, text-to-SQL had a mean NEM score of \num{0.634}, compared with \num{0.169} for JSON,
 the highest-scoring direct format on this measure. The paired JSON-minus-SQL difference was
-\num{-0.465} (\numrange{-0.507}{-0.422}). On sampled BIRD, Text-to-SQL had a mean NEM score of
+\num{-0.465} (\numrange{-0.507}{-0.422}). On sampled BIRD, text-to-SQL had a mean NEM score of
 \num{0.501}, compared with \num{0.054} for CSV, the highest direct mean. The paired CSV-minus-SQL
 difference was \num{-0.447} (\numrange{-0.524}{-0.380}).
 
-CSV had the highest direct BERTScore and ROUGE-L means on both datasets, but Text-to-SQL also had
+CSV had the highest direct BERTScore and ROUGE-L means on both datasets, but text-to-SQL also had
 higher scores in these comparisons. On Spider, the paired CSV-minus-SQL differences were
 \num{-0.104} (\numrange{-0.229}{-0.038}) for BERTScore and \num{-0.403}
 (\numrange{-0.450}{-0.359}) for ROUGE-L. On sampled BIRD, the corresponding differences were
