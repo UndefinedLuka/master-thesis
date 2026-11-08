@@ -1,62 +1,58 @@
-\chapter{Introduction}
-\label{ch:introduction}
+\chapter{Introduction} \label{ch:introduction}
 
 \section{Motivation}
 
-In the current age of information technology the amount of generated and stored information is increasing
-exponentially. A lot of this data comes in the structured form, which allows for easier processing, searching
-and exchange of information between different systems. Alongside the speed of data creation we are witnesses
-to the rise of large language models (LLMs). These models show a promising ability in understanding natural
-language, generating texts, analyzing code and coming to conclusions.
+In the current age of information technology, the amount of generated and stored information is increasing
+exponentially. A lot of this data comes in a structured form, which allows for easier processing, searching,
+and exchange of information between different systems. Alongside the speed of data creation, we are
+witnessing the rise of large language models (LLMs). These models show a promising ability in understanding
+natural language, generating text, analyzing code, and coming to conclusions.
 
-Thus far, LLMs have shown a great promise when utilized for the purposes of extracting and processing information from
-structured and unstructured data. When trying to utilize these models for such use cases, engineers and
-researchers have to carefully balance the three key aspects: accuracy, latency and cost.
+Thus far, LLMs have shown great promise when utilized for the purposes of extracting and processing
+information from structured and unstructured data. When trying to utilize these models for such use cases,
+engineers and researchers have to carefully balance the three key aspects: accuracy, latency, and cost.
 
-For an LLM to process structured data, we first need to provide the data in a form the model can understand. 
-Since it cannot read the data directly, we need to choose
-the right serialization format. Currently the most widespread formats in the industry are JavaScript Object
-Notation (JSON), Extensible Markup Language (XML), and comma-separated values (CSV), but many others are present
-as well. Since these formats can easily be converted into one another,
-the question arises: which format is optimal when working with LLMs? By choosing the right format,
-we could directly influence cost, latency, and accuracy, with a minimal price being paid by the whole system
-for changing from one format to another.
+For an LLM to process structured data, we first need to provide the data in a form the model can understand.
+Since it cannot read the data directly, we need to choose the right serialization format. Currently, the most
+widespread formats in the industry are JavaScript Object Notation (JSON), Extensible Markup Language (XML),
+and comma-separated values (CSV), but many others are present as well. Since these formats can easily be
+converted into one another, the question arises: which format is optimal when working with LLMs? By choosing
+the right format, we could directly influence cost, latency, and accuracy, with a minimal price being paid by
+the whole system for changing from one format to another.
 
 \section{Problem definition}
 
 Even though the LLMs have considerable potential in the field of information extraction from structured data,
 existing work typically evaluates model accuracy \cite{struct-text-eval}, efficiency \cite{toon-format-2025},
-or system latency \cite{fernandez2025energy} in
-isolation. However,
-there is a lack of a unified framework that jointly considers data serialization format, extraction method, and
-system-level efficiency. Choice of data serialization format directly dictates the number of tokens, which increases
-computational complexity, finally leading to higher latency and operational costs. In real
-information systems, where the number of queries is high, and each application programming interface (API) is
-limited, only optimizing for accuracy and increasing the latency and cost is not acceptable.
+or system latency \cite{fernandez2025energy} in isolation. However, there is a lack of a unified framework
+that jointly considers data serialization format, extraction method, and system-level efficiency. The choice
+of data serialization format directly dictates the number of tokens, which increases computational
+complexity, ultimately leading to higher latency and operational costs. In real information systems, where
+the number of queries is high and each application programming interface (API) is limited, only optimizing
+for accuracy and increasing the latency and cost is not acceptable.
 
-Alongside data formats we have to consider other possibilities for information extraction. We explore the following 
-two paths:
+Alongside data formats, we have to consider other possibilities for information extraction. We explore the
+following  two paths:
 
 \begin{itemize}
-  \item Direct context inference: Directly passing the raw serialized data to the prompt (context) of the LLM, so
-    it can extract the information directly
-  \item Program-aided extraction: By using the LLM for generating code or a Structured Query Language (SQL) query, based on the limited
-    number of examples, which is executed on the given data in order to extract information
+  \item Direct context inference: Directly passing the raw serialized data to the prompt (context) of the
+    LLM, so it can extract the information directly
+  \item Program-aided extraction: By using the LLM to generate code or a Structured Query Language (SQL)
+    query, based on a limited number of examples, which is executed on the given data in order to extract information
 \end{itemize}
 
-The main problem we address is the lack of a decision framework that would help us choose an appropriate extraction pipeline 
-(in-context inference compared to program-aided extraction) and configuration while taking accuracy, latency, and cost 
-constraints into consideration.
+The main problem we address is the lack of a decision framework that would help us choose an appropriate
+extraction pipeline  (in-context inference compared to program-aided extraction) and configuration while
+taking accuracy, latency, and cost constraints into consideration.
 
 \section{Contributions}
 
 The main contribution of this thesis is the development of a unified decision framework that maps operational
 trade-offs between in-context inference with different serialization methods and text-to-SQL information
-extraction. While existing works
-evaluate these methods in isolation, we provide a holistic comparison using local open-weight LLMs.
-Furthermore, we inspect influence of different data serialization methods on the overall operational
-efficiency and retrieval accuracy during the in-context inference. In order to collect all the necessary data,
-we run our tests on datasets that vary in size and data quality.
+extraction. While existing works evaluate these methods in isolation, we provide a holistic comparison using
+local open-weight LLMs. Furthermore, we inspect the influence of different data serialization methods on the
+overall operational efficiency and retrieval accuracy during in-context inference. In order to collect all
+the necessary data, we run our tests on datasets that vary in size and data quality.
 
 \section{Structure}
 

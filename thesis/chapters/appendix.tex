@@ -1,19 +1,13 @@
 \appendix
 
-\chapter{Experimental prompt templates}
-\label{app:prompts}
+\chapter{Experimental prompt templates} \label{app:prompts}
 
-The following system prompt templates are reproduced verbatim from the implementation. The
-\texttt{<data>} placeholder is replaced with the serialized database for direct context inference
-or the database schema expressed as data definition language statements for text-to-SQL. In both
-pipelines, the question is supplied separately as a user message.
+The following system prompt templates are reproduced verbatim from the implementation. The \texttt{<data>} placeholder is replaced with the serialized database for direct context inference or the database schema expressed as data definition language statements for text-to-SQL. In both pipelines, the question is supplied separately as a user message.
 
-\section{Direct context inference}
-\label{app:direct-prompt}
+\section{Direct context inference} \label{app:direct-prompt}
 
 \lstinputlisting[basicstyle=\ttfamily\footnotesize,breaklines=true,columns=fullflexible,keepspaces=true,showstringspaces=false]{../code/src/prompts/direct_answer.md}
 
-\section{Text-to-SQL}
-\label{app:sql-prompt}
+\section{Text-to-SQL} \label{app:sql-prompt}
 
-\lstinputlisting[basicstyle=\ttfamily\footnotesize,breaklines=true,columns=fullflexible,keepspaces=true,showstringspaces=false]{../code/src/prompts/sql_answer.md}
+\lstinputlisting[basicstyle=\ttfamily\footnotesize,breaklines=true,columns=fullflexible,keepspaces=true,showstringspaces=false]{../code/src/prompts/sql_answer.md} 

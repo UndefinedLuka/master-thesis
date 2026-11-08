@@ -1,100 +1,92 @@
-\chapter{Related work}
-\label{ch:related_work}
+\chapter{Related work} \label{ch:related_work}
 
-The research into the relationship between data serialization and performance of LLMs has expanded from a narrow 
-concern in prompt engineering into a broader research topic. As LLMs are increasingly
-integrated into enterprise pipelines, the way data is structured, be it as JSON, XML, CSV, or Markdown, has been
-shown to hold a significant influence over the overall performance of the models (cost, accuracy,
-latency). This is not a mere question of our format preference. The benchmarks such as StrucText-Eval
-\cite{struct-text-eval} have given us insight into how such formats influence the overall accuracy of the models.
+The research into the relationship between data serialization and performance of LLMs has expanded from a
+narrow concern in prompt engineering into a broader research topic. As LLMs are increasingly integrated into
+enterprise pipelines, the way data is structured, be it as JSON, XML, CSV, or Markdown, has been shown to
+have a significant influence on the overall performance of the models (cost, accuracy, latency). This is not
+a mere question of our format preference. Benchmarks such as StrucText-Eval \cite{struct-text-eval} have
+given us insight into how such formats influence the overall accuracy of the models.
 
-We review structured data representations and their implications for token efficiency.
-Then we examine text-to-SQL as an alternative approach to information retrieval, before discussing the
-benchmarks and metrics used to evaluate these approaches.
+We review structured data representations and their implications for token efficiency. Then we examine
+text-to-SQL as an alternative approach to information retrieval, before discussing the benchmarks and metrics
+used to evaluate these approaches.
 
 \section{A survey of structured data representations}
 
-To understand how format influences models, it is important to classify structured data
-representations used in this thesis. We can identify several main categories of data representation, as
-shown by StrucText-Eval \cite{struct-text-eval}. These categories show the range of data formats, from
-those that are strictly structured to those that are semi-structured. Structured data is consistent and
-organized. This makes it easy for computers
-to process, but it also creates some overhead during information tokenization. We can divide these formats into
-the following three categories.
+To understand how format influences models, it is important to classify structured data representations used
+in this thesis. We can identify several main categories of data representation, as shown by StrucText-Eval
+\cite{struct-text-eval}. These categories show the range of data formats, from those that are strictly
+structured to those that are semi-structured. Structured data is consistent and organized. This makes it easy
+for computers to process, but it also creates some overhead during information tokenization. We can divide
+these formats into the following three categories.
 
 \begin{itemize}
   \item \textbf{Positional formats:} These include CSV \cite{shafranovich2005common} files and custom
     hierarchical notation. In these formats, relationships are defined either by positional alignment (as in
     CSV) or explicit pointers (as in tree structures). However, CSV fundamentally cannot represent nested
     structures, limiting its applicability to flat tabular data. These also include semi-structured data
-    types like Markdown \cite{macfarlane2024commonmark}, and LaTeX \cite{lamport1994latex}, which represent
+    types like Markdown \cite{macfarlane2024commonmark} and LaTeX \cite{lamport1994latex}, which represent
     information in a human-readable form while embedding structural metadata (headings, lists, and semantic tags).
   \item \textbf{Structural formats:} This category represents the most common data interchange languages in
     software development, notably JSON \cite{bray2017javascript}, YAML (YAML Ain't Markup Language)
-    \cite{benkiki2009yaml}, TOML \cite{preston2021toml}, HTML \cite{whatwghtml}, SVG
-    \cite{ferajoli2011svg}, and XML \cite{bray1998xml}. These formats rely on key-value pairs and nesting to
-    represent multi-dimensional data.
-
-  \item \textbf{Token-optimized formats:} This category represents a newly forming group of formats which are
-    specifically being developed to minimize the number of tokens being used when providing information in this format
-    to an LLM. In this group we can identify Token-Oriented Object Notation (TOON) \cite{toon-format-2025}
-    and Object Notation for Token Optimization (ONTO) \cite{onto-serialization-format}.
+    \cite{benkiki2009yaml}, TOML \cite{preston2021toml}, HTML \cite{whatwghtml}, SVG \cite{ferajoli2011svg},
+    and XML \cite{bray1998xml}. These formats rely on key-value pairs and nesting to represent multi-dimensional data.
+  \item \textbf{Token-optimized formats:} This category represents a newly forming group of formats that are
+    specifically being developed to minimize the number of tokens being used when providing information in
+    this format to an LLM. In this group, we can identify Token-Oriented Object Notation (TOON)
+    \cite{toon-format-2025} and Object Notation for Token Optimization (ONTO) \cite{onto-serialization-format}.
 \end{itemize}
 
-These differences in representation matter both for how data is organized, and for how accurately
-models interpret it. Results point to the most common formats (CSV and JSON) performing the best over different
+These differences in representation matter both for how data is organized and for how accurately models
+interpret it. Results point to the most common formats (CSV and JSON) performing the best across different
 models. For example, Llama-3.1-405B in \cite{struct-text-eval} achieves the highest accuracies for CSV and
-JSON (respectively, \qty{96.6}{\percent} and \qty{82.0}{\percent}), while all the other formats record a significant drop-off in
-accuracy. These results indicate that LLMs' understanding of the structured data remains tied to patterns
-present in the training data rather than a true grasp of the data structure.
+JSON (respectively, \qty{96.6}{\percent} and \qty{82.0}{\percent}), while all the other formats record a
+significant drop-off in accuracy. These results indicate that LLMs' understanding of the structured data
+remains tied to patterns present in the training data rather than a true grasp of the data structure.
 
 Accuracy is only one aspect of format choice. Different representations also require different numbers of
 tokens to encode the same data, affecting the resources needed to process it.
 
-\section{Token efficiency and economic impact of data serialization}
-\label{sec:token-efficiency}
+\section{Token efficiency and economic impact of data serialization} \label{sec:token-efficiency}
 
-Since serialization format has a direct influence on how many characters are used to represent the data, it
-has a direct knock-on effect on LLMs' performance \cite{liu2024lost}. Format verbosity determines
-token usage of the model, and this influences other factors, such as latency, cost, and accuracy,
-as well as the effective context window.
+Since the serialization format has a direct influence on how many characters are used to represent the data,
+it has a direct knock-on effect on LLMs' performance \cite{liu2024lost}. Format verbosity determines token
+usage of the model, and this influences other factors, such as latency, cost, and accuracy, as well as the
+effective context window.
 
-Formats like JSON and XML tend to be more verbose, which leads to a higher token usage, as they have been
-designed for data exchange
-between information systems, where self-description and compatibility were more important than their
-verbosity. These formats are designed in such a way that each field carries its own description
-\cite{bray1998xml, bray2017javascript}, through
-repeated keywords, which create overhead when working with LLMs. The experiments performed in
-\cite{onto-serialization-format} were
-carried out across \num{1000} Internet of Things telemetry records. They have shown that the majority of the tokens used for
+Formats like JSON and XML tend to be more verbose, which leads to higher token usage, as they have been
+designed for data exchange between information systems, where self-description and compatibility were more
+important than their verbosity. These formats are designed in such a way that each field carries its own
+description \cite{bray1998xml, bray2017javascript}, through repeated keywords, which create overhead when
+working with LLMs. The experiments performed in \cite{onto-serialization-format} were carried out across
+\num{1000} Internet of Things telemetry records. They have shown that the majority of the tokens used for
 encoding data in the JSON format are used up by field names and punctuation (\num{60500} tokens), while the
 actual semantic values take up only \num{14274} tokens, out of \num{79774} tokens. This overhead proves to be
-problematic, as most pricing is done based on the input and output tokens used, with this higher token
-usage directly translating to higher operational costs for the users. Also in the same experiment it was shown
-that a reduction in tokens used directly correlates with lower latency, when using the custom ONTO format
+problematic, as most pricing is done based on the input and output tokens used, with this higher token usage
+directly translating to higher operational costs for the users. Also, in the same experiment, it was shown
+that a reduction in tokens used directly correlates with lower latency when using the custom ONTO format
 compared to JSON.
 
 In order to address these inefficiencies, there have been multiple efforts aimed at them, in the form of ONTO
-\cite{onto-serialization-format} and TOON \cite{toon-format-2025}. Both formats are
-aimed at fixing the problem of repeated schema for each record; they fix this by declaring all the fields
-only once at the top of the record, and values are arranged in pipe-delimited rows with indentation-based
-hierarchy. Both of these formats claim to use significantly fewer tokens (TOON \qty{39.9}{\percent} fewer tokens compared
-to JSON~\cite{toon-format-2025}, and ONTO \qtyrange{46}{51}{\percent} compared to JSON~\cite{onto-serialization-format}) while
-stating they have minimal impact on the accuracy.
+\cite{onto-serialization-format} and TOON \cite{toon-format-2025}. Both formats are aimed at fixing the
+problem of repeated schema for each record; they fix this by declaring all the fields only once at the top of
+the record, and values are arranged in pipe-delimited rows with indentation-based hierarchy. Both of these
+formats claim to use significantly fewer tokens (TOON \qty{39.9}{\percent} fewer tokens compared to
+  JSON~\cite{toon-format-2025}, and ONTO \qtyrange{46}{51}{\percent} compared to
+JSON~\cite{onto-serialization-format}) while stating they have minimal impact on the accuracy.
 
-Compact formats reduce the amount of text supplied to the model, but direct context inference still
-requires the relevant records to be included in its input. Text-to-SQL offers another approach: the model
-generates a query, while the database engine retrieves the requested information.
+Compact formats reduce the amount of text supplied to the model, but direct context inference still requires
+the relevant records to be included in its input. Text-to-SQL offers another approach: the model generates a
+query, while the database engine retrieves the requested information.
 
 \section{LLMs for text-to-SQL}
 
-Translating natural language to executable SQL is a long-standing problem. The
-first attempts at this problem operated primarily on rigid, handcrafted grammar rules and pattern-matching
-frameworks \cite{woods1972lunar, warren1982efficient} which worked reasonably well on a narrow domain, but each
-new schema required a new set of rules. With the rise of neural networks researchers began applying them for this
-task, through methods based on long short-term memory networks \cite{graves2012long} and transformers
-\cite{vaswani2017attention}. But
-these two methods faced similar problems that they could not generalize to unseen schemas. State-of-the-art
+Translating natural language to executable SQL is a long-standing problem. The first attempts at this problem
+operated primarily on rigid, handcrafted grammar rules and pattern-matching frameworks \cite{woods1972lunar,
+warren1982efficient} which worked reasonably well on a narrow domain, but each new schema required a new set
+of rules. With the rise of neural networks, researchers began applying them for this task, through methods
+based on long short-term memory networks \cite{graves2012long} and transformers \cite{vaswani2017attention}.
+But these two methods faced similar problems: they could not generalize to unseen schemas. State-of-the-art
 text-to-SQL systems use LLMs as query generators, often within larger workflows that retrieve relevant
 context, generate alternative queries, and verify their outputs \cite{hong2025next}. Their performance
 therefore depends on both the underlying language model and the architecture surrounding it.
@@ -108,125 +100,121 @@ When optimizing for text-to-SQL accuracy, there are multiple strategies to achie
     \cite{hong2024knowledge, zhang2024structure} and parameter-efficient fine-tuning \cite{song2022learning,
     gao2023text}.
   \item \textbf{Task-training:} A task-specific text-to-SQL model is trained with training strategies similar
-    to those used for LLMs, such as transformers \cite{li2024codes, fu2023miga} and mixture of experts \cite{pourreza2024sql}.
-  \item \textbf{LLM agent:} Agents collaborate with with other agents and use external tools, dynamically generate and correct
-    SQL queries, handle database matching issues, and improve query accuracy and execution through external
-    tools \cite{wang2025mac, wang2024tool}.
+    to those used for LLMs, such as transformers \cite{li2024codes, fu2023miga} and mixture of experts
+    \cite{pourreza2024sql}.
+  \item \textbf{LLM agent:} Agents collaborate with other agents and use external tools, dynamically generate
+    and correct SQL queries, handle database matching issues, and improve query accuracy and execution
+    through external tools \cite{wang2025mac, wang2024tool}.
 \end{itemize}
 
-\subsection{State-of-the-art text-to-SQL architectures}
-\label{sec:sota-text-to-sql}
+\subsection{State-of-the-art text-to-SQL architectures} \label{sec:sota-text-to-sql}
 
-Recent work extends the basic sequence of providing a schema, generating SQL, and executing the query.
-The following papers illustrate complementary directions: metadata enrichment, test-time scaling,
-structured query verification, and broader agent-based data analysis.
-The systems reviewed below report results on BIRD \cite{li2023can}, a text-to-SQL benchmark involving large
-databases and real-world data challenges, discussed further in the following section.
+Recent work extends the basic sequence of providing a schema, generating SQL, and executing the query. The
+following papers illustrate complementary directions: metadata enrichment, test-time scaling, structured
+query verification, and broader agent-based data analysis. The systems reviewed below report results on BIRD
+\cite{li2023can}, a text-to-SQL benchmark involving large databases and real-world data challenges, discussed
+further in the following section.
 
-\textbf{Automatic Metadata Extraction for Text-to-SQL.} Shkapenyuk et~al.~\cite{shkapenyuk2025metadata} address
-the difficulty of understanding database contents
-from schemas alone. Their approach profiles columns to collect properties such as value frequencies,
-NULL counts, and value formats, then uses an LLM to turn these statistics into field descriptions.
-Schema linking is performed by generating preliminary SQL under different metadata configurations and
-collecting the referenced fields, with value matching helping to correct misplaced filters. The BIRD
-submission further retrieves few-shot examples from the training set, generates three candidate queries, checks and repairs
-potentially problematic SQL, and selects an answer by agreement between execution results. The paper also
-investigates query-log analysis and SQL-to-text generation for recovering business logic and constructing
-examples, although query logs were unavailable for the held-out test databases. Using GPT-4o without
-task-specific fine-tuning, the authors report \qty{77.14}{\percent} execution accuracy on BIRD-Test \cite{li2023can} with
-question-specific hints. This demonstrates how database understanding and orchestration can improve results
-beyond the capabilities of a schema-only prompt.
+\textbf{Automatic Metadata Extraction for Text-to-SQL.} Shkapenyuk et~al.~\cite{shkapenyuk2025metadata}
+address the difficulty of understanding database contents from schemas alone. Their approach profiles columns
+to collect properties such as value frequencies, NULL counts, and value formats, then uses an LLM to turn
+these statistics into field descriptions. Schema linking is performed by generating preliminary SQL under
+different metadata configurations and collecting the referenced fields, with value matching helping to
+correct misplaced filters. The BIRD submission further retrieves few-shot examples from the training set,
+generates three candidate queries, checks and repairs potentially problematic SQL, and selects an answer by
+agreement between execution results. The paper also investigates query-log analysis and SQL-to-text
+generation for recovering business logic and constructing examples, although query logs were unavailable for
+the held-out test databases. Using GPT-4o without task-specific fine-tuning, the authors report
+\qty{77.14}{\percent} execution accuracy on BIRD-Test \cite{li2023can} with question-specific hints. This
+demonstrates how database understanding and orchestration can improve results beyond the capabilities of a
+schema-only prompt.
 
-\textbf{Agentar-Scale-SQL.} Wang et~al.~\cite{wang2025agentar} organize additional inference computation along
-three dimensions: internal reasoning, sequential refinement, and parallel candidate generation and selection.
-A task-understanding stage retrieves relevant database values and few-shot examples. Two complementary
-generators then produce
-candidates: a reinforcement-learning-trained SQL reasoner using a data schema, and an
-in-context-learning generator using a compact Markdown schema. Syntax repair and semantic revision refine
-these candidates. Queries with identical execution results are grouped, and a reinforcement-learning-trained
-selector compares representatives in a pairwise tournament. The paper reports \qty{81.67}{\percent} execution accuracy
-on BIRD-Test. This architecture explicitly trades additional generation, refinement, and selection work for
-higher accuracy, rather than relying on a single model response.
+\textbf{Agentar-Scale-SQL.} Wang et~al.~\cite{wang2025agentar} organize additional inference computation
+along three dimensions: internal reasoning, sequential refinement, and parallel candidate generation and
+selection. A task-understanding stage retrieves relevant database values and few-shot examples. Two
+complementary generators then produce candidates: a reinforcement-learning-trained SQL reasoner using a data
+schema, and an in-context-learning generator using a compact Markdown schema. Syntax repair and semantic
+revision refine these candidates. Queries with identical execution results are grouped, and a
+reinforcement-learning-trained selector compares representatives in a pairwise tournament. The paper reports
+\qty{81.67}{\percent} execution accuracy on BIRD-Test. This architecture explicitly trades additional
+generation, refinement, and selection work for higher accuracy, rather than relying on a single model response.
 
-\textbf{DeepEye and DeepEye-SQL.}
-DeepEye combines an agent-based analytical workflow with DeepEye-SQL as its query-generation component
-\cite{li2026deepeye,li2026deepeyesql}. DeepEye-SQL treats query generation as a small software-development process.
-Semantic value retrieval grounds the question in actual database values, while complementary schema-linking
-strategies identify relevant fields and retain the keys needed for joins. Three generation strategies (SQL
-skeleton construction, in-context learning, and divide-and-conquer reasoning) produce alternative queries.
-A deterministic tool-chain checks syntax, suspicious logical patterns, and quality issues, providing targeted
-feedback for LLM revision. Selection uses agreement between execution results as a confidence signal:
-strong consensus permits direct selection, while uncertain cases receive deeper execution-guided comparison.
-These checks target particular error patterns; they do not constitute a general proof of semantic correctness.
-Using open-weight mixture-of-experts models with approximately \num{30} billion total and \num{3} billion active parameters,
-without fine-tuning, the paper reports \qty{75.07}{\percent} execution accuracy on BIRD-Test. Thus, sophisticated
-orchestration is relevant to open-weight models as well as proprietary ones.
+\textbf{DeepEye and DeepEye-SQL.} DeepEye combines an agent-based analytical workflow with DeepEye-SQL as its
+query-generation component \cite{li2026deepeye,li2026deepeyesql}. DeepEye-SQL treats query generation as a
+small software-development process. Semantic value retrieval grounds the question in actual database values,
+while complementary schema-linking strategies identify relevant fields and retain the keys needed for joins.
+Three generation strategies (SQL skeleton construction, in-context learning, and divide-and-conquer
+reasoning) produce alternative queries. A deterministic toolchain checks syntax, suspicious logical patterns,
+and quality issues, providing targeted feedback for LLM revision. Selection uses agreement between execution
+results as a confidence signal: strong consensus permits direct selection, while uncertain cases receive
+deeper execution-guided comparison. These checks target particular error patterns; they do not constitute a
+general proof of semantic correctness. Using open-weight mixture-of-experts models with approximately
+\num{30} billion total and \num{3} billion active parameters, without fine-tuning, the paper reports
+\qty{75.07}{\percent} execution accuracy on BIRD-Test. Thus, sophisticated orchestration is relevant to
+open-weight models as well as proprietary ones.
 
 The broader DeepEye system \cite{li2026deepeye} extends this query-generation workflow to analytical tasks
-that combine databases, documents, and files. A memory-augmented planner constructs a directed acyclic
-graph of LLM-driven AgentNodes and deterministic ToolNodes. Each agent has an isolated reasoning context,
-while standardized input and output interfaces expose its role to the planner. A workflow engine compiles
-the plan, validates dependencies and interface compatibility, schedules independent nodes in parallel,
-and executes them. Runtime errors can trigger replanning, and users can inspect and edit the workflow.
-The resulting workflows produce outputs such as dashboards and reports.
+that combine databases, documents, and files. A memory-augmented planner constructs a directed acyclic graph
+of LLM-driven AgentNodes and deterministic ToolNodes. Each agent has an isolated reasoning context, while
+standardized input and output interfaces expose its role to the planner. A workflow engine compiles the plan,
+validates dependencies and interface compatibility, schedules independent nodes in parallel, and executes
+them. Runtime errors can trigger replanning, and users can inspect and edit the workflow. The resulting
+workflows produce outputs such as dashboards and reports.
 
 \section{Overview of evaluation datasets}
 
-There has been a lot of effort in recent years to curate datasets which can be utilized for testing
-(and training) models on the task of SQL generation. The first notable datasets came onto the scene 
-in \num[group-digits=none]{2017}. For WikiSQL
-\cite{zhong2017seq2sql} researchers annotated data based on Wikipedia. It covers \num{24241} database
-tables, and has more than
-\num{80000} pairs of natural language questions and corresponding queries.
+There has been a lot of effort in recent years to curate datasets which can be utilized for testing (and
+training) models on the task of SQL generation. The first notable datasets came onto the scene in
+\num[group-digits=none]{2017}. For WikiSQL \cite{zhong2017seq2sql}, researchers annotated data based on
+Wikipedia. It covers \num{24241} database tables and has more than \num{80000} pairs of natural language
+questions and corresponding queries.
 
 WikiSQL has a problem: it only involves one table per question and only supports simple SQL operations, which
 is not representative of expectations we have of these systems when deployed in the real world. In order to
 overcome these challenges, the Spider \cite{yu2018spider} dataset was introduced, which is one of the most
-complex text-to-SQL
-datasets. Like WikiSQL it is multi domain, it covers more than \num{100} domains with over \num{200} databases,
-where each database has \num{5.1} tables on average. One more feature is that the tables appearing in the test
-set are distinct from the ones that appear in the training set. Compared with those in the datasets available at 
-that time, the queries were more complex, including aggregate functions, ordering of the results, and nested
-queries, which were divided into \num{4} levels of difficulty, based on their complexity. This is important to
-consider because all the questions present in the WikiSQL dataset were classified as EASY.
+complex text-to-SQL datasets. Like WikiSQL, it is multi-domain; it covers more than \num{100} domains with
+over \num{200} databases, where each database has \num{5.1} tables on average. One more feature is that the
+tables appearing in the test set are distinct from the ones that appear in the training set. Compared with
+those in the datasets available at that time, the queries were more complex, including aggregate functions,
+ordering of the results, and nested queries, which were divided into \num{4} levels of difficulty, based on
+their complexity. This is important to consider because all the questions present in the WikiSQL dataset were
+classified as EASY.
 
 Even though the Spider dataset introduced a lot of improvements, it still was not perfect. All of the data
-present in the Spider dataset is clean and does not suffer from real-life problems, such as integer values being
-stored as strings, and other inconsistencies.
+present in the Spider dataset is clean and does not suffer from real-life problems, such as integer values
+being stored as strings and other inconsistencies.
 
-BIRD \cite{li2023can} introduced larger databases and additional challenges involving real-world data.
-These include dealing with dirty database contents (both values and schemas) and using external knowledge
-about the data in order to link the natural language question to the present database.
+BIRD \cite{li2023can} introduced larger databases and additional challenges involving real-world data. These
+include dealing with dirty database contents (both values and schemas) and using external knowledge about the
+data in order to link the natural language question to the present database.
 
 The newest addition to these benchmarks is Spider 2.0 \cite{lei2025spider}; it introduces data directly
-pulled from enterprise environments like Google Analytics  and Salesforce. It pulls the real-world tasks from
-these environments, and moves away from small and unrealistically clean datasets present in the original
-Spider dataset. Besides moving away from tidy data, it also introduces another challenge in the form of massive
-cloud schemas which are averaging over \num{800} columns, intricate nested structures, and distinct dialects like
-BigQuery and Snowflake that require knowledge of external documentation. The change in size and complexity
-moves this task from simple one-shot examples into multi-step agentic workflows where queries stretch more
-than \num{100} lines.
+pulled from enterprise environments like Google Analytics and Salesforce. It pulls the real-world tasks from
+these environments and moves away from small and unrealistically clean datasets present in the original
+Spider dataset. Besides moving away from tidy data, it also introduces another challenge in the form of
+massive cloud schemas that average over \num{800} columns, intricate nested structures, and distinct dialects
+like BigQuery and Snowflake that require knowledge of external documentation. The change in size and
+complexity moves this task from simple one-shot examples into multi-step agentic workflows where queries
+stretch more than \num{100} lines.
 
 Benchmarks define the tasks on which systems are evaluated, while metrics determine which aspects of their
 outputs count as successful. Comparing the two retrieval approaches requires considering reference-answer
 agreement, execution reliability, and the resources required to obtain an answer.
 
-\section{Evaluation metrics for structured data extraction}
-\label{sec:evaluation-metrics-background}
+\section{Evaluation metrics for structured data extraction} \label{sec:evaluation-metrics-background}
 
-When evaluating structured data extraction, we are interested in several questions: how closely an answer agrees
-with its reference, whether the retrieval pipeline completes successfully, and how much time and computation
-it requires. Text-based measures capture different aspects of answer agreement, but their scores do not
-necessarily reflect factual correctness \cite{novikova2017we}. Execution and resource measurements therefore
-provide complementary information when comparing direct context inference with text-to-SQL.
+When evaluating structured data extraction, we are interested in several questions: how closely an answer
+agrees with its reference, whether the retrieval pipeline completes successfully, and how much time and
+computation it requires. Text-based measures capture different aspects of answer agreement, but their scores
+do not necessarily reflect factual correctness \cite{novikova2017we}. Execution and resource measurements
+therefore provide complementary information when comparing direct context inference with text-to-SQL.
 
 This thesis evaluates reference-answer agreement using normalized exact match (NEM), ROUGE-L F1, and
 BERTScore F1. For conciseness, subsequent references to \emph{ROUGE-L} and \emph{BERTScore} denote these F1
 measures unless stated otherwise. The following subsections introduce these measures alongside execution
 reliability, token consumption, latency, and context-window feasibility.
 
-\subsection{Reference-answer agreement}
-\label{sec:reference-answer-metrics}
+\subsection{Reference-answer agreement} \label{sec:reference-answer-metrics}
 
 The two pipelines can be compared at the answer level by evaluating their outputs against a common reference.
 For direct context inference, this output is the model's answer; for text-to-SQL, it is a textual
@@ -238,16 +226,12 @@ similarity offer progressively more flexible ways of comparing these texts.
 Exact match is a binary measure widely used in question-answering benchmarks such as SQuAD
 \cite{rajpurkar2016squad}. Given a candidate answer $c$, a reference $r$, and a normalization function $n$,
 normalized exact match is defined as
-\begin{equation}
-  \operatorname{NEM}(c,r) =
-  \begin{cases}
-    \num{1} & \text{if } n(c) = n(r), \\
-    \num{0} & \text{otherwise.}
+\begin{equation}   \operatorname{NEM}(c,r) =
+  \begin{cases} \num{1} & \text{if } n(c) = n(r), \\ \num{0} & \text{otherwise.}
   \end{cases}
 \end{equation}
-SQuAD normalization lowercases the text, removes punctuation and English articles, and
-collapses whitespace. Averaging the binary scores gives the proportion of answers that match after these
-transformations.
+SQuAD normalization lowercases the text, removes punctuation and English articles, and collapses whitespace.
+Averaging the binary scores gives the proportion of answers that match after these transformations.
 
 NEM gives a clear measure of normalized textual agreement, especially for short answers. However, a correct
 answer with additional explanation or a different row order can fail to match. Normalization can also remove
@@ -256,21 +240,18 @@ equality of the normalized representation rather than directly verifying the und
 
 \subsubsection{ROUGE-L F1}
 
-ROUGE-L belongs to the ROUGE family of summary-evaluation measures \cite{lin2004rouge}. It uses the
-longest common subsequence (LCS): the longest sequence of tokens appearing in both texts in the same relative
-order, without requiring adjacent matches. Let $C$ and $R$ be the candidate and reference token sequences,
-and let $L$ be their LCS length. For nonempty sequences, precision and recall are
-\begin{equation}
-  P_{\mathrm{LCS}} = \frac{L}{|C|}, \qquad
-  R_{\mathrm{LCS}} = \frac{L}{|R|}, \qquad
-  F_1 = \frac{\num{2}P_{\mathrm{LCS}}R_{\mathrm{LCS}}}{P_{\mathrm{LCS}}+R_{\mathrm{LCS}}}.
-\end{equation}
-The F1 score balances precision and recall, rewarding partial overlap while accounting for both additional
-and missing content.
+ROUGE-L belongs to the ROUGE family of summary-evaluation measures \cite{lin2004rouge}. It uses the longest
+common subsequence (LCS): the longest sequence of tokens appearing in both texts in the same relative order,
+without requiring adjacent matches. Let $C$ and $R$ be the candidate and reference token sequences, and let
+$L$ be their LCS length. For nonempty sequences, precision and recall are
+\begin{equation}   P_{\mathrm{LCS}} = \frac{L}{|C|}, \qquad   R_{\mathrm{LCS}} = \frac{L}{|R|}, \qquad   F_1
+  = \frac{\num{2}P_{\mathrm{LCS}}R_{\mathrm{LCS}}}{P_{\mathrm{LCS}}+R_{\mathrm{LCS}}}.
+\end{equation} The F1 score balances precision and recall, rewarding partial overlap while accounting for
+both additional and missing content.
 
 Because LCS matching preserves relative token order, row ordering can affect the score even when two answers
-contain the same values. ROUGE-L also cannot establish whether a matching value belongs to the correct row
-or column, and substantial overlap can coexist with an incorrect number or identifier.
+contain the same values. ROUGE-L also cannot establish whether a matching value belongs to the correct row or
+column, and substantial overlap can coexist with an incorrect number or identifier.
 
 \subsubsection{BERTScore F1}
 
@@ -282,9 +263,9 @@ when the surface forms differ.
 
 This flexibility complements exact and lexical matching, but similar embeddings do not guarantee that
 numbers, entities, or relationships are correct. The reported scores depend on the embedding model and
-scoring configuration. Raw BERTScore values are similarities rather than probabilities of correctness and
-are not constrained to be nonnegative. Section~\ref{sec:scoring-pass} specifies the scoring configuration
-used in this study.
+scoring configuration. Raw BERTScore values are similarities rather than probabilities of correctness and are
+not constrained to be nonnegative. Section~\ref{sec:scoring-pass} specifies the scoring configuration used in
+this study.
 
 Together, NEM, ROUGE-L, and BERTScore describe strict agreement, ordered lexical overlap, and contextual
 similarity. Their complementary views help interpret differences between outputs, while their shared
@@ -296,16 +277,15 @@ pairwise judgments. These approaches can capture qualities beyond reference over
 additional model, evaluation prompts, and potential judgment biases. They provide useful context for answer
 evaluation, although the experiments here use the three reference-based measures above.
 
-\subsection{SQL execution and error correction}
-\label{sec:sql-execution-metrics}
+\subsection{SQL execution and error correction} \label{sec:sql-execution-metrics}
 
 SQL evaluation distinguishes the ability to execute a query from agreement with the intended result.
 \emph{Execution success} indicates that a generated query runs without errors, including when it returns an
 empty result. Its mean is the execution-success rate. A query can nevertheless execute successfully while
 using an incorrect join, filter, or aggregation, so this rate describes operational reliability.
 
-\emph{Execution accuracy}, used in text-to-SQL benchmarks \cite{yu2018spider,li2023can}, instead compares
-the results of the generated and reference queries on the same database. Matching results provide stronger
+\emph{Execution accuracy}, used in text-to-SQL benchmarks \cite{yu2018spider,li2023can}, instead compares the
+results of the generated and reference queries on the same database. Matching results provide stronger
 evidence than execution success, although agreement on one database instance does not prove equivalence on
 all possible data. The execution-accuracy figures cited earlier for text-to-SQL architectures use this
 benchmark notion. In this thesis, execution success is reported alongside text-based agreement with the
@@ -315,48 +295,46 @@ When a pipeline can correct execution errors, we also need to consider whether a
 attempt or only after correction. The first-attempt success rate shows how often no correction is needed,
 while the final success rate also includes runs recovered through retries. Recovery can be reported as the
 share of initially failed runs that later execute successfully, or as the increase in the success rate across
-all runs. It is important to state whether the calculation uses only the initially failed runs or all runs
-as its denominator. The number of retries and the additional model-generation time show the cost of this
+all runs. It is important to state whether the calculation uses only the initially failed runs or all runs as
+its denominator. The number of retries and the additional model-generation time show the cost of this
 recovery. However, correction based on execution errors cannot detect a query that runs successfully but
 returns the wrong result, since there is no execution error to trigger a retry.
 
-Other benchmark measures consider how a query is written and how efficiently it runs. Spider's
-\emph{Exact Set Match} compares normalized SQL components, so queries written differently can fail to match
-even when they return equivalent results \cite{yu2018spider}. BIRD's \emph{Valid Efficiency Score} combines
-result correctness with query-execution efficiency relative to the reference query \cite{li2023can}.
-These measures help explain the benchmark results discussed earlier. In this thesis, we evaluate answer
-agreement and execution success, while measuring latency separately.
+Other benchmark measures consider how a query is written and how efficiently it runs. Spider's \emph{Exact
+Set Match} compares normalized SQL components, so queries written differently can fail to match even when
+they return equivalent results \cite{yu2018spider}. BIRD's \emph{Valid Efficiency Score} combines result
+correctness with query-execution efficiency relative to the reference query \cite{li2023can}. These measures
+help explain the benchmark results discussed earlier. In this thesis, we evaluate answer agreement and
+execution success, while measuring latency separately.
 
 The resources needed to obtain an answer extend beyond executing SQL. For both retrieval approaches, we also
 need to consider token consumption, whether the input and generated output fit within the model's context
 window, and the time needed to produce an answer. These are the focus of the following subsection.
 
-\subsection{Operational efficiency and context feasibility}
-\label{sec:operational-metrics}
+\subsection{Operational efficiency and context feasibility} \label{sec:operational-metrics}
 
-\textbf{Token consumption.} As discussed in Section~\ref{sec:token-efficiency}, different formats require
+\textbf{Token consumption}. As discussed in Section~\ref{sec:token-efficiency}, different formats require
 different numbers of tokens to represent the same data. Counting only the serialized data shows these format
 differences, while the complete input also includes instructions, the question, and chat-template tokens.
 Output counts include the generated answer or query and any reasoning tokens. These counts depend on the
 tokenizer, and their effect on performance also depends on the hardware and serving software
-\cite{fernandez2025energy}. Token usage therefore indicates workload, rather than directly measuring
-monetary cost.
+\cite{fernandez2025energy}. Token usage therefore indicates workload, rather than directly measuring monetary cost.
 
-\textbf{Context-window feasibility.} Fitting the data within a model's context window is only part of the
+\textbf{Context-window feasibility}. Fitting the data within a model's context window is only part of the
 requirement. The request must also leave room for prompt instructions and generated output, including
-reasoning. We therefore need to check the complete request before inference and report how many requests
-are skipped, since answer scores alone do not show how often the approach can be used.
+reasoning. We therefore need to check the complete request before inference and report how many requests are
+skipped, since answer scores alone do not show how often the approach can be used.
 
-\textbf{Latency.} A model first processes the prompt and then generates its response, known as the prefill
+\textbf{Latency}. A model first processes the prompt and then generates its response, known as the prefill
 and decoding phases \cite{zhong2024distserve}. \emph{Time to First Token (TTFT)} measures the time from
 submitting a request to receiving the first output token, including prompt processing and serving overhead.
-The remaining generation time covers the rest of the response, including reasoning. Together, these give
-the model response time. Text-to-SQL also requires \emph{SQL execution time}. Measuring these parts
-separately helps explain where delays occur.
+The remaining generation time covers the rest of the response, including reasoning. Together, these give the
+model response time. Text-to-SQL also requires \emph{SQL execution time}. Measuring these parts separately
+helps explain where delays occur.
 
-If SQL correction requires retries, we need to count tokens and time across all attempts to include the
-cost of recovery. Chapter~\ref{ch:methodolgy} defines these measurements, and
-Chapter~\ref{ch:implementation} describes their implementation.
+If SQL correction requires retries, we need to count tokens and time across all attempts to include the cost
+of recovery. Chapter~\ref{ch:methodolgy} defines these measurements, and Chapter~\ref{ch:implementation}
+describes their implementation.
 
 The studies reviewed in this chapter show how data representation and query generation affect information
 retrieval. The next chapter builds on this work by defining a comparison of direct context inference and

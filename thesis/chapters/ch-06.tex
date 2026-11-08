@@ -1,231 +1,214 @@
-\chapter{Discussion}
-\label{ch:discussion}
+\chapter{Discussion} \label{ch:discussion}
 
 This chapter interprets the findings in Chapter~\ref{ch:results} and develops a framework for selecting an
-extraction method and, where needed, a serialization format.
-\section{Interpretation of the main findings}
-\label{sec:main-findings-interpretation}
+extraction method and, where needed, a serialisation format.
+\section{Interpretation of the main findings} \label{sec:main-findings-interpretation}
 
-\subsection{Pipeline selection and database size}
-\label{sec:pipeline-size-interpretation}
+\subsection{Pipeline selection and database size} \label{sec:pipeline-size-interpretation}
 
 The results in Section~\ref{sec:common-cohort-comparison} support text-to-SQL as the preferred pipeline for
 the evaluated relational tasks. On the same answerable question--model pairs, it achieved higher mean NEM,
-BERTScore, and ROUGE-L than every direct context inference format. On Spider, mean NEM was \num{0.634}
-for SQL, compared with \num{0.169} for JSON, the highest-scoring direct format on this measure. On sampled
-BIRD, the corresponding scores were \num{0.501} for SQL and \num{0.054} for CSV. These represent paired
-gains of \num{46.5} percentage points (\numrange{42.2}{50.7}) and \num{44.7} percentage points
+BERTScore, and ROUGE-L than every direct context inference format. On Spider, mean NEM was \num{0.634} for
+SQL, compared with \num{0.169} for JSON, the highest-scoring direct format on this measure. On sampled BIRD,
+the corresponding scores were \num{0.501} for SQL and \num{0.054} for CSV. These represent paired gains of
+\num{46.5} percentage points (\numrange{42.2}{50.7}) and \num{44.7} percentage points
 (\numrange{38.0}{52.4}), respectively, with both \qty{95}{\percent} intervals above zero.
 
 The other metrics support the same choice. CSV had the highest direct BERTScore and ROUGE-L means on both
-datasets, but SQL exceeded its BERTScore by \num{0.104} on Spider and \num{0.385} on BIRD. The
-corresponding ROUGE-L gains were \num{0.403} and \num{0.438}
-(Figure~\ref{fig:pipeline-retrieval-comparison}). Under these conditions, generating a query and delegating
-retrieval, joins, and aggregation to the database engine produced closer agreement with the reference
-answers than deriving them directly from serialized records. The choice of extraction method should
-therefore come before optimizing the serialization format.
+datasets, but SQL exceeded its BERTScore by \num{0.104} on Spider and \num{0.385} on BIRD. The corresponding
+ROUGE-L gains were \num{0.403} and \num{0.438} (Figure~\ref{fig:pipeline-retrieval-comparison}). Under these
+conditions, generating a query and delegating retrieval, joins, and aggregation to the database engine
+produced closer agreement with the reference answers than deriving them directly from serialised records. The
+choice of extraction method should therefore come before optimising the serialisation format.
 
-Operational efficiency results also favour SQL. On the shared context-fit workload, it required fewer
-input tokens and had lower mean total latency than every direct format, including all SQL correction
-attempts and execution time (Figures~\ref{fig:common-cohort-token-usage}
-and~\ref{fig:common-cohort-latency}). A limited exception concerned speed in the small-database tier
-defined in Section~\ref{sec:pipeline-accuracy-by-database-size}, where CSV was faster in most
-question--model pairs, although its mean latency advantage remained uncertain. Across the shared
-workload, SQL's larger latency savings on larger databases outweighed this advantage on small inputs.
-Considering latency and input-token use together, the results therefore reinforce the preference for
-text-to-SQL when an SQL engine is available and the task can be expressed as a query.
+Operational efficiency results also favour SQL. On the shared context-fit workload, it required fewer input
+tokens and had lower mean total latency than every direct format, including all SQL correction attempts and
+execution time (Figures~\ref{fig:common-cohort-token-usage} and~\ref{fig:common-cohort-latency}). A limited
+exception concerned speed in the small-database tier defined in
+Section~\ref{sec:pipeline-accuracy-by-database-size}, where CSV was faster in most question--model pairs,
+although its mean latency advantage remained uncertain. Across the shared workload, SQL's larger latency
+savings on larger databases outweighed this advantage on small inputs. Considering latency and input-token
+use together, the results therefore reinforce the preference for text-to-SQL when an SQL engine is available,
+and the task can be expressed as a query.
 
-For small databases, direct context inference remains worth considering because the records can be
-supplied within the model's context window, particularly when an SQL engine is unavailable. However, the
-size-tier comparison in Section~\ref{sec:pipeline-accuracy-by-database-size} still favoured SQL. In the small
-tier, defined by at most \num{1500} payload tokens averaged across formats and tokenizer families, mean
-NEM was \num{0.723} for SQL and \num{0.239} for JSON, the strongest direct format on this measure. The
-paired gain was \num{48.4} percentage points (\numrange{44.2}{54.1}). SQL also had higher BERTScore and
-ROUGE-L means than every direct format in this tier. The same ranking held in the medium and large tiers,
-with every paired direct-minus-SQL interval below zero across all three metrics.
+For small databases, direct context inference remains worth considering because the records can be supplied
+within the model's context window, particularly when an SQL engine is unavailable. However, the size-tier
+comparison in Section~\ref{sec:pipeline-accuracy-by-database-size} still favoured SQL. In the small tier,
+defined by at most \num{1500} payload tokens averaged across formats and tokenizer families, mean NEM was
+\num{0.723} for SQL and \num{0.239} for JSON, the strongest direct format on this measure. The paired gain
+was \num{48.4} percentage points (\numrange{44.2}{54.1}). SQL also had higher BERTScore and ROUGE-L means
+than every direct format in this tier. The same ranking held in the medium and large tiers, with every paired
+direct-minus-SQL interval below zero across all three metrics.
 
-Database size nevertheless affects whether direct inference is practical. Some large databases exceeded
-the context limit in every format, and these failures contributed zero scores. The comparisons therefore
-capture both reference-answer agreement and the ability to process the request. Size also varied with
-schema, domain, and questions: all small and medium databases came from Spider, while all BIRD
-databases belonged to the large tier. The results consequently do not establish a size threshold at which
-the preferred pipeline changes. Small inputs make direct inference feasible, but the measured advantage
-of text-to-SQL supports retaining it as the first choice wherever SQL is applicable, as reflected in
-Section~\ref{sec:decision-framework}.
+Database size nevertheless affects whether direct inference is practical. Some large databases exceeded the
+context limit in every format, and these failures contributed zero scores. The comparisons therefore capture
+both reference-answer agreement and the ability to process the request. Size also varied with schema, domain,
+and questions: all small and medium databases came from Spider, while all BIRD databases belonged to the
+large tier. The results consequently do not establish a size threshold at which the preferred pipeline
+changes. Small inputs make direct inference feasible, but the measured advantage of text-to-SQL supports
+retaining it as the first choice wherever SQL is applicable, as reflected in Section~\ref{sec:decision-framework}.
 
 \subsection{Serialization trade-offs}
 
-When direct context inference is used, the results support CSV and TOON as the preferred serialization
+When direct context inference is used, the results support CSV and TOON as the preferred serialisation
 formats. They required the fewest input tokens and had the lowest mean total latency on the shared
-context-fit workload (Table~\ref{tab:direct-operational-efficiency}). On Spider, CSV and TOON used
-\num{5366} and \num{5758} input tokens on average, with mean latencies of \qty{1.25}{\second} and
-\qty{1.37}{\second}, respectively. On BIRD, the corresponding counts were \num{31756} and
-\num{32810}, with latencies of \qty{8.02}{\second} and \qty{8.27}{\second}. CSV was therefore the most
-efficient format on these measures, with TOON a close alternative.
+context-fit workload (Table~\ref{tab:direct-operational-efficiency}). On Spider, CSV and TOON used \num{5366}
+and \num{5758} input tokens on average, with mean latencies of \qty{1.25}{\second} and \qty{1.37}{\second},
+respectively. On BIRD, the corresponding counts were \num{31756} and \num{32810}, with latencies of
+\qty{8.02}{\second} and \qty{8.27}{\second}. CSV was therefore the most efficient format on these measures,
+with TOON a close alternative.
 
-More verbose representations increased the processing workload. XML, for example, required \num{3.76}
-times as many input tokens as CSV on Spider and \num{3.06} times as many on BIRD. Much of the latency
-difference occurred in TTFT, indicating that the main benefit of compact formats concerned processing
-the input. These operational comparisons use the same question--model pairs across formats, although
-the BIRD context-fit cohort covers only two sampled databases.
+More verbose representations increased the processing workload. XML, for example, required \num{3.76} times
+as many input tokens as CSV on Spider and \num{3.06} times as many on BIRD. Much of the latency difference
+occurred in TTFT, indicating that the main benefit of compact formats concerned processing the input. These
+operational comparisons use the same question--model pairs across formats, although the BIRD context-fit
+cohort covers only two sampled databases.
 
-While NEM differed only slightly among JSON, TOON, and CSV on Spider, BERTScore showed a
-clearer separation across formats, favouring CSV and TOON
-(Figure~\ref{fig:direct-accuracy-by-format}). CSV had the highest mean BERTScore at
-\num{0.812}, with TOON close behind: the paired TOON-minus-CSV difference was only
-\num{-0.0004} (\numrange{-0.0020}{0.0011}). JSON had a lower mean BERTScore of
-\num{0.714}, with a paired CSV-minus-JSON difference of \num{0.098}
-(\numrange{0.002}{0.269}). The gap to XML was similar, with CSV exceeding XML by
-\num{0.099} (\numrange{0.003}{0.269}). This supports a clearer BERTScore advantage for CSV over more verbose formats.
-In contrast, mean NEM was \num{0.169} for JSON, \num{0.166} for TOON, and
-\num{0.163} for CSV. JSON's paired advantage over CSV was only \num{0.57} percentage
-points, with a \qty{95}{\percent} interval of \numrange{-1.21}{2.34}, which did not
-establish a clear improvement. CSV also had the highest mean ROUGE-L at \num{0.336}.
-The BERTScore results therefore provide additional support for choosing CSV and TOON,
-alongside their lower input-token requirements.
+While NEM differed only slightly among JSON, TOON, and CSV on Spider, BERTScore showed a clearer separation
+across formats, favouring CSV and TOON (Figure~\ref{fig:direct-accuracy-by-format}). CSV had the highest mean
+BERTScore at \num{0.812}, with TOON close behind: the paired TOON-minus-CSV difference was only \num{-0.0004}
+(\numrange{-0.0020}{0.0011}). JSON had a lower mean BERTScore of \num{0.714}, with a paired CSV-minus-JSON
+difference of \num{0.098} (\numrange{0.002}{0.269}). The gap to XML was similar, with CSV exceeding XML by
+\num{0.099} (\numrange{0.003}{0.269}). This supports a clearer BERTScore advantage for CSV over more verbose
+formats. In contrast, mean NEM was \num{0.169} for JSON, \num{0.166} for TOON, and \num{0.163} for CSV.
+JSON's paired advantage over CSV was only \num{0.57} percentage points, with a \qty{95}{\percent} interval of
+\numrange{-1.21}{2.34}, which did not establish a clear improvement. CSV also had the highest mean ROUGE-L at
+\num{0.336}. The BERTScore results therefore provide additional support for choosing CSV and TOON, alongside
+their lower input-token requirements.
 
-On BIRD, CSV had the highest mean scores on all three measures: \num{0.054} for NEM,
-\num{0.463} for BERTScore, and \num{0.079} for ROUGE-L, with TOON close behind. The paired
-TOON-minus-CSV NEM difference was \num{-0.31} percentage points (\numrange{-0.79}{0.14}), again
-without a clear separation. These answerable-cohort scores include zero scores for context failures,
-so they reflect both reference-answer agreement and the ability to fit the request within the context
-limit.
+On BIRD, CSV had the highest mean scores on all three measures: \num{0.054} for NEM, \num{0.463} for
+BERTScore, and \num{0.079} for ROUGE-L, with TOON close behind. The paired TOON-minus-CSV NEM difference was
+\num{-0.31} percentage points (\numrange{-0.79}{0.14}), again without a clear separation. These
+answerable-cohort scores include zero scores for context failures, so they reflect both reference-answer
+agreement and the ability to fit the request within the context limit.
 
-Taken together, the efficiency advantage and competitive accuracy make CSV and TOON the preferred
-starting formats for direct inference on relational tables. CSV offers the lowest measured input-token
-use and latency, while TOON provides similar performance with modest additional overhead. The results
-give little reason to prefer a more verbose format. This recommendation
-assumes that the selected representation preserves the information and relationships needed for the
-task; retrieval from nested data was not evaluated here.
+Taken together, the efficiency advantage and competitive accuracy make CSV and TOON the preferred starting
+formats for direct inference on relational tables. CSV offers the lowest measured input-token use and
+latency, while TOON provides similar performance with modest additional overhead. The results give little
+reason to prefer a more verbose format. This recommendation assumes that the selected representation
+preserves the information and relationships needed for the task; retrieval from nested data was not evaluated here.
 
 \subsection{Model effects}
 
-Model choice affected retrieval accuracy in both pipelines, with larger variants generally achieving
-higher scores. In text-to-SQL, Qwen~3.5 9B exceeded 0.8B by \num{44.06} NEM percentage points on
-Spider and \num{46.03} on BIRD, with most of the observed improvement occurring by 4B
-(Figure~\ref{fig:text-to-sql-accuracy-by-model-size}). Gemma~4 26B-A4B had the highest observed mean
-NEM, at \num{0.774} and \num{0.669}, respectively. These results show that model selection remains
-important even when the database engine performs the retrieval.
+Model choice affected retrieval accuracy in both pipelines, with larger variants generally achieving higher
+scores. In text-to-SQL, Qwen~3.5 9B exceeded 0.8B by \num{44.06} NEM percentage points on Spider and
+\num{46.03} on BIRD, with most of the observed improvement occurring by 4B
+(Figure~\ref{fig:text-to-sql-accuracy-by-model-size}). Gemma~4 26B-A4B had the highest observed mean NEM, at
+\num{0.774} and \num{0.669}, respectively. These results show that model selection remains important even
+when the database engine performs the retrieval.
 
-The gains were less consistent in direct context inference
-(Figure~\ref{fig:direct-accuracy-by-model-size}). Averaged across formats, Gemma~4 26B-A4B exceeded
-E2B by \num{15.52} NEM percentage points on Spider, but only \num{1.58} on BIRD. The 
-\qty{95}{\percent} interval for the latter difference, \numrange{-0.02}{3.29}, included zero. Increasing model size therefore
-did not consistently establish better retrieval accuracy across datasets. These comparisons also
-reflect differences in architecture and training, so the gains cannot be attributed to parameter count
-alone.
+The gains were less consistent in direct context inference (Figure~\ref{fig:direct-accuracy-by-model-size}).
+Averaged across formats, Gemma~4 26B-A4B exceeded E2B by \num{15.52} NEM percentage points on Spider, but
+only \num{1.58} on BIRD. The  \qty{95}{\percent} interval for the latter difference, \numrange{-0.02}{3.29},
+included zero. Increasing model size therefore did not consistently establish better retrieval accuracy
+across datasets. These comparisons also reflect differences in architecture and training, so the gains cannot
+be attributed to parameter count alone.
 
 Smaller models were not necessarily more efficient across a complete SQL run. As reported in
-Section~\ref{sec:text-to-sql-results}, Qwen~3.5 2B used fewer input and output tokens than 0.8B,
-alongside fewer retries. Its mean total latency was \num{0.432} times that of 0.8B on Spider and
-\num{0.333} times on BIRD, including correction attempts and SQL execution. A more capable
-model can therefore reduce the total work needed to obtain a result. Model selection should consider
-measured answer agreement and complete-run latency on the intended workload, rather than assuming
-that the largest model is always preferable or the smallest is always the most efficient.
+Section~\ref{sec:text-to-sql-results}, Qwen~3.5 2B used fewer input and output tokens than 0.8B, alongside
+fewer retries. Its mean total latency was \num{0.432} times that of 0.8B on Spider and \num{0.333} times on
+BIRD, including correction attempts and SQL execution. A more capable model can therefore reduce the total
+work needed to obtain a result. Model selection should consider measured answer agreement and complete-run
+latency on the intended workload, rather than assuming that the largest model is always preferable or the
+smallest is always the most efficient.
 
 \section{Relationship to prior work}
 
-The serialization results support the importance of format choice discussed in
-Chapter~\ref{ch:related_work}. StrucText-Eval \cite{struct-text-eval} shows that retrieval accuracy
-varies with the format and model, while ONTO and TOON aim to reduce the tokens needed to represent
-data \cite{onto-serialization-format,toon-format-2025}. In our experiments, CSV required the fewest
-tokens on average, with TOON close behind. Both also had low mean latency and competitive accuracy.
-These findings support using compact representations, but show that a format designed for token
-efficiency does not necessarily outperform CSV on relational tables. The choice still depends on the
-data structure, serializer, and tokenizer.
+The serialisation results support the importance of format choice discussed in Chapter~\ref{ch:related_work}.
+StrucText-Eval \cite{struct-text-eval} shows that retrieval accuracy varies with the format and model, while
+ONTO and TOON aim to reduce the tokens needed to represent data
+\cite{onto-serialization-format,toon-format-2025}. In our experiments, CSV required the fewest tokens on
+average, with TOON close behind. Both also had low mean latency and competitive accuracy. These findings
+support using compact representations, but show that a format designed for token efficiency does not
+necessarily outperform CSV on relational tables. The choice still depends on the data structure, serializer,
+and tokenizer.
 
-Research on long contexts shows that fitting data within the context window does not guarantee that
-an LLM will use it reliably \cite{liu2024lost}. Our results support the same practical conclusion:
-larger databases generally had lower direct-inference scores, while even small databases had higher
-scores with text-to-SQL. However, these observations do not establish the lost-in-the-middle effect
-studied in that work, since we did not vary the position of relevant information. Context failures
-and differences in schemas and questions also contributed to the observed results. The context limit
-therefore determines whether direct inference is possible, while its accuracy needs to be evaluated
-on the intended task.
+Research on long contexts shows that fitting data within the context window does not guarantee that an LLM
+will use it reliably \cite{liu2024lost}. Our results support the same practical conclusion: larger databases
+generally had lower direct-inference scores, while even small databases had higher scores with text-to-SQL.
+However, these observations do not establish the lost-in-the-middle effect studied in that work, since we did
+not vary the position of relevant information. Context failures and differences in schemas and questions also
+contributed to the observed results. The context limit therefore determines whether direct inference is
+possible, while its accuracy needs to be evaluated on the intended task.
 
 Recent text-to-SQL systems also suggest ways to extend the pipeline used here. Metadata enrichment
 \cite{shkapenyuk2025metadata}, generating and selecting among several candidate queries
-\cite{wang2025agentar}, and targeted query checks \cite{li2026deepeyesql} provide additional support
-for query generation beyond correcting execution errors. Our simpler pipeline, described in
-Section~\ref{sec:minimalist-text-to-sql}, provides a baseline for evaluating such additions. Their
-reported execution accuracy cannot be compared directly with our reference-answer scores and
-execution-success rates, especially given the use of BIRD databases. Further experiments
-would need to measure whether improvements from these methods justify the additional token use,
-processing time, and data preparation.
+\cite{wang2025agentar}, and targeted query checks \cite{li2026deepeyesql} provide additional support for
+query generation beyond correcting execution errors. Our simpler pipeline, described in
+Section~\ref{sec:minimalist-text-to-sql}, provides a baseline for evaluating such additions. Their reported
+execution accuracy cannot be compared directly with our reference-answer scores and execution-success rates,
+especially given the use of BIRD databases. Further experiments would need to measure whether improvements
+from these methods justify the additional token use, processing time, and data preparation.
 
-\section{SQL error correction: benefits and limitations}
-\label{sec:sql-error-correction}
+\section{SQL error correction: benefits and limitations} \label{sec:sql-error-correction}
 
 Providing database error messages to the model helped it correct some queries that initially failed to
-execute. Under the policy described in Section~\ref{sec:minimalist-text-to-sql}, most successful
-corrections occurred on the first retry, while the remaining attempts recovered fewer runs
+execute. Under the policy described in Section~\ref{sec:minimalist-text-to-sql}, most successful corrections
+occurred on the first retry, while the remaining attempts recovered fewer runs
 (Table~\ref{tab:text-to-sql-error-correction}). However, most initially failed runs still failed after
-correction. Database feedback was therefore useful, but repeating the process did not reliably resolve
-the remaining errors. Successful execution also does not guarantee a correct answer, as discussed in
-Section~\ref{sec:sql-execution-metrics}. A query with an incorrect join or filter can execute without
-error and will not trigger a retry.
+correction. Database feedback was therefore useful, but repeating the process did not reliably resolve the
+remaining errors. Successful execution also does not guarantee a correct answer, as discussed in
+Section~\ref{sec:sql-execution-metrics}. A query with an incorrect join or filter can execute without error
+and will not trigger a retry.
 
 Most of the time spent on correction went to runs that ultimately failed. These accounted for
-\qty{95.3}{\percent} of retry-generation time on Spider and \qty{88.3}{\percent} on BIRD.
-Each of these runs used all three available retries, while successful runs stopped as soon as a query
-executed. Repeated attempts therefore added substantial work without producing an executable query in
-many cases.
+\qty{95.3}{\percent} of retry-generation time on Spider and \qty{88.3}{\percent} on BIRD. Each of these runs
+used all three available retries, while successful runs stopped as soon as a query executed. Repeated
+attempts therefore added substantial work without producing an executable query in many cases.
 
 The number of retries should therefore balance the benefit of recovering failed queries against the
-additional latency and resource use. Since the first retry accounted for most successful corrections,
-one retry is a reasonable starting choice for applications that require short response times. The
-experiments did not establish an optimal retry limit, so further attempts may be worthwhile when the
-additional successful executions justify the extra processing time.
+additional latency and resource use. Since the first retry accounted for most successful corrections, one
+retry is a reasonable starting choice for applications that require short response times. The experiments did
+not establish an optimal retry limit, so further attempts may be worthwhile when the additional successful
+executions justify the extra processing time.
 
-\section{Decision framework}
-\label{sec:decision-framework}
+\section{Decision framework} \label{sec:decision-framework}
 
 \subsection{Decision inputs}
 
-The framework uses the experimental findings to guide the choice of pipeline and serialization format.
-The decision starts with five inputs:
+The framework uses the experimental findings to guide the choice of pipeline and serialisation format. The
+decision starts with five inputs:
 
 \begin{itemize}
   \item \textbf{Database size:} The amount of data to be processed, measured in tokens for the chosen
-    representation and tokenizer. This determines whether the data can fit within the model's context
-    window and how much input processing direct inference requires.
-  \item \textbf{SQL support:} Whether an SQL engine is available, the environment allows query execution,
-    and the data can be represented in a form that supports the required SQL queries while preserving
-    the relevant values and relationships.
+    representation and tokenizer. This determines whether the data can fit within the model's context window
+    and how much input processing direct inference requires.
+  \item \textbf{SQL support:} Whether an SQL engine is available, the environment allows query execution, and
+    the data can be represented in a form that supports the required SQL queries while preserving the
+    relevant values and relationships.
   \item \textbf{Expected latency:} The response time required by the application, including any query
     correction and SQL execution.
-  \item \textbf{Budget:} The available token or computational budget per request. For a paid API, token
-    usage can also be related to the financial budget through the provider's pricing.
-  \item \textbf{Required accuracy:} The level of answer correctness needed for the intended task,
-    assessed using representative questions and reference answers.
+  \item \textbf{Budget:} The available token or computational budget per request. For a paid API, token usage
+    can also be related to the financial budget through the provider's pricing.
+  \item \textbf{Required accuracy:} The level of answer correctness needed for the intended task, assessed
+    using representative questions and reference answers.
 \end{itemize}
 
-The data structure also guides format selection if direct inference is needed, particularly whether the
-input consists of flat tables or contains nested relationships.
+The data structure also guides format selection if direct inference is needed, particularly whether the input
+consists of flat tables or contains nested relationships.
 
 \subsection{Selection rules}
 
 The first decision is whether the environment supports SQL execution as defined above. If it does,
 text-to-SQL is the preferred pipeline, regardless of database size. The comparisons in
-Section~\ref{sec:pipeline-size-interpretation} support this choice even for small databases, where all
-direct formats had lower mean retrieval scores. The separate operational comparisons also showed lower
-mean input-token use and latency for SQL. It is therefore the recommended starting point when high
-accuracy, low latency, and low token consumption are all important.
+Section~\ref{sec:pipeline-size-interpretation} support this choice even for small databases, where all direct
+formats had lower mean retrieval scores. The separate operational comparisons also showed lower mean
+input-token use and latency for SQL. It is therefore the recommended starting point when high accuracy, low
+latency, and low token consumption are all important.
 
-If SQL cannot be used, direct context inference can be considered when the complete request fits within
-the model's context window. Database size becomes especially important here because the records must
-be supplied to the model. The fit check should include the serialized data, instructions, question, and
-chat-template overhead, while reserving space for the answer and any reasoning tokens. For text-to-SQL,
-the corresponding check uses the schema rather than the database contents. Text-to-SQL remains the preferred 
-approach overall when SQL is supported. However, the comparison for Spider's small database 
-Section~\ref{sec:pipeline-operational-efficiency} suggests that CSV may be worth considering when response 
+If SQL cannot be used, direct context inference can be considered when the complete request fits within the
+model's context window. Database size becomes especially important here because the records must be supplied
+to the model. The fit check should include the serialised data, instructions, question, and chat-template
+overhead, while reserving space for the answer and any reasoning tokens. For text-to-SQL, the corresponding
+check uses the schema rather than the database contents. Text-to-SQL remains the preferred approach overall
+when SQL is supported. However, the comparison for Spider's small database in
+Section~\ref{sec:pipeline-operational-efficiency} suggests that CSV may be worth considering when response
 time is the main priority.
 
-For direct inference, CSV is the preferred format for flat data when minimizing input tokens and latency.
-TOON is the preferred starting format for potentially nested data, provided that its representation
-preserves the required structure. This nested-data recommendation follows its support for hierarchy and
-compact representation \cite{toon-format-2025}; the experiments evaluated relational tables rather than
-nested-data retrieval.
+For direct inference, CSV is the preferred format for flat data when minimising input tokens and latency.
+TOON is the preferred starting format for potentially nested data, provided that its representation preserves
+the required structure. This nested-data recommendation follows its support for hierarchy and compact
+representation \cite{toon-format-2025}; the experiments evaluated relational tables rather than nested-data retrieval.
 
 The main reason for preferring CSV and TOON is their operational efficiency
 (Table~\ref{tab:direct-operational-efficiency}). Accuracy differences among the leading formats were
@@ -236,62 +219,57 @@ verbose format is therefore not a supported strategy for meeting a higher accura
 
 \subsection{Decision tree}
 
-\begin{figure}[p]
-  \centering
-  \resizebox{\textwidth}{!}{\input{figures/decision_framework}}
-  \caption{Pipeline and serialization format selection. The TOON recommendation for nested data
-    is based on format capabilities, not evaluated retrieval performance.}
-  \label{fig:decision-framework}
+\begin{figure}[p]   \centering   \resizebox{\textwidth}{!}{\input{figures/decision_framework}}
+  \caption{Pipeline and serialization format selection. The TOON recommendation for nested data is based on
+  format capabilities, not evaluated retrieval performance.}   \label{fig:decision-framework}
 \end{figure}
 
 The selected pipeline should be evaluated on representative application questions against the required
-accuracy, response time, and budget. These requirements guide the choice of model and, for SQL, the
-number of correction attempts. Section~\ref{sec:sql-error-correction} discusses how additional retries
-affect execution success and processing time. Answer quality should be assessed separately, since an
-executable query can still return an incorrect result.
+accuracy, response time, and budget. These requirements guide the choice of model and, for SQL, the number of
+correction attempts. Section~\ref{sec:sql-error-correction} discusses how additional retries affect execution
+success and processing time. Answer quality should be assessed separately, since an executable query can
+still return an incorrect result.
 
-When a configuration does not meet the requirements, the model, prompt, and retry limit can be adjusted
-and evaluated again within the preferred pipeline. If SQL is unavailable and direct inference cannot fit
-the data or meet the required accuracy within the latency and token budgets, changing serialization alone
-may be insufficient. The application would then need SQL support or an alternative retrieval approach, 
-discussed in Section~\ref{sec:sota-text-to-sql}.
+When a configuration does not meet the requirements, the model, prompt, and retry limit can be adjusted and
+evaluated again within the preferred pipeline. If SQL is unavailable and direct inference cannot fit the data
+or meet the required accuracy within the latency and token budgets, changing serialisation alone may be
+insufficient. The application would then need SQL support or an alternative retrieval approach,  discussed in
+Section~\ref{sec:sota-text-to-sql}.
 
-\section{Threats to validity and study limitations}
-\label{sec:validity-limitations}
+\section{Threats to validity and study limitations} \label{sec:validity-limitations}
 
 \subsection{Measurement and task representation}
 
 The accuracy measures compare answers through their textual representation, as described in
-Section~\ref{sec:reference-answer-metrics}. Direct inference produces a free-text answer, while
-text-to-SQL returns database rows that are converted to text. Differences in row order, additional
-explanations, repeated values, or numeric formatting can affect the scores without necessarily changing
-the correctness of the answer. Using NEM, BERTScore, and ROUGE-L provides different views of agreement,
-but all three remain sensitive to how the answer is written.
+Section~\ref{sec:reference-answer-metrics}. Direct inference produces a free-text answer, while text-to-SQL
+returns database rows that are converted to text. Differences in row order, additional explanations, repeated
+values, or numeric formatting can affect the scores without necessarily changing the correctness of the
+answer. Using NEM, BERTScore, and ROUGE-L provides different views of agreement, but all three remain
+sensitive to how the answer is written.
 
 \subsection{Sampling and population coverage}
 
 The BIRD databases were sampled independently for each table, as described in
-Chapter~\ref{ch:implementation}. This can remove related rows, change the results of joins and
-aggregations, and make questions easier or harder to answer. We recomputed the reference answers on
-the sampled data so that both pipelines were compared against the same results. However, excluding
-questions with empty reference answers does not restore the original tasks. The BIRD results
-therefore cannot be treated as results on the full databases.
+Chapter~\ref{ch:implementation}. This can remove related rows, change the results of joins and aggregations,
+and make questions easier or harder to answer. We recomputed the reference answers on the sampled data so
+that both pipelines were compared against the same results. However, excluding questions with empty reference
+answers does not restore the original tasks. The BIRD results therefore cannot be treated as results on the
+full databases.
 
-The operational comparisons were further limited to questions that fit within the context limits
-across all evaluated configurations. For BIRD, this left only two sampled databases. 
-Section~\ref{sec:pipeline-size-interpretation} discusses how database size and context failures also affect 
+The operational comparisons were further limited to questions that fit within the context limits across all
+evaluated configurations. For BIRD, this left only two sampled databases.
+Section~\ref{sec:pipeline-size-interpretation} discusses how database size and context failures also affect
 the retrieval comparisons.
 
 \subsection{Deployment and framework validity}
 
-The decision framework is based on these experiments and has not yet been evaluated on new workloads.
-We did not measure monetary costs, SQL execution at production scale, or the effects of concurrent
-requests and caching. The recorded latency also excludes the preprocessing described in
-Section~\ref{sec:evaluation-metrics-implementation}. In an application, this work may add to response
-time or be performed once and reused across several requests.
+The decision framework is based on these experiments and has not yet been evaluated on new workloads. We did
+not measure monetary costs, SQL execution at production scale, or the effects of concurrent requests and
+caching. The recorded latency also excludes the preprocessing described in
+Section~\ref{sec:evaluation-metrics-implementation}. In an application, this work may add to response time or
+be performed once and reused across several requests.
 
-Retrieval from nested and non-relational data was not tested. Recommendations for these inputs,
-including the use of TOON for nested data, are based on format capabilities and require further
-evaluation. The framework provides a starting point for selecting a pipeline and format, while
-application-specific measurements are needed to establish whether the selected configuration meets
-the required accuracy, latency, and budget.
+Retrieval from nested and non-relational data was not tested. Recommendations for these inputs, including the
+use of TOON for nested data, are based on format capabilities and require further evaluation. The framework
+provides a starting point for selecting a pipeline and format, while application-specific measurements are
+needed to establish whether the selected configuration meets the required accuracy, latency, and budget.
