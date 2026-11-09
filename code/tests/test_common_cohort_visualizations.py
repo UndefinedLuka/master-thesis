@@ -16,10 +16,6 @@ from visualizations.common_cohort_latency import (
     generate_common_cohort_latency_figure,
     plot_common_cohort_latency,
 )
-from visualizations.common_cohort_operational_table import (
-    generate_common_cohort_table,
-    render_common_cohort_table,
-)
 from visualizations.common_cohort_token_usage import (
     generate_common_cohort_token_figure,
     plot_common_cohort_token_usage,
@@ -27,7 +23,6 @@ from visualizations.common_cohort_token_usage import (
 from visualizations.config import (
     COMMON_COHORT_LATENCY_FIGURE_FILENAME,
     COMMON_COHORT_METHOD_ORDER,
-    COMMON_COHORT_TABLE_FILENAME,
     COMMON_COHORT_TOKENS_FIGURE_FILENAME,
 )
 from visualizations.direct_accuracy_data import METRIC_SOURCE_COLUMNS
@@ -209,18 +204,6 @@ def test_invalid_metrics_cannot_silently_enter_means(value: float) -> None:
     data.loc[0, "input_tokens"] = value
     with pytest.raises(ValueError):
         calculate_common_cohort_analysis(data)
-
-
-def test_table_shows_all_methods_without_notes(tmp_path: Path) -> None:
-    analysis = calculate_common_cohort_analysis(_matrix())
-    table = render_common_cohort_table(analysis)
-    assert r"\label{tab:common-cohort-operational-efficiency}" in table
-    assert "recorded context-fit" in table
-    assert r"\parbox" not in table
-    assert "Note:" not in table
-    assert "Direct / CSV" in table
-    assert "Text-to-SQL" in table
-    assert generate_common_cohort_table(analysis, tmp_path).name == COMMON_COHORT_TABLE_FILENAME
 
 
 def test_figures_show_all_methods_and_distinguish_log_and_linear_scales(tmp_path: Path) -> None:

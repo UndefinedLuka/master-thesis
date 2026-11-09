@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 from unittest.mock import Mock
 
@@ -20,6 +21,35 @@ from visualizations.cohorts import DIRECT_FORMATS, RETAINED_MODELS
 
 def _write_records(path: Path, records: list[dict]) -> None:
     path.write_text("".join(json.dumps(row) + "\n" for row in records), encoding="utf-8")
+
+
+def _thesis_artifacts() -> set[Path]:
+    root = Path(__file__).resolve().parents[2]
+    artifacts = set()
+    for source in (root / "thesis").rglob("*.tex"):
+        text = re.sub(r"(?<!\\)%[^\n]*", "", source.read_text(encoding="utf-8"))
+        for directory, filename in re.findall(r"\.\./code/analysis/(tables|figures)/([^}]+)", text):
+            path = Path(directory) / filename
+            artifacts.add(path.with_suffix(".tex") if directory == "tables" else path)
+    return artifacts
+
+
+def test_generated_tables_and_pdfs_match_thesis_imports() -> None:
+    analysis = Path(__file__).resolve().parents[1] / "analysis"
+    actual = {
+        path.relative_to(analysis)
+        for pattern in ("tables/*.tex", "figures/*.pdf")
+        for path in analysis.glob(pattern)
+    }
+    assert actual == _thesis_artifacts()
+
+
+def test_analysis_outputs_are_stored_by_category() -> None:
+    analysis = Path(__file__).resolve().parents[1] / "analysis"
+    categories = {".csv": "summaries", ".json": "summaries", ".pdf": "figures", ".tex": "tables"}
+    for path in analysis.rglob("*"):
+        if path.is_file() and path.suffix in categories:
+            assert path.parent == analysis / categories[path.suffix]
 
 
 @pytest.fixture
@@ -129,8 +159,8 @@ def campaign(tmp_path: Path) -> tuple[list[str], list[dict], Path]:
         str(tmp_path / "tables"),
         "--figures-dir",
         str(tmp_path / "figures"),
-        "--audit-dir",
-        str(tmp_path / "audit"),
+        "--summaries-dir",
+        str(tmp_path / "summaries"),
         "--allow-incomplete",
     ]
     return args, records, results_path
@@ -173,6 +203,7 @@ def test_cli_dispatches_answerable_and_context_fit_populations(
     campaign: tuple[list[str], list[dict], Path],
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
 ) -> None:
     args, _, _ = campaign
     calculators = {}
@@ -187,37 +218,37 @@ def test_cli_dispatches_answerable_and_context_fit_populations(
         calculators[name] = Mock(return_value=object())
         monkeypatch.setattr(orchestration, name, calculators[name])
     generators = {}
-    for name in (
-        "generate_experiment_outcomes_table",
-        "generate_serialization_efficiency_table",
-        "generate_tokenizer_comparison_figure",
-        "generate_direct_accuracy_by_format_figure",
-        "generate_direct_accuracy_by_model_size_figure",
-        "generate_direct_operational_table",
-        "generate_direct_token_usage_figure",
-        "generate_direct_latency_figure",
-        "generate_text_to_sql_retrieval_table",
-        "generate_text_to_sql_accuracy_figure",
-        "generate_text_to_sql_operational_table",
-        "generate_text_to_sql_token_figure",
-        "generate_text_to_sql_latency_figure",
-        "generate_error_correction_table",
-        "generate_error_correction_figure",
-        "generate_pipeline_retrieval_comparison_figure",
-        "generate_pipeline_size_retrieval_figure",
-        "generate_pipeline_size_cohort_table",
-        "generate_common_cohort_table",
-        "generate_common_cohort_latency_figure",
-        "generate_common_cohort_token_figure",
-        "generate_database_size_accuracy_figures",
-    ):
-        output = tmp_path / name
+    for name, filename in {
+        "generate_experiment_outcomes_table": "experiment_outcomes.tex",
+        "generate_serialization_efficiency_table": "serialization_efficiency.tex",
+        "generate_tokenizer_comparison_figure": "tokenizer_family_comparison.pdf",
+        "generate_direct_accuracy_by_format_figure": "direct_accuracy_by_format.pdf",
+        "generate_direct_accuracy_by_model_size_figure": "direct_accuracy_by_model_size.pdf",
+        "generate_direct_operational_table": "direct_operational_efficiency.tex",
+        "generate_text_to_sql_retrieval_table": "text_to_sql_retrieval_accuracy.tex",
+        "generate_text_to_sql_accuracy_figure": "text_to_sql_accuracy_by_model_size.pdf",
+        "generate_text_to_sql_operational_table": "text_to_sql_operational_efficiency.tex",
+        "generate_error_correction_table": "text_to_sql_error_correction.tex",
+        "generate_pipeline_retrieval_comparison_figure": "pipeline_retrieval_comparison.pdf",
+        "generate_pipeline_size_retrieval_figure": "pipeline_retrieval_by_database_size.pdf",
+        "generate_pipeline_size_cohort_table": "pipeline_size_cohorts.tex",
+        "generate_common_cohort_latency_figure": "common_cohort_latency.pdf",
+        "generate_common_cohort_token_figure": "common_cohort_token_usage.pdf",
+        "generate_database_size_accuracy_figures": "direct_accuracy_by_database_size_nem.pdf",
+    }.items():
+        output = tmp_path / ("tables" if filename.endswith(".tex") else "figures") / filename
         generators[name] = Mock(return_value=[output] if name.endswith("figures") else output)
         monkeypatch.setattr(orchestration, name, generators[name])
     evidence = Mock()
     monkeypatch.setattr(orchestration, "save_chapter5_evidence", evidence)
 
     assert orchestration.main(args) == 0
+    saved = {
+        Path(line.removeprefix("Saved ")).relative_to(tmp_path)
+        for line in capsys.readouterr().out.splitlines()
+        if line.startswith("Saved ")
+    }
+    assert saved == _thesis_artifacts()
 
     answerable = calculators["calculate_text_to_sql_analysis"].call_args.args[0]
     context_fit = calculators["calculate_direct_efficiency"].call_args.args[0]
@@ -255,8 +286,6 @@ def test_cli_dispatches_answerable_and_context_fit_populations(
             "calculate_direct_efficiency",
             (
                 "generate_direct_operational_table",
-                "generate_direct_token_usage_figure",
-                "generate_direct_latency_figure",
             ),
         ),
         (
@@ -265,21 +294,17 @@ def test_cli_dispatches_answerable_and_context_fit_populations(
                 "generate_text_to_sql_retrieval_table",
                 "generate_text_to_sql_accuracy_figure",
                 "generate_text_to_sql_operational_table",
-                "generate_text_to_sql_token_figure",
-                "generate_text_to_sql_latency_figure",
             ),
         ),
         (
             "calculate_text_to_sql_retry_analysis",
             (
                 "generate_error_correction_table",
-                "generate_error_correction_figure",
             ),
         ),
         (
             "calculate_common_cohort_analysis",
             (
-                "generate_common_cohort_table",
                 "generate_common_cohort_latency_figure",
                 "generate_common_cohort_token_figure",
             ),
@@ -309,25 +334,35 @@ def test_cli_dispatches_answerable_and_context_fit_populations(
     assert generators["generate_tokenizer_comparison_figure"].call_args.args[0] is report
     assert calculators["calculate_pipeline_size_retrieval_comparison"].call_args.args[1] is report
     assert evidence.call_args.args[0] is answerable
-    assert evidence.call_args.args[-1] == tmp_path / "audit"
+    assert evidence.call_args.args[-1] == tmp_path / "summaries"
     assert evidence.call_args.kwargs["size_retrieval"] is (
         calculators["calculate_pipeline_size_retrieval_comparison"].return_value
     )
 
-    manifest = pd.read_csv(tmp_path / "audit" / "analysis_cohort_membership.csv")
+    manifest = pd.read_csv(tmp_path / "summaries" / "analysis_cohort_membership.csv")
     assert len(manifest) == 6
     assert manifest["answerable"].sum() == manifest["context_fit"].sum() == 4
     assert (manifest["answerable"] & manifest["context_fit"]).sum() == 2
-    audit = json.loads((tmp_path / "audit" / "analysis_cohort_audit.json").read_text())
+    audit = json.loads((tmp_path / "summaries" / "analysis_cohort_audit.json").read_text())
     assert all(source["sha256"] for source in audit["reference_sources"])
     assert (tmp_path / "tables" / "analysis_cohorts.tex").is_file()
 
 
-def test_parser_defaults_use_stored_references_and_separate_audit_directory(tmp_path: Path) -> None:
+def test_parser_defaults_use_stored_references_and_three_output_directories(tmp_path: Path) -> None:
     args = orchestration.build_parser(ProjectPaths.from_root(tmp_path)).parse_args([])
 
     assert args.references_dir == tmp_path / "data"
-    assert args.audit_dir == tmp_path / "analysis" / "chapter5"
+    assert args.summaries_dir == tmp_path / "analysis" / "summaries"
+    assert args.figures_dir == tmp_path / "analysis" / "figures"
+    assert args.tables_dir == tmp_path / "analysis" / "tables"
+
+
+@pytest.mark.parametrize("option", ["--summaries-dir", "--audit-dir"])
+def test_summary_directory_override_accepts_previous_audit_option(
+    option: str, tmp_path: Path,
+) -> None:
+    args = orchestration.build_parser().parse_args([option, str(tmp_path)])
+    assert args.summaries_dir == tmp_path
 
 
 def test_cli_cannot_override_confirmed_model_roster() -> None:

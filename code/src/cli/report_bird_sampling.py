@@ -3,7 +3,7 @@
 Run ``python -m cli.report_bird_sampling`` from ``code/``. The report uses the
 benchmark sampler, serializers, and three GGUF tokenizers, without model inference.
 Temporary databases are removed after measurement. Detailed CSVs are written under
-``results/bird_sampling_sensitivity`` and a summary under ``analysis/``.
+``results/bird_sampling_sensitivity`` and a summary under ``analysis/summaries/``.
 """
 
 from __future__ import annotations
@@ -219,7 +219,7 @@ def main() -> int:
                     "identical_payload_token_counts": len(tokens),
                 }
             report["samples"].append(summary)
-            report_path = paths.root / "analysis/bird_sampling_sensitivity.json"
+            report_path = paths.root / "analysis/summaries/bird_sampling_sensitivity.json"
             report_path.parent.mkdir(parents=True, exist_ok=True)
             report_path.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
             print(

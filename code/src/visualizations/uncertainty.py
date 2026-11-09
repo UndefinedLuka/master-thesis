@@ -131,54 +131,6 @@ def interval_marks(axis, positions, rows, metric, *, horizontal=False, color="#3
         axis.plot(positions, high, "_", color=color, markersize=5)
 
 
-def effect_axis(axis, *, horizontal=False, label="Difference from CSV", ratio=False):
-    """Expand an existing subplot with an aligned effect-size panel."""
-    grid = axis.get_subplotspec().subgridspec(
-        1 if horizontal else 2, 2 if horizontal else 1,
-        **({"width_ratios": [2, 1.3], "wspace": 0.15} if horizontal else
-           {"height_ratios": [2, 1], "hspace": 0.12}),
-    )
-    axis.set_subplotspec(grid[0])
-    companion = axis.figure.add_subplot(
-        grid[1], **({"sharey": axis} if horizontal else {"sharex": axis})
-    )
-    companion.spines[["top", "right"]].set_visible(False)
-    companion.grid(axis="x" if horizontal else "y", alpha=0.3)
-    if horizontal:
-        companion.axvline(1 if ratio else 0, color="#777777", linewidth=0.8)
-        companion.set_xlabel(label, fontsize=9)
-        companion.tick_params(axis="y", labelleft=False)
-    else:
-        companion.axhline(1 if ratio else 0, color="#777777", linewidth=0.8)
-        companion.set_ylabel(label, fontsize=8)
-        companion.set_xlabel(axis.get_xlabel(), fontsize=9)
-        axis.set_xlabel("")
-        axis.tick_params(axis="x", labelbottom=False)
-        companion.tick_params(axis="x", labelrotation=30, labelsize=8)
-    companion.tick_params(labelsize=8)
-    return companion
-
-
-def effect_marks(axis, positions, rows, metric, *, horizontal=False, color="#333333",
-                 scale=1.0):
-    if f"{metric}_effect" not in rows:
-        return
-    values = rows[f"{metric}_effect"] * scale
-    scaled = rows[[f"{metric}_effect_low", f"{metric}_effect_high"]] * scale
-    interval_marks(axis, positions, scaled, f"{metric}_effect",
-                   horizontal=horizontal, color=color)
-    axis.plot(values if horizontal else positions, positions if horizontal else values,
-              "o", color=color, markersize=4)
-
-
-def ci_text(row, metric: str, decimals: int = 2) -> str:
-    """Compact numerical interval for table cells and figure annotations."""
-    low, high = row[f"{metric}_low"], row[f"{metric}_high"]
-    if not np.isfinite([low, high]).all():
-        return "[not estimable]"
-    return f"[{low:.{decimals}f}, {high:.{decimals}f}]"
-
-
 def table_estimate(row, metric: str, decimals=2, *, scale=1.0, suffix="") -> str:
     """Two-line LaTeX cell, keeping intervals below their estimates to limit width."""
     if hasattr(row, "_asdict"):

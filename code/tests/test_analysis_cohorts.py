@@ -251,9 +251,9 @@ def test_manifest_and_counts_are_reproducible_under_input_permutation(tmp_path):
     pd.testing.assert_frame_equal(one.manifest, two.manifest)
     pd.testing.assert_frame_equal(one.summary, two.summary)
     assert one.audit == two.audit
-    files = generate_cohort_artifacts(one, tmp_path / "tables", tmp_path / "audit")
+    files = generate_cohort_artifacts(one, tmp_path / "tables", tmp_path / "summaries")
     before = [path.read_bytes() for path in files]
-    generate_cohort_artifacts(two, tmp_path / "tables", tmp_path / "audit")
+    generate_cohort_artifacts(two, tmp_path / "tables", tmp_path / "summaries")
     assert before == [path.read_bytes() for path in files]
     assert json.loads(files[-1].read_text())["datasets"][0]["context_fit_questions"] == 1
     assert r"\parbox" not in files[0].read_text()

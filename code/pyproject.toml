@@ -35,7 +35,6 @@ metrics = [
 visualizations = [
     "matplotlib>=3.9.0",
     "pandas>=2.2.0",
-    "seaborn>=0.13.2",
 ]
 
 [project.scripts]

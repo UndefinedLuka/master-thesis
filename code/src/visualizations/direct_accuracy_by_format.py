@@ -80,10 +80,7 @@ def plot_direct_accuracy_by_format(
             axis = axes[row_index][column_index]
             panel = dataset_rows[dataset_rows["metric"].eq(metric)].set_index("format")
             panel = panel.reindex(formats)
-            scores = [
-                float(panel.loc[value, "mean_score"]) if value in panel.index else float("nan")
-                for value in formats
-            ]
+            scores = [float(panel.loc[value, "mean_score"]) for value in formats]
             axis.bar(
                 range(len(formats)),
                 scores,

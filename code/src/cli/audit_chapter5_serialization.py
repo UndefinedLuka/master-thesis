@@ -129,7 +129,7 @@ def main() -> None:
         default=root / "results/input_token_overhead/serialization_tokens_by_database.csv",
     )
     parser.add_argument("--output", type=Path,
-                        default=root / "analysis/chapter5_serialization_audit.json")
+                        default=root / "analysis/summaries/chapter5_serialization_audit.json")
     args = parser.parse_args()
     audit = audit_serialization(args.source)
     args.output.parent.mkdir(parents=True, exist_ok=True)

@@ -7,28 +7,17 @@ from pathlib import Path
 import pytest
 
 pytest.importorskip("pandas")
-pytest.importorskip("matplotlib")
 
 import pandas as pd
 
 from visualizations.config import (
-    DIRECT_LATENCY_FIGURE_FILENAME,
     DIRECT_OPERATIONAL_TABLE_FILENAME,
-    DIRECT_TOKEN_USAGE_FIGURE_FILENAME,
     SERIALIZATION_FORMAT_ORDER,
 )
 from visualizations.direct_efficiency_data import calculate_direct_efficiency
-from visualizations.direct_latency_by_format import (
-    generate_direct_latency_figure,
-    plot_direct_latency,
-)
 from visualizations.direct_operational_efficiency_table import (
     generate_direct_operational_table,
     render_direct_operational_table,
-)
-from visualizations.direct_token_usage import (
-    generate_direct_token_usage_figure,
-    plot_direct_token_usage,
 )
 
 
@@ -182,31 +171,3 @@ def test_table_contains_all_requested_metrics(tmp_path: Path) -> None:
     tables_dir = tmp_path / "tables"
     table_path = generate_direct_operational_table(analysis, tables_dir)
     assert table_path == tables_dir / DIRECT_OPERATIONAL_TABLE_FILENAME
-
-
-def test_figures_contain_all_requested_metrics(tmp_path: Path) -> None:
-    analysis = calculate_direct_efficiency(_complete_matrix())
-    token_figure, token_axes = plot_direct_token_usage(analysis)
-    latency_figure, latency_axes = plot_direct_latency(analysis)
-    assert [axis.get_title() for axis in token_axes[0]] == [
-        "Average input tokens",
-        "Average output tokens",
-    ]
-    assert len(latency_axes[0].containers) == 2
-    assert [text.get_text() for text in latency_figure.legends[0].get_texts()] == [
-        "TTFT",
-        "Generation after first token",
-    ]
-
-    figures_dir = tmp_path / "figures"
-    token_path = generate_direct_token_usage_figure(analysis, figures_dir)
-    latency_path = generate_direct_latency_figure(analysis, figures_dir)
-    assert token_path == figures_dir / DIRECT_TOKEN_USAGE_FIGURE_FILENAME
-    assert latency_path == figures_dir / DIRECT_LATENCY_FIGURE_FILENAME
-    assert token_path.stat().st_size > 0
-    assert latency_path.stat().st_size > 0
-
-    import matplotlib.pyplot as plt
-
-    plt.close(token_figure)
-    plt.close(latency_figure)

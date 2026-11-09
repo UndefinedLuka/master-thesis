@@ -9,7 +9,7 @@ import pytest
 
 pytest.importorskip("pandas")
 
-from visualizations.config import METHOD_LABELS, METRIC_TITLES
+from visualizations.config import FORMAT_LABELS, METRIC_TITLES
 from visualizations.data import (
     discover_scored_files,
     load_scored_results,
@@ -17,14 +17,13 @@ from visualizations.data import (
 
 
 def test_shared_display_labels_match_publication_style() -> None:
-    assert list(METHOD_LABELS.values()) == [
+    assert list(FORMAT_LABELS.values()) == [
         "CSV",
-        "Markdown",
         "TOON",
+        "Markdown",
         "YAML",
         "JSON",
         "XML",
-        "SQL",
     ]
     assert list(METRIC_TITLES.values()) == [
         "NEM",

@@ -14,29 +14,18 @@ import pandas as pd
 
 from visualizations.config import (
     TEXT_TO_SQL_ACCURACY_FIGURE_FILENAME,
-    TEXT_TO_SQL_LATENCY_FIGURE_FILENAME,
     TEXT_TO_SQL_OPERATIONAL_TABLE_FILENAME,
     TEXT_TO_SQL_RETRIEVAL_TABLE_FILENAME,
-    TEXT_TO_SQL_RETRY_FIGURE_FILENAME,
     TEXT_TO_SQL_RETRY_TABLE_FILENAME,
-    TEXT_TO_SQL_TOKEN_FIGURE_FILENAME,
 )
 from visualizations.text_to_sql_accuracy_by_model_size import (
     generate_text_to_sql_accuracy_figure,
     plot_text_to_sql_accuracy,
 )
 from visualizations.text_to_sql_data import calculate_text_to_sql_analysis
-from visualizations.text_to_sql_error_correction import (
-    generate_error_correction_figure,
-    plot_error_correction_performance,
-)
 from visualizations.text_to_sql_error_correction_table import (
     generate_error_correction_table,
     render_error_correction_table,
-)
-from visualizations.text_to_sql_latency import (
-    generate_text_to_sql_latency_figure,
-    plot_text_to_sql_latency,
 )
 from visualizations.text_to_sql_operational_efficiency_table import (
     generate_text_to_sql_operational_table,
@@ -47,10 +36,6 @@ from visualizations.text_to_sql_retrieval_accuracy_table import (
     render_text_to_sql_retrieval_table,
 )
 from visualizations.text_to_sql_retry_data import calculate_text_to_sql_retry_analysis
-from visualizations.text_to_sql_token_usage import (
-    generate_text_to_sql_token_figure,
-    plot_text_to_sql_token_usage,
-)
 
 
 def _record(
@@ -245,34 +230,9 @@ def test_error_correction_table(tmp_path: Path) -> None:
     assert table_path.name == TEXT_TO_SQL_RETRY_TABLE_FILENAME
 
 
-def test_error_correction_figure(tmp_path: Path) -> None:
-    retry_analysis = calculate_text_to_sql_retry_analysis(
-        calculate_text_to_sql_analysis(_results())
-    )
-    figure, axes = plot_error_correction_performance(retry_analysis)
-    assert [axis.get_title() for axis in axes] == [
-        "Added generation time by terminal outcome",
-        "Added generation time by retry stage",
-    ]
-    # Both decompositions sum to the same added seconds per eligible run.
-    for axis in axes:
-        assert axis.get_ylabel() == "Additional seconds per answerable run"
-        assert sum(patch.get_height() for patch in axis.patches) == pytest.approx(4 / 3)
-
-    figure_path = generate_error_correction_figure(retry_analysis, tmp_path / "figures")
-    assert figure_path.name == TEXT_TO_SQL_RETRY_FIGURE_FILENAME
-    assert figure_path.stat().st_size > 0
-
-    import matplotlib.pyplot as plt
-
-    plt.close(figure)
-
-
-def test_text_to_sql_figures_show_metrics_tokens_latency_and_retries(tmp_path: Path) -> None:
+def test_text_to_sql_accuracy_figure_shows_all_metrics_and_datasets(tmp_path: Path) -> None:
     analysis = calculate_text_to_sql_analysis(_results())
     accuracy_figure, accuracy_axes = plot_text_to_sql_accuracy(analysis)
-    token_figure, token_axes = plot_text_to_sql_token_usage(analysis)
-    latency_figure, latency_axes = plot_text_to_sql_latency(analysis)
 
     assert len(accuracy_axes) == 3
     assert all(len(row) == 2 for row in accuracy_axes)
@@ -282,34 +242,14 @@ def test_text_to_sql_figures_show_metrics_tokens_latency_and_retries(tmp_path: P
         "BERTScore\nMean score",
         "ROUGE-L\nMean score",
     ]
-    assert [axis.get_title() for axis in token_axes[0]] == [
-        "Average input tokens",
-        "Average output tokens",
-    ]
-    assert all(len(axis.containers) == 3 for axis in latency_axes)
-    for axis in latency_axes:
-        formatter = axis.yaxis.get_major_formatter()
-        assert formatter(0.5, 0) == r"\num{0.5}"
-        assert formatter(1.5, 1) == r"\num{1.5}"
-    assert [text.get_text() for text in latency_figure.legends[0].get_texts()][0] == (
-        "Cumulative TTFT"
-    )
-    assert any(r"\num{1.00} retries" in text.get_text() for text in latency_axes[0].texts)
-
     figures_dir = tmp_path / "figures"
     accuracy_path = generate_text_to_sql_accuracy_figure(analysis, figures_dir)
-    token_path = generate_text_to_sql_token_figure(analysis, figures_dir)
-    latency_path = generate_text_to_sql_latency_figure(analysis, figures_dir)
     assert accuracy_path == figures_dir / TEXT_TO_SQL_ACCURACY_FIGURE_FILENAME
-    assert token_path == figures_dir / TEXT_TO_SQL_TOKEN_FIGURE_FILENAME
-    assert latency_path == figures_dir / TEXT_TO_SQL_LATENCY_FIGURE_FILENAME
-    assert all(path.stat().st_size > 0 for path in (accuracy_path, token_path, latency_path))
+    assert accuracy_path.stat().st_size > 0
 
     import matplotlib.pyplot as plt
 
     plt.close(accuracy_figure)
-    plt.close(token_figure)
-    plt.close(latency_figure)
 
 
 @pytest.mark.parametrize("column,value,message", [

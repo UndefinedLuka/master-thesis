@@ -217,6 +217,25 @@ def _plot_results() -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
+def test_format_plot_preserves_nan_for_formats_missing_from_one_dataset(monkeypatch) -> None:
+    import matplotlib.pyplot as plt
+
+    monkeypatch.setattr(
+        "visualizations.direct_accuracy_by_format.tight_layout", lambda *args, **kwargs: None,
+    )
+    summary = calculate_format_accuracy(_plot_results())
+    summary = summary[~(summary["dataset"].eq("bird") & summary["format"].eq("json"))]
+
+    figure, axes = plot_direct_accuracy_by_format(summary)
+    try:
+        for row in axes:
+            assert len(row[0].patches) == len(row[1].patches) == 2
+            assert not pd.isna(row[0].patches[1].get_height())
+            assert pd.isna(row[1].patches[1].get_height())
+    finally:
+        plt.close(figure)
+
+
 def test_format_and_model_size_figures_have_dataset_metric_grid(tmp_path: Path) -> None:
     results = _plot_results()
     format_figure, format_axes = plot_direct_accuracy_by_format(

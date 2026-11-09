@@ -11,7 +11,7 @@
 # multi-part GGUF (`...-00001-of-0000N.gguf`) would need merging first, since cli.run_all globs
 # models/*.gguf and would otherwise treat each shard as its own model.
 #
-# 13 models, ~97 GB total. Sizes are the on-disk GGUF size (weights only — the 128K KV cache is
+# 11 models from Chapter 4. Sizes are the on-disk GGUF size (weights only — the 128K KV cache is
 # a separate, much larger VRAM allocation at run time).
 
 # ── Qwen 3.5 ──────────────────────────────────────────────────────────────────
@@ -24,17 +24,15 @@ https://huggingface.co/unsloth/Qwen3.5-27B-GGUF/resolve/main/Qwen3.5-27B-Q4_K_M.
 # ── Ministral 3 ───────────────────────────────────────────────────────────────
 # The Instruct variants, not the Reasoning ones — the benchmark measures direct extraction,
 # and the Reasoning models' <think> traces would confound both accuracy and tokens/s.
-https://huggingface.co/unsloth/Ministral-3-3B-Instruct-2512-GGUF/resolve/main/Ministral-3-3B-Instruct-2512-Q4_K_M.gguf?download=true      # 2.2 GB
 https://huggingface.co/unsloth/Ministral-3-8B-Instruct-2512-GGUF/resolve/main/Ministral-3-8B-Instruct-2512-Q4_K_M.gguf?download=true      # 5.2 GB
 https://huggingface.co/unsloth/Ministral-3-14B-Instruct-2512-GGUF/resolve/main/Ministral-3-14B-Instruct-2512-Q4_K_M.gguf?download=true    # 8.2 GB
 
 # ── Gemma 4 ───────────────────────────────────────────────────────────────────
-# Gemma 4 ships as E2B / E4B (MatFormer "effective" sizes) / 12b / 26B-A4B (MoE) / 31B — there
-# is no 4b GGUF repo. Non-QAT repos, to keep Q4_K_M uniform across all families.
+# Selected Gemma 4 variants: E2B / E4B (MatFormer "effective" sizes) / 12b / 26B-A4B (MoE).
+# Non-QAT repos, using Q4_K_M or the UD-Q4_K_M variant noted below.
 https://huggingface.co/unsloth/gemma-4-E2B-it-GGUF/resolve/main/gemma-4-E2B-it-Q4_K_M.gguf?download=true        # 3.1 GB
 https://huggingface.co/unsloth/gemma-4-E4B-it-GGUF/resolve/main/gemma-4-E4B-it-Q4_K_M.gguf?download=true        # 5.0 GB
 https://huggingface.co/unsloth/gemma-4-12b-it-GGUF/resolve/main/gemma-4-12b-it-Q4_K_M.gguf?download=true        # 7.1 GB
 # 26B-A4B has no plain Q4_K_M — only unsloth's UD- (dynamic) variants. UD-Q4_K_M is the closest
 # match; note the deviation if you report per-model quant details.
 https://huggingface.co/unsloth/gemma-4-26B-A4B-it-GGUF/resolve/main/gemma-4-26B-A4B-it-UD-Q4_K_M.gguf?download=true   # 17.0 GB
-https://huggingface.co/unsloth/gemma-4-31B-it-GGUF/resolve/main/gemma-4-31B-it-Q4_K_M.gguf?download=true        # 18.3 GB

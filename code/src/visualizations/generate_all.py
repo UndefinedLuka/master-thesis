@@ -1,4 +1,4 @@
-"""Generate every results-chapter table and figure through one command.
+"""Generate only the tables and figures imported by the results chapter.
 
 The orchestrator owns argument parsing, input loading, coverage validation, and progress output.
 Artifact modules remain independently testable and each writes exactly one table or figure.
@@ -25,7 +25,6 @@ from visualizations.cohorts import (
 )
 from visualizations.common_cohort_data import calculate_common_cohort_analysis
 from visualizations.common_cohort_latency import generate_common_cohort_latency_figure
-from visualizations.common_cohort_operational_table import generate_common_cohort_table
 from visualizations.common_cohort_token_usage import generate_common_cohort_token_figure
 from visualizations.config import (
     CONTEXT_WINDOW_TOKENS,
@@ -50,11 +49,9 @@ from visualizations.direct_efficiency_data import (
     DIRECT_EFFICIENCY_COLUMNS,
     calculate_direct_efficiency,
 )
-from visualizations.direct_latency_by_format import generate_direct_latency_figure
 from visualizations.direct_operational_efficiency_table import (
     generate_direct_operational_table,
 )
-from visualizations.direct_token_usage import generate_direct_token_usage_figure
 from visualizations.experiment_outcomes import (
     DEFAULT_EXCLUDED_MODEL_MARKERS,
     FAILURE_OUTCOMES,
@@ -94,11 +91,9 @@ from visualizations.text_to_sql_data import (
     TEXT_TO_SQL_COLUMNS,
     calculate_text_to_sql_analysis,
 )
-from visualizations.text_to_sql_error_correction import generate_error_correction_figure
 from visualizations.text_to_sql_error_correction_table import (
     generate_error_correction_table,
 )
-from visualizations.text_to_sql_latency import generate_text_to_sql_latency_figure
 from visualizations.text_to_sql_operational_efficiency_table import (
     generate_text_to_sql_operational_table,
 )
@@ -106,7 +101,6 @@ from visualizations.text_to_sql_retrieval_accuracy_table import (
     generate_text_to_sql_retrieval_table,
 )
 from visualizations.text_to_sql_retry_data import calculate_text_to_sql_retry_analysis
-from visualizations.text_to_sql_token_usage import generate_text_to_sql_token_figure
 from visualizations.tokenizer_family_comparison import generate_tokenizer_comparison_figure
 
 
@@ -120,7 +114,7 @@ def generate_all(
     context_window_tokens: int = CONTEXT_WINDOW_TOKENS,
     coverage_validated: bool,
     cohorts: AnalysisCohorts,
-    audit_dir: Path,
+    summaries_dir: Path,
 ) -> list[Path]:
     """Generate artifacts using the audited, explicitly selected question populations."""
     if excluded_model_markers != DEFAULT_EXCLUDED_MODEL_MARKERS:
@@ -147,10 +141,10 @@ def generate_all(
     size_retrieval = calculate_pipeline_size_retrieval_comparison(
         answerable, serialization_report, excluded_model_markers=excluded_model_markers,
     )
-    generate_cohort_artifacts(cohorts, tables_dir=tables_dir, audit_dir=audit_dir)
+    generate_cohort_artifacts(cohorts, tables_dir=tables_dir, summaries_dir=summaries_dir)
     save_chapter5_evidence(
         answerable, serialization_report, efficiency, sql_analysis, retry_analysis,
-        common_cohort, retrieval, audit_dir,
+        common_cohort, retrieval, summaries_dir,
         size_retrieval=size_retrieval,
     )
     return [
@@ -185,19 +179,13 @@ def generate_all(
             excluded_model_markers=excluded_model_markers,
         ),
         generate_direct_operational_table(efficiency, tables_dir),
-        generate_direct_token_usage_figure(efficiency, figures_dir),
-        generate_direct_latency_figure(efficiency, figures_dir),
         generate_text_to_sql_retrieval_table(sql_analysis, tables_dir),
         generate_text_to_sql_accuracy_figure(sql_analysis, figures_dir),
         generate_text_to_sql_operational_table(sql_analysis, tables_dir),
-        generate_text_to_sql_token_figure(sql_analysis, figures_dir),
-        generate_text_to_sql_latency_figure(sql_analysis, figures_dir),
         generate_error_correction_table(retry_analysis, tables_dir),
-        generate_error_correction_figure(retry_analysis, figures_dir),
         generate_pipeline_retrieval_comparison_figure(retrieval, figures_dir),
         generate_pipeline_size_cohort_table(size_retrieval, tables_dir),
         generate_pipeline_size_retrieval_figure(size_retrieval, figures_dir),
-        generate_common_cohort_table(common_cohort, tables_dir),
         generate_common_cohort_latency_figure(common_cohort, figures_dir),
         generate_common_cohort_token_figure(common_cohort, figures_dir),
     ]
@@ -232,10 +220,10 @@ def build_parser(paths: ProjectPaths | None = None) -> argparse.ArgumentParser:
         help="directory containing stored *_references.ndjson (default: data/)",
     )
     parser.add_argument(
-        "--audit-dir",
+        "--summaries-dir", "--audit-dir",
         type=Path,
-        default=project_paths.root / "analysis" / "chapter5",
-        help="cohort manifest and recalculated supporting evidence",
+        default=project_paths.root / "analysis" / "summaries",
+        help="CSV/JSON summaries and audit evidence (default: analysis/summaries/)",
     )
     parser.add_argument(
         "--serialization-report",
@@ -334,7 +322,9 @@ def main(argv: list[str] | None = None) -> int:
         cohorts = build_analysis_cohorts(
             experiment_results, references_dir=args.references_dir,
         )
-        generate_cohort_artifacts(cohorts, tables_dir=args.tables_dir, audit_dir=args.audit_dir)
+        generate_cohort_artifacts(
+            cohorts, tables_dir=args.tables_dir, summaries_dir=args.summaries_dir,
+        )
         _validate_publication_cohorts(cohorts)
         direct_accuracy_count = validate_direct_accuracy_scores(cohorts.answerable_records)
     except (ValueError, FileNotFoundError) as exc:
@@ -352,7 +342,7 @@ def main(argv: list[str] | None = None) -> int:
         context_window_tokens=args.context_window,
         coverage_validated=coverage_validated,
         cohorts=cohorts,
-        audit_dir=args.audit_dir,
+        summaries_dir=args.summaries_dir,
     )
     outcome_summary = calculate_outcome_summary(
         experiment_results,

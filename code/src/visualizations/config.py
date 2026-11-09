@@ -37,26 +37,6 @@ FORMAT_COLORS: dict[str, str] = {
     "xml": "#56B4E9",
 }
 
-SQL_EXECUTION_LABEL = "SQL execution"
-METHOD_ORDER: tuple[str, ...] = (
-    "csv",
-    "markdown",
-    "toon",
-    "yaml",
-    "json",
-    "xml",
-    SQL_EXECUTION_LABEL,
-)
-METHOD_LABELS: dict[str, str] = {
-    "csv": "CSV",
-    "markdown": "Markdown",
-    "toon": "TOON",
-    "yaml": "YAML",
-    "json": "JSON",
-    "xml": "XML",
-    SQL_EXECUTION_LABEL: "SQL",
-}
-
 TOKENIZER_FAMILY_ORDER: tuple[str, ...] = ("qwen-3.5", "ministral-3", "gemma-4")
 TOKENIZER_FAMILY_LABELS: dict[str, str] = {
     "qwen-3.5": "Qwen 3.5",
@@ -96,48 +76,25 @@ EXPERIMENT_OUTCOMES_TABLE_LABEL = "tab:experiment-outcomes"
 SERIALIZATION_EFFICIENCY_TABLE_FILENAME = "serialization_efficiency.tex"
 SERIALIZATION_EFFICIENCY_TABLE_LABEL = "tab:serialization-efficiency"
 TOKENIZER_COMPARISON_FIGURE_FILENAME = "tokenizer_family_comparison.pdf"
-TOKENIZER_COMPARISON_FIGURE_LABEL = "fig:tokenizer-family-comparison"
 DIRECT_ACCURACY_FORMAT_FIGURE_FILENAME = "direct_accuracy_by_format.pdf"
-DIRECT_ACCURACY_FORMAT_FIGURE_LABEL = "fig:direct-accuracy-by-format"
 DIRECT_ACCURACY_MODEL_SIZE_FIGURE_FILENAME = "direct_accuracy_by_model_size.pdf"
-DIRECT_ACCURACY_MODEL_SIZE_FIGURE_LABEL = "fig:direct-accuracy-by-model-size"
 DIRECT_OPERATIONAL_TABLE_FILENAME = "direct_operational_efficiency.tex"
 DIRECT_OPERATIONAL_TABLE_LABEL = "tab:direct-operational-efficiency"
-DIRECT_TOKEN_USAGE_FIGURE_FILENAME = "direct_token_usage_by_format.pdf"
-DIRECT_TOKEN_USAGE_FIGURE_LABEL = "fig:direct-token-usage-by-format"
-DIRECT_LATENCY_FIGURE_FILENAME = "direct_latency_by_format.pdf"
-DIRECT_LATENCY_FIGURE_LABEL = "fig:direct-latency-by-format"
 DIRECT_DATABASE_SIZE_FIGURE_FILENAMES: dict[str, str] = {
     "normalized_exact_match": "direct_accuracy_by_database_size_nem.pdf",
 }
-DIRECT_DATABASE_SIZE_FIGURE_LABELS: dict[str, str] = {
-    "normalized_exact_match": "fig:direct-accuracy-by-database-size-nem",
-}
 TEXT_TO_SQL_ACCURACY_FIGURE_FILENAME = "text_to_sql_accuracy_by_model_size.pdf"
-TEXT_TO_SQL_ACCURACY_FIGURE_LABEL = "fig:text-to-sql-accuracy-by-model-size"
 TEXT_TO_SQL_RETRIEVAL_TABLE_FILENAME = "text_to_sql_retrieval_accuracy.tex"
 TEXT_TO_SQL_RETRIEVAL_TABLE_LABEL = "tab:text-to-sql-retrieval-accuracy"
 TEXT_TO_SQL_OPERATIONAL_TABLE_FILENAME = "text_to_sql_operational_efficiency.tex"
 TEXT_TO_SQL_OPERATIONAL_TABLE_LABEL = "tab:text-to-sql-operational-efficiency"
-TEXT_TO_SQL_TOKEN_FIGURE_FILENAME = "text_to_sql_token_usage.pdf"
-TEXT_TO_SQL_TOKEN_FIGURE_LABEL = "fig:text-to-sql-token-usage"
-TEXT_TO_SQL_LATENCY_FIGURE_FILENAME = "text_to_sql_latency.pdf"
-TEXT_TO_SQL_LATENCY_FIGURE_LABEL = "fig:text-to-sql-latency"
 TEXT_TO_SQL_RETRY_TABLE_FILENAME = "text_to_sql_error_correction.tex"
 TEXT_TO_SQL_RETRY_TABLE_LABEL = "tab:text-to-sql-error-correction"
-TEXT_TO_SQL_RETRY_FIGURE_FILENAME = "text_to_sql_error_correction.pdf"
-TEXT_TO_SQL_RETRY_FIGURE_LABEL = "fig:text-to-sql-error-correction"
 COMMON_COHORT_SQL_METHOD = "text_to_sql"
 COMMON_COHORT_METHOD_ORDER: tuple[str, ...] = (
     COMMON_COHORT_SQL_METHOD,
     *SERIALIZATION_FORMAT_ORDER,
 )
-COMMON_COHORT_METHOD_LABELS: dict[str, str] = {
-    COMMON_COHORT_SQL_METHOD: "Text-to-SQL",
-    **{value: f"Direct / {label}" for value, label in FORMAT_LABELS.items()},
-}
-COMMON_COHORT_TABLE_FILENAME = "common_cohort_operational_efficiency.tex"
-COMMON_COHORT_TABLE_LABEL = "tab:common-cohort-operational-efficiency"
 COMMON_COHORT_LATENCY_FIGURE_FILENAME = "common_cohort_latency.pdf"
 COMMON_COHORT_TOKENS_FIGURE_FILENAME = "common_cohort_token_usage.pdf"
 RETRY_OUTCOME_ORDER: tuple[str, ...] = (
@@ -156,19 +113,6 @@ RETRY_OUTCOME_LABELS: dict[str, str] = {
 }
 
 
-LATENCY_PHASE_LABELS: dict[str, str] = {
-    "ttft": "TTFT",
-    "generation": "Generation after first token",
-}
-LATENCY_PHASE_COLORS: dict[str, str] = {
-    "ttft": "#0072B2",
-    "generation": "#E69F00",
-}
-TEXT_TO_SQL_LATENCY_PHASE_LABELS: dict[str, str] = {
-    "ttft": "Cumulative TTFT",
-    "generation": "Generation after first tokens",
-    "sql": "SQL execution",
-}
 TEXT_TO_SQL_LATENCY_PHASE_COLORS: dict[str, str] = {
     "ttft": "#0072B2",
     "generation": "#E69F00",

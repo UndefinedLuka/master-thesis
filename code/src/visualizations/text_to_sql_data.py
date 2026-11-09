@@ -12,7 +12,6 @@ import pandas as pd
 from visualizations.config import (
     DATASET_ORDER,
     DEFAULT_EXCLUDED_MODEL_MARKERS,
-    TOKENIZER_FAMILY_LABELS,
 )
 from visualizations.direct_accuracy_data import (
     METRIC_SOURCE_COLUMNS,
@@ -306,12 +305,6 @@ def calculate_text_to_sql_analysis(
         model_count=int(data["model_id"].nunique()),
         question_counts=question_counts,
     )
-
-
-def text_to_sql_model_label(model_family: str, size_label: str) -> str:
-    """Return a compact two-line publication label for a model."""
-    size_text = size_label.replace(" (", "B (", 1) if " (" in size_label else f"{size_label}B"
-    return f"{TOKENIZER_FAMILY_LABELS[model_family]}\n{size_text}"
 
 
 def _numeric_attempt_values(values: Any) -> list[float] | None:
