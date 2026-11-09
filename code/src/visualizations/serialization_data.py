@@ -1,13 +1,15 @@
-"""Shared loading, validation, and ordering helpers for serialization analyses."""
+"""Shared measurement, validation, and ordering helpers for serialization analyses."""
 
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from pathlib import Path
 
 import pandas as pd
 
+from config.paths import ProjectPaths
+from serialization.tokens import measure_serialization_tokens
 from visualizations.config import (
     DATASET_ORDER,
     EXPECTED_DATABASE_COUNTS,
@@ -42,11 +44,18 @@ class SerializationCoverageStats:
     record_count: int
 
 
-def load_token_report(path: Path) -> pd.DataFrame:
-    """Load and minimally validate the serialization-token CSV."""
-    if not path.is_file():
-        raise FileNotFoundError(f"Serialization-token report not found: {path}")
-    report = pd.read_csv(path)
+def measure_token_report(
+    paths: ProjectPaths | None = None,
+    *,
+    models_dir: Path | None = None,
+) -> pd.DataFrame:
+    """Build the analysis input directly from databases and GGUFs, without a disk cache."""
+    records = measure_serialization_tokens(paths, models_dir=models_dir)
+    return validate_token_report(pd.DataFrame(asdict(record) for record in records))
+
+
+def validate_token_report(report: pd.DataFrame) -> pd.DataFrame:
+    """Validate in-memory token measurements and return a normalized copy."""
     require_columns(report, REQUIRED_COLUMNS)
     report = report.copy()
     report["tokens"] = pd.to_numeric(report["tokens"], errors="coerce")

@@ -1,27 +1,28 @@
-"""Tests for the standalone serialized-input token CSV report."""
+"""Tests for in-memory token measurement and the stdout-only reporting command."""
 
 from __future__ import annotations
 
 import csv
+import io
+import json
+import shutil
 from dataclasses import dataclass
 from pathlib import Path
 
 import pytest
 
-from cli.report_serialization_tokens import (
-    DatabaseInput,
-    DatasetInput,
-    TokenizerFamily,
-    TokenizerSelection,
-    TokenRecord,
-    _default_output_dir,
-    discover_databases,
-    load_token_records,
-    measure_databases,
-    resolve_tokenizer_models,
-    write_token_report,
-)
+from cli import report_serialization_tokens as cli
 from config.paths import ProjectPaths
+from config.settings import default_dev_json, effective_db_root
+from serialization import tokens as measurement
+from serialization.tokens import (
+    DatabaseInput,
+    TokenizerFamily,
+    discover_databases,
+    measure_databases,
+    measure_serialization_tokens,
+    resolve_tokenizer_models,
+)
 
 FAMILY = TokenizerFamily(
     key="family",
@@ -43,55 +44,6 @@ class FakeCounter:
 
     def close(self) -> None:
         self.closed = True
-
-
-def _record(
-    database_id: str,
-    serialization_format: str,
-    tokens: int,
-    *,
-    characters: int = 1_000,
-) -> TokenRecord:
-    return TokenRecord(
-        dataset="spider",
-        database_id=database_id,
-        format=serialization_format,
-        tokenizer_family=FAMILY.key,
-        tokenizer_label=FAMILY.label,
-        tokenizer_model=FAMILY.preferred_model,
-        table_count=2,
-        row_count=10,
-        characters=characters,
-        utf8_bytes=characters,
-        tokens=tokens,
-    )
-
-
-def test_default_output_is_under_results_and_isolates_smoke_runs(tmp_path: Path) -> None:
-    paths = ProjectPaths.from_root(tmp_path)
-    selection = TokenizerSelection(FAMILY, tmp_path / FAMILY.preferred_model, ())
-    full = _default_output_dir(
-        paths,
-        datasets=("spider", "bird"),
-        formats=("json", "xml", "yaml", "csv", "markdown", "toon"),
-        family_keys=("qwen-3.5", "ministral-3", "gemma-4"),
-        limit=None,
-        selections=(selection,),
-        custom_tokenizers=False,
-    )
-    smoke = _default_output_dir(
-        paths,
-        datasets=("spider", "bird"),
-        formats=("json", "xml", "yaml", "csv", "markdown", "toon"),
-        family_keys=("qwen-3.5", "ministral-3", "gemma-4"),
-        limit=1,
-        selections=(selection,),
-        custom_tokenizers=False,
-    )
-
-    assert full == tmp_path / "results" / "input_token_overhead"
-    assert smoke.parent == full / "subsets"
-    assert "limit-1" in smoke.name
 
 
 def test_discover_databases_uses_conventional_layout_and_sort_order(tmp_path: Path) -> None:
@@ -195,73 +147,103 @@ def test_measure_databases_counts_each_format_and_tokenizer(tiny_db: Path) -> No
         assert family_record.row_count == 7
 
 
-def test_measure_databases_skips_completed_tokenizer_target(tiny_db: Path) -> None:
-    counter = FakeCounter(FAMILY, Path(FAMILY.preferred_model))
-    completed_record = _record("tiny", "json", 1)
-    checkpointed: list[TokenRecord] = []
-
-    records = measure_databases(
-        "spider",
-        [DatabaseInput("tiny", tiny_db)],
-        ("json", "csv"),
-        [counter],
-        completed={
-            (
-                completed_record.dataset,
-                completed_record.database_id,
-                completed_record.format,
-                completed_record.tokenizer_family,
-                completed_record.tokenizer_model,
+@pytest.fixture
+def inputs(tmp_path, tiny_db, monkeypatch):
+    paths = ProjectPaths.from_root(tmp_path)
+    for dataset in ("spider", "bird"):
+        dev = default_dev_json(dataset, paths.data_dir)
+        dev.parent.mkdir(parents=True, exist_ok=True)
+        query_key = "query" if dataset == "spider" else "SQL"
+        dev.write_text(
+            json.dumps(
+                [
+                    {"db_id": db, "question": "Count?", query_key: "SELECT count(*) FROM singer"}
+                    for db in ("b", "a", "a")
+                ]
             )
-        },
-        on_record=checkpointed.append,
-        show_progress=False,
+        )
+        for db in ("a", "b", "unused"):
+            dest = effective_db_root(dataset, paths.data_dir) / db / f"{db}.sqlite"
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(tiny_db, dest)
+    paths.models_dir.mkdir()
+    for family in measurement.TOKENIZER_FAMILIES:
+        (paths.models_dir / family.preferred_model).write_bytes(b"fake GGUF")
+    counters = []
+
+    def create(selection):
+        counter = FakeCounter(selection.family, selection.model_path)
+        counters.append(counter)
+        return counter
+
+    monkeypatch.setattr(measurement.LlamaCppTokenCounter, "create", create)
+    monkeypatch.setattr(ProjectPaths, "discover", lambda: paths)
+    return paths, counters
+
+
+def _files(root):
+    return {path.relative_to(root): path.read_bytes() for path in root.rglob("*") if path.is_file()}
+
+
+def test_measurement_reads_only_dev_databases_and_writes_nothing(inputs):
+    paths, counters = inputs
+    before = _files(paths.root)
+    records = measure_serialization_tokens(paths, formats=("csv", "json"), show_progress=False)
+    assert len(records) == 2 * 2 * 2 * 3
+    assert {record.database_id for record in records} == {"a", "b"}
+    assert {record.dataset for record in records} == {"spider", "bird"}
+    assert all(record.row_count == 7 and record.tokens > 0 for record in records)
+    assert len(counters) == 3
+    assert all(counter.closed for counter in counters)
+    assert _files(paths.root) == before
+    assert not paths.results_dir.exists()
+
+
+def test_measurement_closes_tokenizers_on_failure(inputs, monkeypatch):
+    paths, counters = inputs
+    before = _files(paths.root)
+
+    def fail(self, text):
+        raise RuntimeError("tokenizer failure")
+
+    monkeypatch.setattr(FakeCounter, "count_tokens", fail)
+    with pytest.raises(RuntimeError, match="Failed to tokenize"):
+        measure_serialization_tokens(paths, show_progress=False)
+    assert len(counters) == 3
+    assert all(counter.closed for counter in counters)
+    assert _files(paths.root) == before
+
+
+def test_cli_prints_filtered_measurements_without_files(inputs, capsys):
+    paths, counters = inputs
+    before = _files(paths.root)
+    assert (
+        cli.main(
+            [
+                "--dataset",
+                "bird",
+                "--format",
+                "csv",
+                "--family",
+                "qwen-3.5",
+                "--limit",
+                "1",
+            ]
+        )
+        == 0
     )
-
-    assert [record.format for record in records] == ["csv"]
-    assert checkpointed == records
-
-
-def test_csv_report_round_trip_and_columns(tmp_path: Path) -> None:
-    report = tmp_path / "report.csv"
-    records = [_record("a", "json", 100), _record("a", "csv", 50)]
-
-    write_token_report(report, records)
-
-    assert load_token_records(report) == records
-    with report.open(newline="", encoding="utf-8") as handle:
-        rows = list(csv.DictReader(handle))
-    assert list(rows[0]) == [
-        "dataset",
-        "database_id",
-        "format",
-        "tokenizer_family",
-        "tokenizer_label",
-        "tokenizer_model",
-        "table_count",
-        "row_count",
-        "characters",
-        "utf8_bytes",
-        "tokens",
-    ]
-    assert rows[1]["tokens"] == "50"
-    assert not (tmp_path / ".report.csv.tmp").exists()
+    rows = list(csv.DictReader(io.StringIO(capsys.readouterr().out)))
+    assert len(rows) == 1
+    assert rows[0]["dataset"] == "bird"
+    assert rows[0]["database_id"] == "a"
+    assert rows[0]["format"] == "csv"
+    assert rows[0]["tokenizer_family"] == "qwen-3.5"
+    assert int(rows[0]["tokens"]) > 0
+    assert counters[0].closed
+    assert _files(paths.root) == before
 
 
-def test_csv_report_can_checkpoint_an_empty_run(tmp_path: Path) -> None:
-    report = tmp_path / "report.csv"
-
-    write_token_report(report, [])
-
-    assert load_token_records(report) == []
-    assert report.read_text(encoding="utf-8").startswith("dataset,database_id,format,")
-
-
-def test_dataset_input_carries_dev_cohort_size() -> None:
-    dataset = DatasetInput(
-        name="spider",
-        example_count=1_034,
-        databases=(DatabaseInput("singer", Path("singer.sqlite")),),
-    )
-
-    assert dataset.example_count == 1_034
+@pytest.mark.parametrize("args", [["--output-dir", "output"], ["--no-resume"]])
+def test_cli_has_no_persistence_options(args):
+    with pytest.raises(SystemExit):
+        cli.build_parser().parse_args(args)

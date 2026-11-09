@@ -52,17 +52,24 @@ and resume automatically; use `--no-resume` to restart. Scoring writes adjacent
 ## Thesis analysis
 
 Generate tables, figures, and summaries from the complete scored experiment results,
-stored reference answers, and serialization-token report. Figure generation requires
+stored reference answers, and benchmark databases. Figure generation requires
 LaTeX with `pdflatex`, `pgf`, and `siunitx` v3.
 
 ```bash
-uv run thesis-report-serialization-tokens
 uv run --extra visualizations thesis-visualize-all
 ```
 
-The token report requires representative GGUF models from each experiment family in
-`models/`. Outputs are written to `analysis/tables/`, `analysis/figures/`, and
-`analysis/summaries/`; the token report is stored in `results/input_token_overhead/`.
+Token counts are computed automatically using representative GGUF models from each
+experiment family in `models/`. Outputs go to `analysis/tables/`, `analysis/figures/`,
+and `analysis/summaries/`.
+
+Independently audit serialization token counts and format comparisons with:
+
+```bash
+uv run --extra visualizations python -m cli.audit_serialization_tokens
+```
+
+The audit is saved to `analysis/summaries/serialization_token_audit.json`.
 
 ## Development
 

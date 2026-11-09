@@ -17,7 +17,7 @@ import sqlite3
 from pathlib import Path
 
 from serialization.types import DatabaseContents, Row
-from sqlite.connection import open_connection, query_sqlite, query_sqlite_safe
+from sqlite.connection import open_connection, query_connection, query_sqlite, query_sqlite_safe
 from sqlite.schema import get_table_names
 
 
@@ -26,6 +26,21 @@ def load_full_database(db_path: Path | str) -> DatabaseContents:
     contents: DatabaseContents = {}
     for name in get_table_names(db_path):
         contents[name] = query_sqlite(db_path, f'SELECT * FROM "{name}"').rows
+    return contents
+
+
+def load_connection_contents(conn: sqlite3.Connection) -> DatabaseContents:
+    """Read all tables from an existing connection; the caller owns its lifetime."""
+    tables = query_connection(
+        conn,
+        "SELECT name FROM sqlite_master"
+        " WHERE type = 'table' AND sql IS NOT NULL AND name NOT LIKE 'sqlite_%';",
+    )
+    contents: DatabaseContents = {}
+    for row in tables.rows:
+        name = row["name"]
+        quoted = name.replace('"', '""')
+        contents[name] = query_connection(conn, f'SELECT * FROM "{quoted}"').rows
     return contents
 
 
@@ -86,7 +101,7 @@ def build_sampled_connection(db_path: Path | str, n_rows: int, *, seed: int) -> 
     finally:
         src_conn.close()
 
-    mem_conn = sqlite3.connect(":memory:")
+    mem_conn = open_connection(":memory:")
     try:
         for stmt in ddl_statements:
             mem_conn.execute(stmt)

@@ -46,7 +46,7 @@ def render_text_to_sql_retrieval_table(
                 r"by dataset on the answerable cohort.}"
             ),
             f"  \\label{{{label}}}",
-            r"  \resizebox{\linewidth}{!}{%",
+            r"  \resizebox{0.7\linewidth}{!}{%",
             r"  \begin{tabular}{@{}lrrrr@{}}",
             r"    \toprule",
             "    Dataset & NEM & BERTScore & ROUGE-L & Executed \\\\",

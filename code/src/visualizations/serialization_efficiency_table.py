@@ -126,7 +126,7 @@ def render_serialization_efficiency_table(
         raise ValueError("Context-window size must be positive")
     if caption is None:
         caption = (
-            "Serialization efficiency by dataset and format."
+            "Serialization efficiency by dataset and format. "
             f"Context fit reports payloads at or below {num(context_window_tokens)} tokens."
         )
 

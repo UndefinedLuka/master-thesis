@@ -2,49 +2,46 @@
 
 Run ``python -m cli.report_bird_sampling`` from ``code/``. The report uses the
 benchmark sampler, serializers, and three GGUF tokenizers, without model inference.
-Temporary databases are removed after measurement. Detailed CSVs are written under
-``results/bird_sampling_sensitivity`` and a summary under ``analysis/summaries/``.
+Sampled databases, query records, and token measurements stay in memory. Only the
+completed summary is written under ``analysis/summaries/``.
 """
 
 from __future__ import annotations
 
-import csv
 import json
 from collections import Counter
-from contextlib import ExitStack
-from dataclasses import asdict
+from contextlib import ExitStack, closing
 from datetime import UTC, datetime
-from pathlib import Path
-from tempfile import TemporaryDirectory
 
-from cli.report_serialization_tokens import (
-    TOKENIZER_FAMILIES,
-    DatabaseInput,
-    LlamaCppTokenCounter,
-    measure_databases,
-    resolve_tokenizer_models,
-)
 from config.config import BIRD_SAMPLE_ROWS, N_CTX, SAMPLE_SEED
 from config.paths import ProjectPaths
 from config.settings import default_db_root, default_dev_json, sampled_db_root
 from datasets.bird import load_bird_examples
 from datasets.loader import load_db_contents
-from reference.answers import generate_reference_answer, load_reference_file
+from reference.answers import load_reference_file
+from serialization.tokens import (
+    TOKENIZER_FAMILIES,
+    LlamaCppTokenCounter,
+    discover_databases,
+    measure_contents,
+    resolve_tokenizer_models,
+)
 from serialization.types import FORMATS
-from sqlite.materialize import materialize_sampled_db
+from sqlite.connection import query_connection_safe
+from sqlite.sampling import build_sampled_connection, load_connection_contents
 
 ROW_CAPS = (100, 500, 1000)
 
 
-def write_csv(path: Path, records: list[dict]) -> None:
-    with path.open("w", encoding="utf-8", newline="") as handle:
-        writer = csv.DictWriter(handle, fieldnames=list(records[0]))
-        writer.writeheader()
-        writer.writerows(records)
-
-
-def main() -> int:
-    paths = ProjectPaths.discover()
+def calculate_bird_sampling(
+    paths: ProjectPaths | None = None,
+    *,
+    row_caps: tuple[int, ...] = ROW_CAPS,
+) -> dict:
+    """Compare row caps entirely in memory and return the completed sensitivity summary."""
+    paths = paths or ProjectPaths.discover()
+    if BIRD_SAMPLE_ROWS not in row_caps or any(cap <= 0 for cap in row_caps):
+        raise ValueError("Row caps must be positive and include the benchmark sample size")
     examples = load_bird_examples(default_dev_json("bird", paths.data_dir))
     db_ids = sorted({example["db_id"] for example in examples})
     references = load_reference_file(paths.data_dir / "bird_references.ndjson")
@@ -54,22 +51,17 @@ def main() -> int:
     }:
         raise ValueError("Reference IDs do not match the BIRD development split")
 
-    baseline_csv = paths.results_dir / "input_token_overhead/serialization_tokens_by_database.csv"
-    with baseline_csv.open(encoding="utf-8", newline="") as handle:
-        baseline_tokens = {
-            (row["database_id"], row["format"], row["tokenizer_family"]): int(row["tokens"])
-            for row in csv.DictReader(handle)
-            if row["dataset"] == "bird"
-        }
-
-    output_dir = paths.results_dir / "bird_sampling_sensitivity"
-    output_dir.mkdir(parents=True, exist_ok=True)
+    databases = discover_databases(default_db_root("bird", paths.data_dir), db_ids)
+    benchmarks = {
+        database.database_id: database.path
+        for database in discover_databases(sampled_db_root(paths.data_dir), db_ids)
+    }
     selections = resolve_tokenizer_models(paths.models_dir, TOKENIZER_FAMILIES)
     report = {
         "configuration": {
             "release": "dev_20240627",
             "executed_at_utc": datetime.now(UTC).isoformat(),
-            "row_caps": list(ROW_CAPS),
+            "row_caps": list(row_caps),
             "sample_seed": SAMPLE_SEED,
             "context_window_tokens": N_CTX,
             "formats": list(FORMATS),
@@ -95,80 +87,79 @@ def main() -> int:
             counter = LlamaCppTokenCounter.create(selection)
             stack.callback(counter.close)
             counters.append(counter)
-        temporary_root = Path(
-            stack.enter_context(TemporaryDirectory(prefix="bird-sensitivity-", dir=paths.data_dir))
-        )
-        for cap in ROW_CAPS:
-            databases = []
+        for cap in row_caps:
+            tokens = []
+            baseline_tokens = []
             query_records = []
             baseline_rows_verified = 0
             baseline_queries_verified = 0
             baseline_row_count_changes = []
-            for db_id in db_ids:
+            for database in databases:
+                db_id = database.database_id
                 print(f"Sampling and executing gold SQL: cap={cap}, database={db_id}", flush=True)
-                src = default_db_root("bird", paths.data_dir) / db_id / f"{db_id}.sqlite"
-                dest = temporary_root / str(cap) / db_id / f"{db_id}.sqlite"
-                materialize_sampled_db(src, dest, cap, seed=SAMPLE_SEED)
-                databases.append(DatabaseInput(database_id=db_id, path=dest))
+                with closing(
+                    build_sampled_connection(database.path, cap, seed=SAMPLE_SEED)
+                ) as conn:
+                    conn.execute("PRAGMA temp_store = MEMORY")
+                    contents = load_connection_contents(conn)
+                    for example in examples:
+                        if example["db_id"] != db_id:
+                            continue
+                        result, error = query_connection_safe(conn, example["gold_sql"])
+                        row_count = len(result.rows) if result is not None else None
+                        query_records.append(
+                            {
+                                "sample_rows_per_table": cap,
+                                "example_id": example["example_id"],
+                                "database_id": db_id,
+                                "difficulty": example["difficulty"],
+                                "row_count": row_count,
+                                "error": error,
+                            }
+                        )
+                        if cap == BIRD_SAMPLE_ROWS:
+                            baseline = reference_by_id[example["example_id"]]
+                            if (error, row_count == 0) != (
+                                baseline["error"],
+                                baseline["row_count"] == 0,
+                            ):
+                                raise ValueError(
+                                    f"Reference empty/error status changed: {example['example_id']}"
+                                )
+                            if row_count != baseline["row_count"]:
+                                # Time-dependent SQL may change counts without changing emptiness.
+                                baseline_row_count_changes.append(
+                                    {
+                                        "example_id": example["example_id"],
+                                        "gold_sql": example["gold_sql"],
+                                        "stored_row_count": baseline["row_count"],
+                                        "current_row_count": row_count,
+                                    }
+                                )
+                            baseline_queries_verified += 1
                 if cap == BIRD_SAMPLE_ROWS:
-                    benchmark = sampled_db_root(paths.data_dir) / db_id / f"{db_id}.sqlite"
-                    if load_db_contents(dest) != load_db_contents(benchmark):
+                    benchmark_contents = load_db_contents(benchmarks[db_id])
+                    if contents != benchmark_contents:
                         raise ValueError(
                             f"Rebuilt {cap}-row sample differs from benchmark: {db_id}"
                         )
                     baseline_rows_verified += 1
-
-                for example in examples:
-                    if example["db_id"] != db_id:
-                        continue
-                    reference = generate_reference_answer(example, dest)
-                    query_records.append(
-                        {
-                            "sample_rows_per_table": cap,
-                            "example_id": example["example_id"],
-                            "database_id": db_id,
-                            "difficulty": example["difficulty"],
-                            "row_count": reference["row_count"],
-                            "error": reference["error"],
-                        }
+                    baseline_tokens.extend(
+                        measure_contents(
+                            "bird",
+                            db_id,
+                            benchmark_contents,
+                            FORMATS,
+                            counters,
+                        )
                     )
-                    if cap == BIRD_SAMPLE_ROWS:
-                        baseline = reference_by_id[example["example_id"]]
-                        if (reference["error"], reference["row_count"] == 0) != (
-                            baseline["error"],
-                            baseline["row_count"] == 0,
-                        ):
-                            raise ValueError(
-                                f"Reference empty/error status changed: {example['example_id']}"
-                            )
-                        if reference["row_count"] != baseline["row_count"]:
-                            # Time-dependent gold SQL (e.g. JULIANDAY('now')) may
-                            # change a non-empty row count without changing emptiness.
-                            baseline_row_count_changes.append(
-                                {
-                                    "example_id": example["example_id"],
-                                    "gold_sql": example["gold_sql"],
-                                    "stored_row_count": baseline["row_count"],
-                                    "current_row_count": reference["row_count"],
-                                }
-                            )
-                        baseline_queries_verified += 1
-
-            write_csv(output_dir / f"gold_queries_{cap}.csv", query_records)
-            tokens = measure_databases("bird", databases, FORMATS, counters)
-            write_csv(
-                output_dir / f"serialization_tokens_{cap}.csv", [asdict(row) for row in tokens]
-            )
+                tokens.extend(measure_contents("bird", db_id, contents, FORMATS, counters))
             expected_measurements = len(db_ids) * len(FORMATS) * len(counters)
             if len(tokens) != expected_measurements:
                 raise ValueError("Incomplete token measurements")
             if cap == BIRD_SAMPLE_ROWS:
-                observed = {
-                    (row.database_id, row.format, row.tokenizer_family): row.tokens
-                    for row in tokens
-                }
-                if observed != baseline_tokens:
-                    raise ValueError("500-row token counts do not reproduce the benchmark report")
+                if tokens != baseline_tokens:
+                    raise ValueError(f"{cap}-row token counts do not reproduce benchmark payloads")
 
             empty = [row for row in query_records if row["error"] is None and row["row_count"] == 0]
             failures = sum(row["error"] is not None for row in query_records)
@@ -219,14 +210,20 @@ def main() -> int:
                     "identical_payload_token_counts": len(tokens),
                 }
             report["samples"].append(summary)
-            report_path = paths.root / "analysis/summaries/bird_sampling_sensitivity.json"
-            report_path.parent.mkdir(parents=True, exist_ok=True)
-            report_path.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
             print(
                 f"cap={cap}: {len(empty)}/{len(examples)} empty; {failures} SQL errors; "
                 f"{summary['payloads_exceeding_context']}/{len(tokens)} payloads exceed context",
                 flush=True,
             )
+    return report
+
+
+def main() -> int:
+    paths = ProjectPaths.discover()
+    report = calculate_bird_sampling(paths)
+    report_path = paths.root / "analysis/summaries/bird_sampling_sensitivity.json"
+    report_path.parent.mkdir(parents=True, exist_ok=True)
+    report_path.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
     return 0
 
 

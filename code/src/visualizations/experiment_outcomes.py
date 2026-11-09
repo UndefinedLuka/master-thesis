@@ -267,8 +267,7 @@ def render_outcome_table(
     *,
     coverage_validated: bool,
     caption: str = (
-        "Successful and failed experiment runs by dataset after excluding Qwen~3.5 27B. "
-        "Each run is assigned to exactly one terminal outcome."
+        "Successful and failed experiment runs by dataset after excluding Qwen~3.5 27B."
     ),
     label: str = EXPERIMENT_OUTCOMES_TABLE_LABEL,
 ) -> str:
@@ -309,7 +308,7 @@ def render_outcome_table(
             f"excluded-model runs: {summary.excluded_run_count}."
         ),
         f"% {coverage_status}",
-        r"\begin{table}[htbp]",
+        r"\begin{table}[htb]",
         r"  \centering",
         f"  \\caption{{{caption}}}",
         f"  \\label{{{label}}}",
@@ -331,6 +330,9 @@ def render_outcome_table(
     lines.extend(
         f"    {OUTCOME_LABELS[outcome]} & {outcome_cells(outcome)}" + LATEX_ROW_END
         for outcome in FAILURE_OUTCOMES
+        # Keep the campaign table compact while exposing these failures if they occur.
+        if outcome not in (FAILED_GENERATION, FAILED_DIRECT_OUTPUT)
+        or summary.outcome_total(outcome) > 0
     )
     lines.extend(
         [

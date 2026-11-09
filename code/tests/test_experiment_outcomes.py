@@ -11,6 +11,7 @@ pytest.importorskip("pandas")
 import pandas as pd
 
 from serialization.types import FORMATS
+from visualizations.config import OUTCOME_LABELS
 from visualizations.experiment_outcomes import (
     FAILED_CONTEXT,
     FAILED_DIRECT_OUTPUT,
@@ -239,3 +240,30 @@ def test_render_outcome_table_includes_totals_and_writes_file(tmp_path: Path) ->
     assert "% Coverage validation skipped." in output.read_text(encoding="utf-8")
     assert r"\parbox" not in latex
     assert "Note:" not in latex
+
+
+@pytest.mark.parametrize("outcome", [FAILED_GENERATION, FAILED_DIRECT_OUTPUT])
+@pytest.mark.parametrize("counts", [(0, 0), (2, 0), (0, 3)])
+def test_optional_failure_rows_are_hidden_only_when_empty(outcome, counts) -> None:
+    spider, bird = counts
+    summary = OutcomeSummary(
+        counts={outcome: {"spider": spider, "bird": bird}},
+        datasets=("spider", "bird"),
+        retained_run_count=spider + bird,
+        excluded_run_count=0,
+        retained_model_count=1,
+    )
+
+    latex = render_outcome_table(summary, coverage_validated=False)
+
+    if spider + bird:
+        assert (
+            f"{OUTCOME_LABELS[outcome]} & \\num{{{spider}}} & \\num{{{bird}}} & "
+            f"\\num{{{spider + bird}}}"
+        ) in latex
+    else:
+        assert OUTCOME_LABELS[outcome] not in latex
+    assert (
+        rf"\textbf{{All failed runs}} & \num{{{spider}}} & \num{{{bird}}} & "
+        rf"\num{{{spider + bird}}}"
+    ) in latex

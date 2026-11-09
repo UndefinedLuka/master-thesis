@@ -1,4 +1,4 @@
-"""Chapter 5 CLI validation and dispatch across the two question cohorts."""
+"""Visualization CLI validation, artifact generation, and dispatch across question cohorts."""
 
 from __future__ import annotations
 
@@ -53,7 +53,7 @@ def test_analysis_outputs_are_stored_by_category() -> None:
 
 
 @pytest.fixture
-def campaign(tmp_path: Path) -> tuple[list[str], list[dict], Path]:
+def campaign(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> tuple[list[str], list[dict], Path]:
     """Two datasets, each with answerable, empty-reference, and context-rejected questions."""
     references_dir = tmp_path / "references"
     references_dir.mkdir()
@@ -125,8 +125,7 @@ def campaign(tmp_path: Path) -> tuple[list[str], list[dict], Path]:
         _write_records(references_dir / f"{dataset}_references.ndjson", references)
     results_path = tmp_path / "campaign.scored.ndjson"
     _write_records(results_path, records)
-    report_path = tmp_path / "tokens.csv"
-    pd.DataFrame(
+    report = pd.DataFrame(
         [
             {
                 "dataset": dataset,
@@ -147,14 +146,15 @@ def campaign(tmp_path: Path) -> tuple[list[str], list[dict], Path]:
                 ("gemma-4", "Gemma 4"),
             )
         ]
-    ).to_csv(report_path, index=False)
+    )
+    monkeypatch.setattr(orchestration, "measure_token_report", Mock(return_value=report))
     args = [
         "--results",
         str(results_path),
         "--references-dir",
         str(references_dir),
-        "--serialization-report",
-        str(report_path),
+        "--models-dir",
+        str(tmp_path / "models"),
         "--tables-dir",
         str(tmp_path / "tables"),
         "--figures-dir",
@@ -240,9 +240,12 @@ def test_cli_dispatches_answerable_and_context_fit_populations(
         generators[name] = Mock(return_value=[output] if name.endswith("figures") else output)
         monkeypatch.setattr(orchestration, name, generators[name])
     evidence = Mock()
-    monkeypatch.setattr(orchestration, "save_chapter5_evidence", evidence)
+    monkeypatch.setattr(orchestration, "save_analysis_summaries", evidence)
 
     assert orchestration.main(args) == 0
+    orchestration.measure_token_report.assert_called_once_with(models_dir=tmp_path / "models")
+    assert not (tmp_path / "results").exists()
+    assert not (tmp_path / "tokens.csv").exists()
     saved = {
         Path(line.removeprefix("Saved ")).relative_to(tmp_path)
         for line in capsys.readouterr().out.splitlines()
@@ -284,9 +287,7 @@ def test_cli_dispatches_answerable_and_context_fit_populations(
     for calculator, outputs in (
         (
             "calculate_direct_efficiency",
-            (
-                "generate_direct_operational_table",
-            ),
+            ("generate_direct_operational_table",),
         ),
         (
             "calculate_text_to_sql_analysis",
@@ -298,9 +299,7 @@ def test_cli_dispatches_answerable_and_context_fit_populations(
         ),
         (
             "calculate_text_to_sql_retry_analysis",
-            (
-                "generate_error_correction_table",
-            ),
+            ("generate_error_correction_table",),
         ),
         (
             "calculate_common_cohort_analysis",
@@ -352,6 +351,7 @@ def test_parser_defaults_use_stored_references_and_three_output_directories(tmp_
     args = orchestration.build_parser(ProjectPaths.from_root(tmp_path)).parse_args([])
 
     assert args.references_dir == tmp_path / "data"
+    assert args.models_dir == tmp_path / "models"
     assert args.summaries_dir == tmp_path / "analysis" / "summaries"
     assert args.figures_dir == tmp_path / "analysis" / "figures"
     assert args.tables_dir == tmp_path / "analysis" / "tables"
@@ -359,7 +359,8 @@ def test_parser_defaults_use_stored_references_and_three_output_directories(tmp_
 
 @pytest.mark.parametrize("option", ["--summaries-dir", "--audit-dir"])
 def test_summary_directory_override_accepts_previous_audit_option(
-    option: str, tmp_path: Path,
+    option: str,
+    tmp_path: Path,
 ) -> None:
     args = orchestration.build_parser().parse_args([option, str(tmp_path)])
     assert args.summaries_dir == tmp_path

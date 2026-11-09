@@ -16,7 +16,7 @@ from pathlib import Path
 import pandas as pd
 
 from config.paths import ProjectPaths
-from visualizations.chapter5_evidence import save_chapter5_evidence
+from visualizations.analysis_summaries import save_analysis_summaries
 from visualizations.cohorts import (
     COHORT_COLUMNS,
     AnalysisCohorts,
@@ -76,7 +76,7 @@ from visualizations.pipeline_retrieval_comparison import (
 )
 from visualizations.pipeline_size_cohort_table import generate_pipeline_size_cohort_table
 from visualizations.serialization_data import (
-    load_token_report,
+    measure_token_report,
 )
 from visualizations.serialization_data import (
     validate_complete_coverage as validate_serialization_coverage,
@@ -136,15 +136,24 @@ def generate_all(
         excluded_model_markers=excluded_model_markers,
     )
     retrieval = calculate_pipeline_retrieval_comparison(
-        answerable, excluded_model_markers=excluded_model_markers,
+        answerable,
+        excluded_model_markers=excluded_model_markers,
     )
     size_retrieval = calculate_pipeline_size_retrieval_comparison(
-        answerable, serialization_report, excluded_model_markers=excluded_model_markers,
+        answerable,
+        serialization_report,
+        excluded_model_markers=excluded_model_markers,
     )
     generate_cohort_artifacts(cohorts, tables_dir=tables_dir, summaries_dir=summaries_dir)
-    save_chapter5_evidence(
-        answerable, serialization_report, efficiency, sql_analysis, retry_analysis,
-        common_cohort, retrieval, summaries_dir,
+    save_analysis_summaries(
+        answerable,
+        serialization_report,
+        efficiency,
+        sql_analysis,
+        retry_analysis,
+        common_cohort,
+        retrieval,
+        summaries_dir,
         size_retrieval=size_retrieval,
     )
     return [
@@ -193,7 +202,9 @@ def generate_all(
 
 def _validate_publication_cohorts(cohorts: AnalysisCohorts) -> None:
     problems = [
-        "incomplete_questions", "answerable_unknown_questions", "context_unknown_questions",
+        "incomplete_questions",
+        "answerable_unknown_questions",
+        "context_unknown_questions",
     ]
     if cohorts.summary.empty or cohorts.summary[problems].gt(0).any(axis=None):
         raise ValueError(
@@ -204,9 +215,7 @@ def _validate_publication_cohorts(cohorts: AnalysisCohorts) -> None:
 def build_parser(paths: ProjectPaths | None = None) -> argparse.ArgumentParser:
     """Build the sole visualization command's parser with project-relative defaults."""
     project_paths = paths or ProjectPaths.discover()
-    parser = argparse.ArgumentParser(
-        description="Generate every results-chapter table and figure"
-    )
+    parser = argparse.ArgumentParser(description="Generate every results-chapter table and figure")
     parser.add_argument(
         "--results",
         type=Path,
@@ -220,20 +229,17 @@ def build_parser(paths: ProjectPaths | None = None) -> argparse.ArgumentParser:
         help="directory containing stored *_references.ndjson (default: data/)",
     )
     parser.add_argument(
-        "--summaries-dir", "--audit-dir",
+        "--summaries-dir",
+        "--audit-dir",
         type=Path,
         default=project_paths.root / "analysis" / "summaries",
         help="CSV/JSON summaries and audit evidence (default: analysis/summaries/)",
     )
     parser.add_argument(
-        "--serialization-report",
+        "--models-dir",
         type=Path,
-        default=(
-            project_paths.results_dir
-            / "input_token_overhead"
-            / "serialization_tokens_by_database.csv"
-        ),
-        help="serialization-token CSV produced by thesis-report-serialization-tokens",
+        default=project_paths.models_dir,
+        help="GGUF directory for in-memory serialization token measurements (default: models/)",
     )
     parser.add_argument(
         "--tables-dir",
@@ -262,7 +268,7 @@ def build_parser(paths: ProjectPaths | None = None) -> argparse.ArgumentParser:
 
 
 def main(argv: list[str] | None = None) -> int:
-    """Load both source snapshots, validate them, and generate every artifact."""
+    """Load scored results, measure payloads in memory, and generate every artifact."""
     parser = build_parser()
     args = parser.parse_args(argv)
     if args.context_window <= 0:
@@ -289,7 +295,7 @@ def main(argv: list[str] | None = None) -> int:
     if experiment_results.empty:
         parser.error("no scored benchmark records were found")
     try:
-        serialization_report = load_token_report(args.serialization_report)
+        serialization_report = measure_token_report(models_dir=args.models_dir)
     except (FileNotFoundError, ValueError) as exc:
         parser.error(str(exc))
 
@@ -320,10 +326,13 @@ def main(argv: list[str] | None = None) -> int:
 
     try:
         cohorts = build_analysis_cohorts(
-            experiment_results, references_dir=args.references_dir,
+            experiment_results,
+            references_dir=args.references_dir,
         )
         generate_cohort_artifacts(
-            cohorts, tables_dir=args.tables_dir, summaries_dir=args.summaries_dir,
+            cohorts,
+            tables_dir=args.tables_dir,
+            summaries_dir=args.summaries_dir,
         )
         _validate_publication_cohorts(cohorts)
         direct_accuracy_count = validate_direct_accuracy_scores(cohorts.answerable_records)

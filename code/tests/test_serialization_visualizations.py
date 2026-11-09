@@ -15,7 +15,7 @@ from visualizations.config import (
     SERIALIZATION_EFFICIENCY_TABLE_FILENAME,
     TOKENIZER_COMPARISON_FIGURE_FILENAME,
 )
-from visualizations.serialization_data import load_token_report, validate_complete_coverage
+from visualizations.serialization_data import validate_complete_coverage, validate_token_report
 from visualizations.serialization_efficiency_table import (
     calculate_serialization_efficiency,
     generate_serialization_efficiency_table,
@@ -249,8 +249,7 @@ def test_artifact_generators_each_write_one_output(tmp_path: Path) -> None:
     assert figure_path.stat().st_size > 0
 
 
-def test_load_token_report_rejects_non_numeric_tokens(tmp_path: Path) -> None:
-    path = tmp_path / "bad.csv"
+def test_token_report_rejects_non_numeric_tokens() -> None:
     row = _record(
         dataset="spider",
         database_id="s1",
@@ -260,7 +259,5 @@ def test_load_token_report_rejects_non_numeric_tokens(tmp_path: Path) -> None:
         tokens=1,
     )
     row["tokens"] = "not-a-number"
-    pd.DataFrame([row]).to_csv(path, index=False)
-
     with pytest.raises(ValueError, match="non-numeric token count"):
-        load_token_report(path)
+        validate_token_report(pd.DataFrame([row]))
