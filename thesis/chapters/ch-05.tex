@@ -112,8 +112,8 @@ full set of experiments; the following sections specify which cohort is used for
 To compare operational efficiency across formats, we used the context-fit cohort defined in
 Section~\ref{sec:analysis-cohorts}. Each format was evaluated on the same questions across all ten retained
 models, including the recorded resource use of unsuccessful runs.
-Table~\ref{tab:direct-operational-efficiency} shows the mean input and output token counts, Time to First
-Token (TTFT), generation time after the first token, and total latency. Unlike the serialisation counts in
+Table~\ref{tab:direct-operational-efficiency} shows the mean input and output token counts, TTFT, generation
+time after the first token, and total latency. Unlike the serialisation counts in
 Section~\ref{sec:serialization-results}, the input counts here include the complete prompt rather than only
 the serialised database contents.
 
@@ -241,8 +241,8 @@ database size and retrieval accuracy in the evaluated databases.
 \subsection{Operational efficiency}
 
 We measured the tokens and time required per text-to-SQL run on the answerable cohort.
-Table~\ref{tab:text-to-sql-operational-efficiency} shows the mean input and output token counts, Time to
-First Token (TTFT), generation time after the first token, SQL execution time, total latency, and retries.
+Table~\ref{tab:text-to-sql-operational-efficiency} shows the mean input and output token counts, TTFT,
+generation time after the first token, SQL execution time, total latency, and retries.
 For each run, we added the tokens and times across the initial attempt and any correction attempts, including
 those in runs that ultimately failed. Output counts include reasoning traces, and total latency includes SQL
 execution time. These measurements therefore describe the cost of the complete attempt sequence rather than a

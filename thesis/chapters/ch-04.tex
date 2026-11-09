@@ -203,8 +203,6 @@ library. This bypasses an empty-input tokenizer call that is unavailable in newe
 also means that two blank texts are compared as identical full stops and can receive a near-perfect
 BERTScore. NEM and ROUGE-L receive the original comparison texts.
 
-For a failed pipeline, backend, or SQL execution with a usable reference, each enabled accuracy metric is set
-to zero. Records without a usable reference are not scored; when BERTScore is disabled, its fields are null.
-
-Some gold queries returned empty results after BIRD subsampling. These successfully executed reference
-queries were retained in the evaluation.
+For a failed pipeline, backend, or SQL execution with a usable reference, each accuracy metric is set to
+zero. Some gold queries returned empty results after BIRD subsampling. We ran experiments on these records,
+but excluded them during the scoring run.

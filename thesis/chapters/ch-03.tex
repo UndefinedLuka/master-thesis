@@ -205,7 +205,7 @@ completion, including any reasoning trace; reasoning tokens are not counted sepa
 therefore distinguish prompt consumption from total generated output, not visible answer tokens from reasoning.
 
 \textbf{System latency:} Measured model time starts at request submission and ends when the streamed
-completion finishes. It includes both \emph{Time to First Token (TTFT)}, from submission to the first output
+completion finishes. It includes both \emph{TTFT}, from submission to the first output
 token, and the remaining post-first-token generation interval. The first token can belong to a reasoning
 trace, and subsequent reasoning is included in the generation interval. For text-to-SQL, measured total
 response latency sums model time and SQL execution time across the initial attempt and all correction
