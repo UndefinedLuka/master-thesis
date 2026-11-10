@@ -122,6 +122,7 @@ def generate_all(
     _validate_publication_cohorts(cohorts)
     answerable = cohorts.answerable_records
     context_fit = cohorts.context_fit_records
+    intersection = cohorts.intersection_records
     efficiency = calculate_direct_efficiency(
         context_fit,
         excluded_model_markers=excluded_model_markers,
@@ -136,7 +137,7 @@ def generate_all(
         excluded_model_markers=excluded_model_markers,
     )
     retrieval = calculate_pipeline_retrieval_comparison(
-        answerable,
+        intersection,
         excluded_model_markers=excluded_model_markers,
     )
     size_retrieval = calculate_pipeline_size_retrieval_comparison(
@@ -152,7 +153,6 @@ def generate_all(
         sql_analysis,
         retry_analysis,
         common_cohort,
-        retrieval,
         summaries_dir,
         size_retrieval=size_retrieval,
     )

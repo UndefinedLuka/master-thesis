@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import re
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import Mock
 
 import pytest
@@ -15,6 +16,7 @@ pytest.importorskip("matplotlib")
 import pandas as pd
 
 from config.paths import ProjectPaths
+from visualizations import analysis_summaries
 from visualizations import generate_all as orchestration
 from visualizations.cohorts import DIRECT_FORMATS, RETAINED_MODELS
 
@@ -199,7 +201,7 @@ def test_cli_allow_incomplete_still_rejects_invalid_cohort_matrix(
     generate.assert_not_called()
 
 
-def test_cli_dispatches_answerable_and_context_fit_populations(
+def test_cli_dispatches_answerable_context_fit_and_intersection_populations(
     campaign: tuple[list[str], list[dict], Path],
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
@@ -273,7 +275,24 @@ def test_cli_dispatches_answerable_and_context_fit_populations(
     assert sql["input_tokens"].sum() == 4_000
     assert not context_fit.loc[context_fit["pipeline"].eq("direct"), "has_answer"].any()
     assert calculators["calculate_common_cohort_analysis"].call_args.args[0] is context_fit
-    assert calculators["calculate_pipeline_retrieval_comparison"].call_args.args[0] is answerable
+    intersection = calculators["calculate_pipeline_retrieval_comparison"].call_args.args[0]
+    assert set(intersection["example_id"]) == {
+        f"{dataset}:answerable" for dataset in ("spider", "bird")
+    }
+    assert len(intersection) == 140
+    assert intersection["error"].isna().all()
+    intersection_sql = intersection.loc[intersection["pipeline"].eq("text_to_sql")]
+    assert len(intersection_sql) == 20
+    assert not intersection_sql["execution_success"].any()
+    assert not intersection.loc[intersection["pipeline"].eq("direct"), "has_answer"].any()
+    methods = intersection.assign(method=intersection["format"].fillna("text_to_sql"))
+    pair_keys = ["dataset", "db_id", "example_id", "model_id"]
+    identities = [
+        set(group[pair_keys].itertuples(index=False, name=None))
+        for _, group in methods.groupby("method")
+    ]
+    assert len(identities) == 7
+    assert all(keys == identities[0] for keys in identities)
     assert (
         calculators["calculate_pipeline_size_retrieval_comparison"].call_args.args[0] is answerable
     )
@@ -333,6 +352,9 @@ def test_cli_dispatches_answerable_and_context_fit_populations(
     assert generators["generate_tokenizer_comparison_figure"].call_args.args[0] is report
     assert calculators["calculate_pipeline_size_retrieval_comparison"].call_args.args[1] is report
     assert evidence.call_args.args[0] is answerable
+    assert evidence.call_args.args[-2] is (
+        calculators["calculate_common_cohort_analysis"].return_value
+    )
     assert evidence.call_args.args[-1] == tmp_path / "summaries"
     assert evidence.call_args.kwargs["size_retrieval"] is (
         calculators["calculate_pipeline_size_retrieval_comparison"].return_value
@@ -345,6 +367,38 @@ def test_cli_dispatches_answerable_and_context_fit_populations(
     audit = json.loads((tmp_path / "summaries" / "analysis_cohort_audit.json").read_text())
     assert all(source["sha256"] for source in audit["reference_sources"])
     assert (tmp_path / "tables" / "analysis_cohorts.tex").is_file()
+
+
+def test_analysis_summaries_do_not_persist_pipeline_retrieval(tmp_path, monkeypatch) -> None:
+    summary = pd.DataFrame({"mean_score": [0.5]})
+    monkeypatch.setattr(analysis_summaries, "calculate_format_accuracy", lambda _: summary)
+    monkeypatch.setattr(analysis_summaries, "calculate_model_size_accuracy", lambda _: summary)
+    monkeypatch.setattr(
+        analysis_summaries, "calculate_database_size_accuracy",
+        lambda *_: SimpleNamespace(database_scores=summary, correlations=summary),
+    )
+    common = SimpleNamespace(
+        summary=summary,
+        paired_comparisons=pd.DataFrame({
+            "dataset": ["spider"], "format": ["csv"],
+            "sql_faster": [True], "example_id": ["question"],
+        }),
+        records=pd.DataFrame({
+            "dataset": ["spider"], "pipeline": ["text_to_sql"],
+            "example_id": ["question"], "execution_success": [False],
+        }),
+    )
+    analysis_summaries.save_analysis_summaries(
+        pd.DataFrame(), pd.DataFrame(), SimpleNamespace(summary=summary),
+        SimpleNamespace(dataset_summary=summary, model_summary=summary),
+        SimpleNamespace(outcome_summary=summary, retry_stage_summary=summary, gain_summary=summary),
+        common, tmp_path,
+        size_retrieval=SimpleNamespace(database_sizes=summary, coverage=summary, summary=summary),
+    )
+    assert not (tmp_path / "pipeline_retrieval.csv").exists()
+    assert (tmp_path / "pipeline_retrieval_by_database_size.csv").is_file()
+    assert (tmp_path / "pipeline_efficiency.csv").is_file()
+    assert len(list(tmp_path.glob("*.csv"))) == 16
 
 
 def test_parser_defaults_use_stored_references_and_three_output_directories(tmp_path: Path) -> None:

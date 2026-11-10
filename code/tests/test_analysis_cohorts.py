@@ -60,6 +60,7 @@ def test_zero_and_null_reference_rows_are_nonempty(tmp_path, value):
     assert cohorts.manifest.iloc[0]["answerable"]
     assert len(cohorts.answerable_records) == 70
     assert len(cohorts.context_fit_records) == 70
+    assert len(cohorts.intersection_records) == 70
 
 
 def test_empty_references_are_excluded_only_from_answerable(tmp_path):
@@ -70,6 +71,7 @@ def test_empty_references_are_excluded_only_from_answerable(tmp_path):
     cohorts = build_analysis_cohorts(_records(), refs)
     assert cohorts.answerable_records.empty
     assert len(cohorts.context_fit_records) == 70
+    assert cohorts.intersection_records.empty
     assert cohorts.summary.iloc[0]["context_fit_empty_reference_questions"] == 1
     assert cohorts.summary.iloc[0]["intersection_questions"] == 0
 
@@ -83,6 +85,7 @@ def test_context_failure_is_kept_with_zero_accuracy(tmp_path):
     assert len(cohorts.answerable_records) == 70
     assert cohorts.answerable_records.loc[0, "scores.normalized_exact_match"] == 0
     assert cohorts.context_fit_records.empty
+    assert cohorts.intersection_records.empty
     assert cohorts.manifest.iloc[0]["context_status"] == "not_fit"
 
 
@@ -100,6 +103,7 @@ def test_failed_sql_blank_answers_and_all_retry_work_are_retained(tmp_path):
         data.at[index, "attempts.llm_metrics.input_tokens"] = [100, 110, 120, 130]
     cohorts = build_analysis_cohorts(data, _references(tmp_path))
     assert len(cohorts.context_fit_records) == 70
+    pd.testing.assert_frame_equal(cohorts.intersection_records, cohorts.context_fit_records)
     assert cohorts.context_fit_records.loc[sql, "input_tokens"].sum() == 4600
     methods = cohorts.context_fit_records.copy()
     methods["method"] = methods["format"].fillna("text_to_sql")
@@ -110,6 +114,27 @@ def test_failed_sql_blank_answers_and_all_retry_work_are_retained(tmp_path):
     ]
     assert len(identities) == 7
     assert all(keys == identities[0] for keys in identities)
+
+
+def test_intersection_uses_dataset_and_question_keys_without_modifying_cohorts(tmp_path):
+    data = pd.concat([
+        _records().assign(dataset=dataset) for dataset in ("spider", "bird")
+    ], ignore_index=True)
+    refs = _references(tmp_path)
+    (refs / "bird_references.ndjson").write_text(json.dumps({
+        "example_id": "question", "db_id": "database", "rows": [],
+        "row_count": 0, "error": None,
+    }) + "\n", encoding="utf-8")
+    cohorts = build_analysis_cohorts(data, refs)
+    original = cohorts.context_fit_records.copy(deep=True)
+    intersection = cohorts.intersection_records
+    assert len(intersection) == 70
+    assert set(intersection["dataset"]) == {"spider"}
+    assert set(intersection["example_id"]) == {"question"}
+    intersection.loc[:, "input_tokens"] = 0
+    pd.testing.assert_frame_equal(cohorts.context_fit_records, original)
+    assert len(cohorts.context_fit_records) == 140
+    assert len(cohorts.answerable_records) == 70
 
 
 @pytest.mark.parametrize("error", [

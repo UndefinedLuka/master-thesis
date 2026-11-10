@@ -1,4 +1,4 @@
-"""Paired retrieval accuracy on explicitly selected answerable-cohort records.
+"""Paired retrieval accuracy on explicitly selected context-fit ∩ answerable records.
 
 Cohort selection belongs to the caller. Failed outputs remain observations, and SQL
 is stored once per question/model rather than repeated for each direct format.
@@ -50,9 +50,10 @@ def calculate_pipeline_retrieval_comparison(
     *,
     excluded_model_markers: Sequence[str] = DEFAULT_EXCLUDED_MODEL_MARKERS,
 ) -> PipelineRetrievalComparison:
-    """Validate and compare preselected answerable runs using database bootstrap CIs.
+    """Compare preselected context-fit ∩ answerable runs using database bootstrap CIs.
 
-    The caller must supply only answerable questions, established from reference SQL.
+    The caller supplies the context-fit ∩ answerable questions, using the cohort manifest
+    and reference SQL rather than selecting successful outputs.
     All six direct formats and SQL must have identical dataset/database/question/model
     identities. No output-success or context-fit selection is performed here. Means
     give each run equal weight; pointwise 95% intervals use the shared 10,000-draw

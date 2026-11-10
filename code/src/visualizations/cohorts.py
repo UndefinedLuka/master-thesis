@@ -65,6 +65,14 @@ class AnalysisCohorts:
     summary: pd.DataFrame
     audit: dict[str, Any]
 
+    @property
+    def intersection_records(self) -> pd.DataFrame:
+        """Return context-fit ∩ answerable runs without selecting successful outputs."""
+        eligible = self.manifest["context_fit"] & self.manifest["answerable"]
+        keys = pd.MultiIndex.from_frame(self.manifest.loc[eligible, _KEY])
+        row_keys = pd.MultiIndex.from_frame(self.context_fit_records[_KEY])
+        return self.context_fit_records.loc[row_keys.isin(keys)].copy()
+
 
 def _missing(value: Any) -> bool:
     return value is None or (not isinstance(value, (list, dict)) and bool(pd.isna(value)))
