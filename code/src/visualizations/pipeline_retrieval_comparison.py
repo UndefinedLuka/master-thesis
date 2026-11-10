@@ -21,6 +21,7 @@ from visualizations.config import (
     DATASET_ORDER,
     DEFAULT_EXCLUDED_MODEL_MARKERS,
     DIRECT_ACCURACY_METRIC_ORDER,
+    FORMAT_COLORS,
     FORMAT_LABELS,
     METRIC_TITLES,
     SERIALIZATION_FORMAT_ORDER,
@@ -154,7 +155,7 @@ def plot_pipeline_retrieval_comparison(analysis: PipelineRetrievalComparison) ->
     positions = np.arange(len(methods), dtype=float)
     positions[1:] += 0.4
     labels = ["Text-to-SQL", *(FORMAT_LABELS[fmt] for fmt in SERIALIZATION_FORMAT_ORDER)]
-    sql_color, direct_color = "#0072B2", "#707070"
+    colors = {COMMON_COHORT_SQL_METHOD: "#222222", **FORMAT_COLORS}
     figure, axes = plt.subplots(
         len(DIRECT_ACCURACY_METRIC_ORDER), len(datasets),
         figsize=(3.0 * len(datasets), 2.9 * len(DIRECT_ACCURACY_METRIC_ORDER)),
@@ -166,7 +167,7 @@ def plot_pipeline_retrieval_comparison(analysis: PipelineRetrievalComparison) ->
             panel = summary.loc[summary["dataset"].eq(dataset) & summary["metric"].eq(metric)]
             panel = panel.set_index("method").loc[list(methods)]
             for position, method in zip(positions, methods, strict=True):
-                color = sql_color if method == COMMON_COHORT_SQL_METHOD else direct_color
+                color = colors[method]
                 interval_marks(axis, [position], panel.loc[[method]], "mean_score",
                                horizontal=True, color=color)
                 mean = panel.loc[method, "mean_score"]
@@ -189,7 +190,7 @@ def plot_pipeline_retrieval_comparison(analysis: PipelineRetrievalComparison) ->
                 axis.set_title(DATASET_LABELS[dataset], pad=12)
             if col == 0:
                 axis.set_ylabel(METRIC_TITLES[metric], labelpad=12)
-                axis.get_yticklabels()[0].set_color(sql_color)
+                axis.get_yticklabels()[0].set_color(colors[COMMON_COHORT_SQL_METHOD])
             axis.xaxis.set_major_formatter(number_formatter())
             axis.tick_params(axis="y", length=0)
             axis.spines[["top", "right", "left"]].set_visible(False)

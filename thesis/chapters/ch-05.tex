@@ -354,35 +354,32 @@ unsuccessful attempts.
 
 \subsection{Retrieval accuracy}
 
-To compare retrieval accuracy between the two pipelines, we used the same \num{985} answerable Spider
-questions and \num{1108} answerable sampled BIRD questions across all ten retained models. Each of the six
-direct context inference formats was compared with text-to-SQL on the same question--model pairs. Runs that
-exceeded the context limit or failed to complete were retained with zero scores.
-Figure~\ref{fig:pipeline-retrieval-comparison} shows the mean NEM, BERTScore, and ROUGE-L scores and their
-intervals for both pipelines.
+We compared retrieval accuracy on questions that both had non-empty reference answers and met the
+context-fit criteria for every evaluated configuration. We therefore used the intersection of the two
+cohorts defined in Section~\ref{sec:analysis-cohorts}, comprising \num{807} Spider questions and \num{244}
+sampled BIRD questions. This restricted the comparison to questions with an available reference answer
+and recorded context fit across both pipelines. Each of the six direct context inference formats was
+compared with text-to-SQL on the same question--model pairs across all ten retained models. Unsuccessful
+runs were retained with zero scores. Figure~\ref{fig:pipeline-retrieval-comparison} shows the mean NEM,
+BERTScore, and ROUGE-L scores and their intervals for both pipelines.
 
 \begin{figure}[htbp]   \centering
   \includegraphics[width=\textwidth]{../code/analysis/figures/pipeline_retrieval_comparison.pdf}
-  \caption{Mean NEM, BERTScore, and ROUGE-L for text-to-SQL (blue) and the six direct formats   (grey) on the
-  answerable cohort, averaged over the ten retained models. }   \label{fig:pipeline-retrieval-comparison}
+  \caption{Mean NEM, BERTScore, and ROUGE-L for text-to-SQL and the six direct context inference formats
+  on the intersection of the answerable and context-fit cohorts, averaged over the ten retained models.}
+  \label{fig:pipeline-retrieval-comparison}
 \end{figure}
 
-On Spider, text-to-SQL had a mean NEM score of \num{0.634}, compared with \num{0.169} for JSON, the
-highest-scoring direct format on this measure. The paired JSON-minus-SQL difference was \num{-0.465}
-(\numrange{-0.507}{-0.422}). On sampled BIRD, text-to-SQL had a mean NEM score of \num{0.501}, compared with
-\num{0.054} for CSV, the highest direct mean. The paired CSV-minus-SQL difference was \num{-0.447}
-(\numrange{-0.524}{-0.380}).
+The comparison favoured text-to-SQL on both datasets, with higher mean NEM, BERTScore, and ROUGE-L
+than every direct context inference format. The NEM results showed a substantial separation: text-to-SQL
+scored \num{0.664} on Spider and \num{0.511} on sampled BIRD, whereas the highest direct means were
+\num{0.206} for JSON and \num{0.131} for YAML, respectively.
 
-CSV had the highest direct BERTScore and ROUGE-L means on both datasets, but text-to-SQL also had higher
-scores in these comparisons. On Spider, the paired CSV-minus-SQL differences were \num{-0.104}
-(\numrange{-0.229}{-0.038}) for BERTScore and \num{-0.403} (\numrange{-0.450}{-0.359}) for ROUGE-L. On
-sampled BIRD, the corresponding differences were \num{-0.385} (\numrange{-0.661}{-0.137}) and \num{-0.438}
-(\numrange{-0.508}{-0.367}).
-
-Because failed runs retain zero scores, these comparisons reflect both agreement with the reference answer
-and the ability of each pipeline to complete the request. They do not isolate answer agreement among
-successful runs or measure SQL execution success. As with the earlier accuracy results, higher scores
-indicate closer agreement with the textual reference rather than a direct verification of factual correctness.
+The separation was less pronounced for BERTScore. CSV, the highest-scoring direct format on this
+metric, achieved \num{0.876} on Spider and \num{0.849} on sampled BIRD, compared with \num{0.925}
+and \num{0.869} for text-to-SQL. ROUGE-L showed larger differences, with the highest direct means
+remaining below text-to-SQL on both datasets. No single direct format had the highest mean across
+all three metrics.
 
 \subsection{Retrieval accuracy by database size} \label{sec:pipeline-accuracy-by-database-size}
 

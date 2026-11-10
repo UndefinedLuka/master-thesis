@@ -6,7 +6,11 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from visualizations.config import DIRECT_ACCURACY_METRIC_ORDER, SERIALIZATION_FORMAT_ORDER
+from visualizations.config import (
+    DIRECT_ACCURACY_METRIC_ORDER,
+    FORMAT_COLORS,
+    SERIALIZATION_FORMAT_ORDER,
+)
 from visualizations.pipeline_retrieval_comparison import (
     calculate_pipeline_retrieval_comparison,
     generate_pipeline_retrieval_comparison_figure,
@@ -176,6 +180,7 @@ def test_one_database_has_no_spurious_interval() -> None:
 
 def test_display_covers_both_datasets_all_metrics_and_formats(tmp_path) -> None:
     import matplotlib.pyplot as plt
+    from matplotlib.colors import to_rgba
 
     analysis = calculate_pipeline_retrieval_comparison(_matrix())
     figure = plot_pipeline_retrieval_comparison(analysis)
@@ -192,7 +197,12 @@ def test_display_covers_both_datasets_all_metrics_and_formats(tmp_path) -> None:
         np.testing.assert_allclose(
             [line.get_xdata()[0] for line in points], panel["mean_score"],
         )
+        colors = {"text_to_sql": "#222222", **FORMAT_COLORS}
+        for point, annotation, row in zip(points, axis.texts, panel.itertuples(), strict=True):
+            assert point.get_color() == colors[row.method]
+            assert annotation.get_color() == colors[row.method]
         for collection, row in zip(axis.collections, panel.itertuples(), strict=True):
+            np.testing.assert_allclose(collection.get_colors()[0], to_rgba(colors[row.method]))
             np.testing.assert_allclose(
                 collection.get_segments()[0][:, 0], [row.mean_score_low, row.mean_score_high],
             )

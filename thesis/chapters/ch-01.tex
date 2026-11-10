@@ -12,47 +12,54 @@ Thus far, LLMs have shown great promise when utilized for the purposes of extrac
 information from structured and unstructured data. When trying to utilize these models for such use cases,
 engineers and researchers have to carefully balance the three key aspects: accuracy, latency, and cost.
 
-For an LLM to process structured data, we first need to provide the data in a form the model can understand.
-Since it cannot read the data directly, we need to choose the right serialization format. Currently, the most
-widespread formats in the industry are JavaScript Object Notation (JSON), Extensible Markup Language (XML),
-and comma-separated values (CSV), but many others are present as well. Since these formats can easily be
-converted into one another, the question arises: which format is optimal when working with LLMs? By choosing
-the right format, we could directly influence cost, latency, and accuracy, with a minimal price being paid by
-the whole system for changing from one format to another.
+For an LLM to answer questions about structured data, it first needs a way to access that data. One option
+is to convert the data into a text format and include it in the model’s input, allowing the model to read it
+and produce an answer. Another option is to give the model access to external tools that find or process the
+information it needs. This raises two questions: how do these approaches compare in terms of accuracy,
+latency, and cost, and which data format works best when the data is provided directly to the model?
 
 \section{Problem definition}
 
-Even though the LLMs have considerable potential in the field of information extraction from structured data,
-existing work typically evaluates model accuracy \cite{struct-text-eval}, efficiency \cite{toon-format-2025},
-or system latency \cite{fernandez2025energy} in isolation. However, there is a lack of a unified framework
-that jointly considers data serialization format, extraction method, and system-level efficiency. The choice
-of data serialization format directly dictates the number of tokens, which increases computational
-complexity, ultimately leading to higher latency and operational costs. In real information systems, where
-the number of queries is high and each application programming interface (API) is limited, only optimizing
-for accuracy and increasing the latency and cost is not acceptable.
+To examine the two approaches outlined above, this thesis compares direct context inference with
+text-to-SQL, which is used as a representative of indirect, tool-based information extraction.
 
-Alongside data formats, we have to consider other possibilities for information extraction. We explore the
-following  two paths:
+This comparison requires considering retrieval accuracy and operational efficiency together.
+Research on structured-text understanding \cite{struct-text-eval}, token-efficient serialization
+\cite{toon-format-2025}, and inference efficiency \cite{fernandez2025energy} provides relevant evidence for
+individual aspects of this comparison. The problem addressed in this thesis is how to bring these aspects
+together to support the selection of an extraction pipeline and, where applicable, a serialization format.
 
-\begin{itemize}
-  \item Direct context inference: Directly passing the raw serialized data to the prompt (context) of the
-    LLM, so it can extract the information directly
-  \item Program-aided extraction: By using the LLM to generate code or a Structured Query Language (SQL)
-    query, based on a limited number of examples, which is executed on the given data in order to extract information
-\end{itemize}
+Neither the most compact representation nor the approach with the highest retrieval accuracy is
+necessarily the most suitable choice under all operating constraints. A representation may reduce
+input-token consumption while making the data harder for a model to interpret. Similarly, differences in
+retrieval accuracy between extraction pipelines must be considered alongside the resources and time
+required to obtain their answers. These relationships need to be examined empirically rather than
+inferred from any single measure.
 
-The main problem we address is the lack of a decision framework that would help us choose an appropriate
-extraction pipeline  (in-context inference compared to program-aided extraction) and configuration while
-taking accuracy, latency, and cost constraints into consideration.
+This thesis therefore addresses three research questions:
+
+\begin{enumerate}
+  \item How does serialization format affect retrieval accuracy, token consumption, and response latency
+    in direct context inference?
+  \item How do direct context inference and text-to-SQL compare in terms of retrieval accuracy, token
+    consumption, and response latency?
+  \item What evidence-based guidelines can be derived for selecting an extraction pipeline and, when using
+    direct context inference, a serialization format?
+\end{enumerate}
+
+Together, these questions connect the evaluation of retrieval accuracy and operational efficiency to
+practical selection decisions. The aim is to develop a decision framework grounded in the evaluated
+workloads, models, and deployment conditions, rather than to identify a universally optimal configuration.
 
 \section{Contributions}
 
-The main contribution of this thesis is the development of a unified decision framework that maps operational
-trade-offs between in-context inference with different serialization methods and text-to-SQL information
-extraction. While existing works evaluate these methods in isolation, we provide a holistic comparison using
-local open-weight LLMs. Furthermore, we inspect the influence of different data serialization methods on the
-overall operational efficiency and retrieval accuracy during in-context inference. In order to collect all
-the necessary data, we run our tests on datasets that vary in size and data quality.
+The main contribution of this thesis is an empirical comparison of direct context inference and
+text-to-SQL using local open-weight LLMs under shared experimental conditions. The evaluation considers
+retrieval accuracy, token consumption, and response latency together, and examines how serialization
+format affects these measures in direct context inference. Based on the empirical findings, the thesis
+develops a decision framework that provides guidance for selecting an extraction pipeline and, where
+applicable, a serialization format. This guidance is grounded in the evaluated workloads, models, and
+deployment conditions rather than intended as a universally applicable selection rule.
 
 \section{Structure}
 
