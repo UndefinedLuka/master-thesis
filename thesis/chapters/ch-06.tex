@@ -30,11 +30,6 @@ highest BERTScore on both datasets. Unsuccessful runs remain zero-scored. These 
 by themselves establish clear pairwise advantages, and the metrics measure textual agreement rather than
 correctness directly.
 
-The restricted BIRD comparison covers only two sampled databases. Changes from the broader results therefore
-cannot be attributed solely to removing context failures, nor are the rankings guaranteed on new workloads.
-Requiring every configuration to fit created a common comparison; an application only needs its candidates
-to fit.
-
 CSV was the most operationally efficient direct format and led most retrieval-accuracy measures in the broader
 answerable cohort. When all configurations fit within the context window, however, no single format led across
 all measures (Figure~\ref{fig:pipeline-retrieval-comparison}). CSV is therefore a good starting point, but the
