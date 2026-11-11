@@ -357,7 +357,7 @@ unsuccessful attempts.
 We compared retrieval accuracy on questions that both had non-empty reference answers and met the
 context-fit criteria for every evaluated configuration. We therefore used the intersection of the two
 cohorts defined in Section~\ref{sec:analysis-cohorts}, comprising \num{807} Spider questions and \num{244}
-sampled BIRD questions. This restricted the comparison to questions with an available reference answer
+sampled BIRD questions, from a two-database subset. This restricted the comparison to questions with an available reference answer
 and recorded context fit across both pipelines. Each of the six direct context inference formats was
 compared with text-to-SQL on the same question--model pairs across all ten retained models. Unsuccessful
 runs were retained with zero scores. Figure~\ref{fig:pipeline-retrieval-comparison} shows the mean NEM,
@@ -366,7 +366,8 @@ BERTScore, and ROUGE-L scores and their intervals for both pipelines.
 \begin{figure}[htbp]   \centering
   \includegraphics[width=\textwidth]{../code/analysis/figures/pipeline_retrieval_comparison.pdf}
   \caption{Mean NEM, BERTScore, and ROUGE-L for text-to-SQL and the six direct context inference formats
-  on the intersection of the answerable and context-fit cohorts, averaged over the ten retained models.}
+  on the intersection of the answerable and context-fit cohorts, averaged over the ten retained models.
+  BIRD results are based on a two-database subset.}
   \label{fig:pipeline-retrieval-comparison}
 \end{figure}
 
@@ -429,8 +430,8 @@ only among completed runs or a causal effect of size.
 \begin{figure}[htb]   \centering
   \includegraphics[width=\textwidth]{../code/analysis/figures/common_cohort_token_usage.pdf}   \caption{Mean
     input and output tokens on the shared context-fit workload, including SQL failures and all correction
-    attempts. Input tokens use a logarithmic scale; output tokens use a linear scale. Whiskers show pointwise
-  \qty{95}{\percent} intervals.}   \label{fig:common-cohort-token-usage}
+    attempts. Input tokens use a logarithmic scale; output tokens use a linear scale.
+    BIRD results are based on a two-database subset.}   \label{fig:common-cohort-token-usage}
 \end{figure}
 
 We compared operational efficiency on the same context-fit questions used in the direct-format analysis:
@@ -448,7 +449,7 @@ ratio interval excluded one. On BIRD, all direct formats produced more output to
 \begin{figure}[htbp]   \centering
   \includegraphics[width=\textwidth]{../code/analysis/figures/common_cohort_latency.pdf}   \caption{Mean
     latency components on the shared context-fit workload. SQL includes all initial and correction work,
-  including unsuccessful runs. Whiskers show pointwise \qty{95}{\percent}   intervals for total latency.}
+  including unsuccessful runs. BIRD results are based on a two-database subset.}
   \label{fig:common-cohort-latency}
 \end{figure}
 
