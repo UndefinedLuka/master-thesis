@@ -4,20 +4,20 @@
 
 CSV required the fewest input tokens and had the lowest mean latency among the direct formats. Retrieval
 rankings, however, depended on the metric, workload, and questions included in the analysis. Operational
-efficiency therefore did not establish a single best format for answer agreement. Other formats remain
-relevant when they fit within the context window and their task-relevant answer agreement justifies the
+efficiency therefore did not establish a single best format for retrieval accuracy. Other formats remain
+relevant when they fit within the context window and their task-relevant retrieval accuracy justifies the
 additional resources.
 
 Text-to-SQL is a good starting point for comparable relational tasks when SQL execution is feasible. It
-achieved higher agreement with the reference answers even when all configurations fit within the context
+achieved higher retrieval accuracy even when all configurations fit within the context
 window, and required fewer input tokens and had lower overall mean latency on the operational workload.
 The small-input CSV latency results support considering direct inference for latency-sensitive applications,
-but do not establish that CSV is reliably faster or that these faster cases meet the required answer quality.
+but do not establish that CSV is reliably faster or that these faster cases meet the required retrieval accuracy.
 
-Pipeline and format selection should start with the application's required answer agreement, latency, and
+Pipeline and format selection should start with the application's required retrieval accuracy, latency, and
 resource budget. SQL and CSV provide evidence-backed starting configurations, not unconditional final
-choices. Feasible candidates should be evaluated on representative application questions, with answer
-agreement and operational efficiency assessed separately. The final choice should meet the essential
+choices. Feasible candidates should be evaluated on representative application questions, with retrieval
+accuracy and operational efficiency assessed separately. The final choice should meet the essential
 requirements and reflect the application's priorities, while allowing the pipeline, format, model, and retry
 limit to be reconsidered when needed.
 

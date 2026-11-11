@@ -15,7 +15,7 @@ and had slightly higher mean latency on both datasets. XML required the most inp
 as many as CSV on Spider and \num{3.06} times as many on sampled BIRD. Much of the latency difference occurred
 before the first output token, so compactness mainly reduced input processing rather than answer generation.
 
-\subsection{Retrieval agreement}
+\subsection{Retrieval accuracy}
 
 In the broader answerable cohort, CSV had the highest mean BERTScore and ROUGE-L on Spider and led all three
 measures on sampled BIRD, while JSON had the highest Spider NEM
@@ -38,12 +38,12 @@ to fit.
 CSV was the most operationally efficient direct format and led most retrieval-accuracy measures in the broader
 answerable cohort. When all configurations fit within the context window, however, no single format led across
 all measures (Figure~\ref{fig:pipeline-retrieval-comparison}). CSV is therefore a good starting point, but the
-final choice should depend on which measures matter most to the application and whether another format’s answer
-agreement justifies the additional resources.
+final choice should depend on which measures matter most to the application and whether another format’s retrieval
+accuracy justifies the additional resources.
 
 \section{Pipeline comparison} \label{sec:pipeline-comparison-discussion}
 
-\subsection{Retrieval agreement}
+\subsection{Retrieval accuracy}
 
 Text-to-SQL achieved higher mean NEM, BERTScore, and ROUGE-L than every direct format even when all
 configurations fit within the context window (Figure~\ref{fig:pipeline-retrieval-comparison}). This comparison
@@ -78,17 +78,17 @@ it was faster in \qty{68.2}{\percent} of question--model pairs, averaging \qty{0
 zero. SQL's lower overall mean latency therefore does not imply faster responses on most individual
 requests in every tier, nor does the small-input result establish that CSV is reliably faster.
 
-Text-to-SQL is the preferred starting point when SQL execution is feasible. It achieved higher agreement with
-the reference answers, used fewer input tokens, and had lower overall mean latency than direct inference.
+Text-to-SQL is the preferred starting point when SQL execution is feasible. It achieved higher retrieval accuracy,
+used fewer input tokens, and had lower overall mean latency than direct inference.
 CSV is worth considering for small databases when latency is the main priority, although the results do
 not establish that it is reliably faster. Switching to CSV should therefore depend on application-specific
-measurements confirming a useful latency advantage while meeting the required answer quality.
+measurements confirming a useful latency advantage while meeting the required retrieval accuracy.
 
 \section{Model effects and retry policy} \label{sec:main-findings-interpretation}
 
 \subsection{Model effects}
 
-Larger variants generally achieved higher answer-agreement scores, but the gains varied across families,
+Larger variants generally achieved higher retrieval accuracy, but the gains varied across families,
 datasets, and pipelines (Figures~\ref{fig:direct-accuracy-by-model-size}
 and~\ref{fig:text-to-sql-accuracy-by-model-size}). Improvements in direct context inference were less
 consistent across datasets, so model size alone is not a reliable guide to the expected benefit. Architecture
@@ -98,7 +98,7 @@ Smaller models were not necessarily more efficient over a complete SQL run. Qwen
 output tokens and had lower mean total latency than 0.8B on both datasets, alongside fewer retries
 (Section~\ref{sec:text-to-sql-results}). This comparison shows that a larger model can require
 less work overall, not that its individual generation attempts are faster. Model selection should therefore
-use measured answer agreement and complete-run latency and token consumption on representative tasks.
+use measured retrieval accuracy and complete-run latency and token consumption on representative tasks.
 
 \subsection{SQL retry policy} \label{sec:sql-error-correction}
 
@@ -110,7 +110,7 @@ failures could have been identified and stopped in advance.
 
 One retry is worth evaluating for latency-sensitive applications. The experiments did not establish an
 optimal retry limit, and further attempts may still be useful when the additional executable-query recovery
-justifies the extra latency and token usage. Answer agreement needs separate assessment: an executable query
+justifies the extra latency and token usage. Retrieval accuracy needs separate assessment: an executable query
 with the wrong join or filter does not trigger a retry, so execution-error correction does not provide
 semantic checking.
 
@@ -168,8 +168,8 @@ most retrieval-accuracy measures in the broader answerable cohort (Figure~\ref{f
 On the intersection of the answerable and context-fit cohorts, it also achieved the highest mean BERTScore
 among direct formats on both datasets (Figure~\ref{fig:pipeline-retrieval-comparison}). However, CSV did not
 lead on every measure, so the results do not establish a single best format for retrieval accuracy. The final
-choice should depend on which measures matter most to the application and whether another format's answer
-agreement justifies the additional resources.
+choice should depend on which measures matter most to the application and whether another format's retrieval
+accuracy justifies the additional resources.
 
 \subsection{Decision tree}
 
@@ -181,7 +181,7 @@ agreement justifies the additional resources.
 The selected pipeline should be evaluated on representative application questions against the required
 accuracy, response time, and budget. These requirements guide the choice of model and, for SQL, the number of
 correction attempts. Section~\ref{sec:sql-error-correction} discusses how additional retries affect execution
-success and processing time. Answer quality should be assessed separately, since an executable query can
+success and processing time. Retrieval accuracy should be assessed separately, since an executable query can
 still return an incorrect result.
 
 When a configuration does not meet the requirements, the model, prompt, and retry limit can be adjusted and
