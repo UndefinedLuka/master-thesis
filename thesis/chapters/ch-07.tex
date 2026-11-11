@@ -1,29 +1,31 @@
 \chapter{Conclusion} \label{ch:conclusion}
 
-We compared two approaches to extracting information from structured data using LLMs: direct context
-inference and text-to-SQL. We also examined how serialization format affects direct inference. The aim was to
-understand how these choices influence answer agreement, latency, and token usage, and to use the findings to
-guide the selection of an approach for a given application.
+\section{Conclusions}
 
-\section{Conclusions and contributions}
+CSV required the fewest input tokens and had the lowest mean latency among the direct formats. Retrieval
+rankings, however, depended on the metric, workload, and questions included in the analysis. Operational
+efficiency therefore did not establish a single best format for answer agreement. Other formats remain
+relevant when they fit within the context window and their task-relevant answer agreement justifies the
+additional resources.
 
-When deciding on the presented pipelines, we should first choose the extraction method, and then consider the
-serialization format. For the relational tasks evaluated here, text-to-SQL achieved higher agreement with the
-reference answers than direct context inference. It also required fewer input tokens and had lower mean
-latency. These findings support using text-to-SQL as the starting point when an SQL engine is available, and
-the required tasks can be expressed as queries.
+Text-to-SQL is a good starting point for comparable relational tasks when SQL execution is feasible. It
+achieved higher agreement with the reference answers even when all configurations fit within the context
+window, and required fewer input tokens and had lower overall mean latency on the operational workload.
+The small-input CSV latency results support considering direct inference for latency-sensitive applications,
+but do not establish that CSV is reliably faster or that these faster cases meet the required answer quality.
 
-When SQL cannot be used, direct context inference is an option if the complete request fits within the
-model's context window. In this case, format choice affects how much data we can provide and how much
-processing it requires. For flat tabular data, CSV had the lowest mean input-token use and latency, with TOON
-a close alternative. Both also achieved competitive answer scores among the direct formats. More verbose
-representations did not provide a consistent accuracy advantage that would justify their additional input tokens.
+Pipeline and format selection should start with the application's required answer agreement, latency, and
+resource budget. SQL and CSV provide evidence-backed starting configurations, not unconditional final
+choices. Feasible candidates should be evaluated on representative application questions, with answer
+agreement and operational efficiency assessed separately. The final choice should meet the essential
+requirements and reflect the application's priorities, while allowing the pipeline, format, model, and retry
+limit to be reconsidered when needed.
 
-The main contributions are the controlled comparison of these approaches using local open-weight LLMs and the
-decision framework presented in Section~\ref{sec:decision-framework}. The framework connects the findings to
-practical choices by considering database size, SQL support, required accuracy, expected latency, and the
-available budget. As discussed in Chapter~\ref{ch:discussion}, the recommendations depend on the data and
-experimental setup.
+The main contributions are an empirical comparison of direct context inference and text-to-SQL using local
+open-weight LLMs under shared experimental conditions, including the effects of serialization format, and
+the decision framework presented in Section~\ref{sec:decision-framework}. The framework provides selection
+guidelines grounded in the evaluated workloads, models, and deployment conditions rather than a universally
+applicable rule.
 
 \section{Future work}
 
