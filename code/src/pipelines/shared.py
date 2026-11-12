@@ -9,18 +9,12 @@ from pipelines.types import PipelineKind, PipelineResult
 from serialization.types import SerializationFormat
 
 
-def build_messages(
-    system_prompt: str, question: str, *, evidence: str | None = None
-) -> list[ChatMessage]:
-    """Assemble the chat messages: system prompt, then the question.
+def build_messages(system_prompt: str, question: str) -> list[ChatMessage]:
+    """Assemble the chat messages: system prompt, then the question."""
 
-    BIRD's external-knowledge ``evidence`` (when present) is appended to the question, since
-    Chapter 3 notes BIRD requires external knowledge for correct retrieval.
-    """
-    user_content = question if not evidence else f"{question}\n\nHint: {evidence}"
     return [
         {"role": "system", "content": system_prompt},
-        {"role": "user", "content": user_content},
+        {"role": "user", "content": question},
     ]
 
 

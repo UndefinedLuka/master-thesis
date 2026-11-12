@@ -30,7 +30,7 @@ def run_direct_inference(
     result = base_result(example, pipeline="direct", fmt=fmt, model_id=model_id_of(backend))
 
     system_prompt = render_prompt(prompt_template, serialized)
-    messages = build_messages(system_prompt, example["question"], evidence=example["evidence"])
+    messages = build_messages(system_prompt, example["question"])
     response = backend.generate(
         make_request(messages, max_tokens=max_tokens, temperature=temperature, seed=seed)
     )

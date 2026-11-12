@@ -85,8 +85,9 @@ The two cohorts overlap, but they do not contain exactly the same questions. The
 questions and \num{244} BIRD questions. The context-fit cohort also contained \num{45} Spider questions and
 \num{59} BIRD questions with empty reference results. Every question could be assigned or excluded using the
 recorded criteria, and no required run records were missing. For BIRD, the context-fit cohort covered only
-\texttt{student\_club} and \texttt{toxicology}, so any results based on this cohort describe only those two
-sampled databases.
+the sampled \texttt{student\_club} and \texttt{toxicology} databases. We refer to these two databases as the
+\emph{BIRD context-fit subset}. Results based on the BIRD context-fit cohort or its intersection with the
+answerable cohort therefore describe only this subset, with different question sets in the two comparisons.
 
 \input{../code/analysis/tables/experiment_outcomes}
 
@@ -110,8 +111,9 @@ full set of experiments; the following sections specify which cohort is used for
 \input{../code/analysis/tables/direct_operational_efficiency}
 
 To compare operational efficiency across formats, we used the context-fit cohort defined in
-Section~\ref{sec:analysis-cohorts}. Each format was evaluated on the same questions across all ten retained
-models, including the recorded resource use of unsuccessful runs.
+Section~\ref{sec:analysis-cohorts}. BIRD results in this subsection use the BIRD context-fit subset. Each
+format was evaluated on the same questions across all ten retained models, including the recorded resource
+use of unsuccessful runs.
 Table~\ref{tab:direct-operational-efficiency} shows the mean input and output token counts, TTFT, generation
 time after the first token, and total latency. Unlike the serialisation counts in
 Section~\ref{sec:serialization-results}, the input counts here include the complete prompt rather than only
@@ -139,8 +141,8 @@ increased from \qty{0.78}{\second} for CSV to \qty{6.45}{\second} for XML on Spi
 \qty{6.32}{\second} to \qty{46.87}{\second} on BIRD. Generation after the first token varied less, ranging
 from \qty{0.48}{\second} to \qty{0.97}{\second} across formats on Spider and \qtyrange{1.70}{4.00}{\second}
 on BIRD. These results show that compact formats were associated with lower token use and shorter response
-times on the shared question set. However, the BIRD results cover only the two sampled databases in its
-context-fit cohort, so the narrow intervals do not imply the same precision across the full BIRD dataset.
+times on the shared question set. However, the BIRD context-fit subset contains only two databases, so the
+narrow intervals do not imply the same precision across the full BIRD dataset.
 
 \subsection{Retrieval accuracy}
 
@@ -357,28 +359,28 @@ unsuccessful attempts.
 We compared retrieval accuracy on questions that both had non-empty reference answers and met the
 context-fit criteria for every evaluated configuration. We therefore used the intersection of the two
 cohorts defined in Section~\ref{sec:analysis-cohorts}, comprising \num{807} Spider questions and \num{244}
-sampled BIRD questions, from a two-database subset. This restricted the comparison to questions with an available reference answer
-and recorded context fit across both pipelines. Each of the six direct context inference formats was
-compared with text-to-SQL on the same question--model pairs across all ten retained models. Unsuccessful
-runs were retained with zero scores. Figure~\ref{fig:pipeline-retrieval-comparison} shows the mean NEM,
+questions from the BIRD context-fit subset. This restricted the comparison to questions with an available
+reference answer and recorded context fit across both pipelines. Each of the six direct context inference
+formats was compared with text-to-SQL on the same question--model pairs across all ten retained models.
+Unsuccessful runs were retained with zero scores. Figure~\ref{fig:pipeline-retrieval-comparison} shows the mean NEM,
 BERTScore, and ROUGE-L scores and their intervals for both pipelines.
 
 \begin{figure}[htbp]   \centering
   \includegraphics[width=\textwidth]{../code/analysis/figures/pipeline_retrieval_comparison.pdf}
   \caption{Mean NEM, BERTScore, and ROUGE-L for text-to-SQL and the six direct context inference formats
   on the intersection of the answerable and context-fit cohorts, averaged over the ten retained models.
-  BIRD results are based on a two-database subset.}
+  BIRD results are based on the BIRD context-fit subset.}
   \label{fig:pipeline-retrieval-comparison}
 \end{figure}
 
 The comparison favoured text-to-SQL on both datasets, with higher mean NEM, BERTScore, and ROUGE-L
 than every direct context inference format. The NEM results showed a substantial separation: text-to-SQL
-scored \num{0.664} on Spider and \num{0.511} on sampled BIRD, whereas the highest direct means were
-\num{0.206} for JSON and \num{0.131} for YAML, respectively.
+scored \num{0.664} on Spider and \num{0.511} on the BIRD context-fit subset, whereas the highest direct means
+were \num{0.206} for JSON and \num{0.131} for YAML, respectively.
 
 The separation was less pronounced for BERTScore. CSV, the highest-scoring direct format on this
-metric, achieved \num{0.876} on Spider and \num{0.849} on sampled BIRD, compared with \num{0.925}
-and \num{0.869} for text-to-SQL. ROUGE-L showed larger differences, with the highest direct means
+metric, achieved \num{0.876} on Spider and \num{0.849} on the BIRD context-fit subset, compared with
+\num{0.925} and \num{0.869} for text-to-SQL. ROUGE-L showed larger differences, with the highest direct means
 remaining below text-to-SQL on both datasets. No single direct format had the highest mean across
 all three metrics.
 
@@ -431,11 +433,11 @@ only among completed runs or a causal effect of size.
   \includegraphics[width=\textwidth]{../code/analysis/figures/common_cohort_token_usage.pdf}   \caption{Mean
     input and output tokens on the shared context-fit workload, including SQL failures and all correction
     attempts. Input tokens use a logarithmic scale; output tokens use a linear scale.
-    BIRD results are based on a two-database subset.}   \label{fig:common-cohort-token-usage}
+    BIRD results are based on the BIRD context-fit subset.}   \label{fig:common-cohort-token-usage}
 \end{figure}
 
 We compared operational efficiency on the same context-fit questions used in the direct-format analysis:
-\num{852} from \num{18} Spider databases and \num{303} from two sampled BIRD databases. Both pipelines used
+\num{852} from \num{18} Spider databases and \num{303} from the BIRD context-fit subset. Both pipelines used
 identical question--model pairs, retaining the recorded costs of \num{372} unsuccessful SQL runs on Spider
 and \num{231} on BIRD. SQL token counts and timings include all initial and correction attempts, with total
 latency also including SQL execution.
@@ -449,7 +451,7 @@ ratio interval excluded one. On BIRD, all direct formats produced more output to
 \begin{figure}[htbp]   \centering
   \includegraphics[width=\textwidth]{../code/analysis/figures/common_cohort_latency.pdf}   \caption{Mean
     latency components on the shared context-fit workload. SQL includes all initial and correction work,
-  including unsuccessful runs. BIRD results are based on a two-database subset.}
+  including unsuccessful runs. BIRD results are based on the BIRD context-fit subset.}
   \label{fig:common-cohort-latency}
 \end{figure}
 
@@ -472,6 +474,6 @@ databases. CSV was faster in \qty{68.2}{\percent} of its question--model pairs
 However, its mean advantage of \qty{0.037}{\second} (\qtyrange{-0.030}{0.121}{\second}) remained uncertain.
 SQL's lower overall mean was driven mainly by large-database pairs: they represented only
 \qty{20.2}{\percent} of the Spider workload, but their larger latency differences in SQL's favour outweighed
-CSV's smaller advantages elsewhere. The narrow BIRD interval reflects similar win rates in only two sampled
-databases. Since accuracy and efficiency use different cohorts, these results do not establish a joint
-cost--accuracy trade-off on the same question set.
+CSV's smaller advantages elsewhere. The narrow BIRD interval reflects similar win rates in the two databases
+of the BIRD context-fit subset. Since accuracy and efficiency use different cohorts, these results do not
+establish a joint cost--accuracy trade-off on the same question set.

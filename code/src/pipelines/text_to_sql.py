@@ -90,9 +90,7 @@ def run_text_to_sql(
     result = base_result(example, pipeline="text_to_sql", fmt=None, model_id=model_id_of(backend))
 
     system_prompt = render_prompt(prompt_template, schema_ddl)
-    messages: list[ChatMessage] = build_messages(
-        system_prompt, example["question"], evidence=example["evidence"]
-    )
+    messages: list[ChatMessage] = build_messages(system_prompt, example["question"])
 
     attempts: list[RetryAttempt] = []
     total_generation_s = 0.0

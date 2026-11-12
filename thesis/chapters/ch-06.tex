@@ -12,8 +12,9 @@ CSV is a good starting point when operational efficiency is the main priority. I
 tokens and had the lowest mean total latency among the six direct formats
 (Table~\ref{tab:direct-operational-efficiency}). TOON was a close alternative, but required more input tokens
 and had slightly higher mean latency on both datasets. XML required the most input tokens: \num{3.76} times
-as many as CSV on Spider and \num{3.06} times as many on sampled BIRD. Much of the latency difference occurred
-before the first output token, so compactness mainly reduced input processing rather than answer generation.
+as many as CSV on Spider and \num{3.06} times as many on the BIRD context-fit subset. Much of the latency
+difference occurred before the first output token, so compactness mainly reduced input processing rather than
+answer generation.
 
 \subsection{Retrieval accuracy}
 
@@ -25,10 +26,15 @@ agreement with processing feasibility.
 
 When we restrict these questions to those where all configurations fit within the context window, the
 rankings change (Figure~\ref{fig:pipeline-retrieval-comparison}). JSON still had the highest observed Spider
-NEM, but Markdown led Spider ROUGE-L. YAML led NEM and ROUGE-L on sampled BIRD, while CSV retained the
-highest BERTScore on both datasets. Unsuccessful runs remain zero-scored. These observed mean rankings do not
+NEM, but Markdown led Spider ROUGE-L. YAML led NEM and ROUGE-L on the BIRD context-fit subset, while CSV
+retained the highest BERTScore on both datasets. Unsuccessful runs remain zero-scored. These observed mean rankings do not
 by themselves establish clear pairwise advantages, and the metrics measure textual agreement rather than
 correctness directly.
+
+The BIRD context-fit subset contains only two sampled databases. Changes from the broader results therefore
+cannot be attributed solely to removing context failures, nor are the rankings guaranteed on new workloads.
+Requiring every configuration to fit created a common comparison; an application only needs its candidates
+to fit.
 
 CSV was the most operationally efficient direct format and led most retrieval-accuracy measures in the broader
 answerable cohort. When all configurations fit within the context window, however, no single format led across
@@ -46,10 +52,10 @@ uses questions with non-empty reference answers and retains zero scores for unsu
 advantage therefore cannot be explained only by context failures in direct inference: delegating retrieval
 and computation to the database engine remained beneficial when the records could be supplied directly.
 
-The separation was substantial for NEM but much smaller for BERTScore, particularly on sampled BIRD.
-This distinction matters when interpreting retrieval accuracy: similar BERTScores do not establish equivalent
-correctness, and all three metrics measure textual agreement. The restricted BIRD results also concern only
-two sampled databases, as discussed in Section~\ref{sec:serialization-trade-offs}.
+The separation was substantial for NEM but much smaller for BERTScore, particularly on the BIRD context-fit
+subset. This distinction matters when interpreting retrieval accuracy: similar BERTScores do not establish equivalent
+correctness, and all three metrics measure textual agreement. The limited coverage of the BIRD context-fit
+subset also applies here, as discussed in Section~\ref{sec:serialization-trade-offs}.
 
 \subsection{Database size} \label{sec:pipeline-size-interpretation}
 
@@ -65,7 +71,8 @@ Text-to-SQL required fewer input tokens and had lower mean total latency than ev
 shared context-fit workload (Figures~\ref{fig:common-cohort-token-usage} and~\ref{fig:common-cohort-latency}).
 This advantage remained after including SQL correction attempts, unsuccessful runs, and query execution;
 preprocessing was excluded. The operational workload also includes empty reference answers, so the different
-question sets do not establish a measured joint accuracy--latency optimum.
+question sets do not establish a measured joint accuracy--latency optimum. The BIRD results use the BIRD
+context-fit subset.
 
 CSV is worth considering for latency-sensitive applications with small inputs. In the small Spider tier,
 it was faster in \qty{68.2}{\percent} of question--model pairs, averaging \qty{0.261}{\second} against
@@ -242,7 +249,7 @@ evaluated configurations, including some with empty reference answers. The overa
 comparison uses the intersection: questions with non-empty reference answers that also meet those context-fit
 criteria. Unsuccessful runs still receive zero scores, so this is not a successful-runs-only comparison.
 
-For BIRD, both restricted comparisons cover only two sampled databases. Differences from the broader results
+For BIRD, both restricted comparisons use the BIRD context-fit subset. Differences from the broader results
 cannot be attributed solely to removing context failures because the question populations also change.
 Different question sets for retrieval accuracy and operational efficiency prevent a claim of a measured joint
 accuracy--latency optimum. Database size also varies with domain, schema, and questions, so the size findings
