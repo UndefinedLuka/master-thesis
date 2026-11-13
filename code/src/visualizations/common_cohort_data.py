@@ -113,6 +113,7 @@ def calculate_common_cohort_analysis(
             data, ["dataset"], SUMMARY_METRICS, comparison="method",
             reference=COMMON_COHORT_SQL_METHOD, effect="ratio",
             pair_keys=("db_id", "example_id", "model_id"),
+            min_databases=3,
         ), on=["dataset", "method"], validate="one_to_one",
     )
     sql_records = data[data["method"].eq(COMMON_COHORT_SQL_METHOD)]

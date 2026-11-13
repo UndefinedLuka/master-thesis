@@ -58,7 +58,9 @@ def calculate_pipeline_retrieval_comparison(
     All six direct formats and SQL must have identical dataset/database/question/model
     identities. No output-success or context-fit selection is performed here. Means
     give each run equal weight; pointwise 95% intervals use the shared 10,000-draw
-    database bootstrap, with the same sampled databases for every method.
+    database bootstrap, with the same sampled databases for every method. Intervals
+    are omitted for groups with fewer than three databases, including the two-database
+    BIRD context-fit subset; point estimates and paired effects are retained.
     """
     required = {*PAIR_KEYS, "pipeline", "format", "error", "execution_success",
                 *SCORE_COLUMNS.values()}
@@ -130,6 +132,7 @@ def calculate_pipeline_retrieval_comparison(
     intervals = mean_intervals(
         long, ["dataset", "metric"], {"mean_score": "score"}, comparison="method",
         reference=COMMON_COHORT_SQL_METHOD, pair_keys=PAIR_KEYS,
+        min_databases=3,
     )
     summary = summary.merge(intervals, on=["dataset", "metric", "method"], validate="one_to_one")
     order = {"dataset": DATASET_ORDER, "metric": DIRECT_ACCURACY_METRIC_ORDER,

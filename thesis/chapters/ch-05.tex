@@ -6,7 +6,8 @@ context inference, text-to-SQL, and a comparison of the two pipelines. The resul
 efficiency and retrieval accuracy as described in Section~\ref{sec:evaluation-metrics-implementation}.
 Estimates retain equal weight per run within each reported analysis group. Intervals are pointwise
 \qty{95}{\percent} database-bootstrap intervals, as presented in Section~\ref{sec:confidence-intervals}
-(table cells show these intervals in brackets).
+(table cells show these intervals in brackets). Intervals are omitted for the BIRD context-fit
+subset and its intersection with the answerable cohort; these results are descriptive point estimates.
 
 \section{Serialization efficiency} \label{sec:serialization-results}
 
@@ -88,6 +89,7 @@ recorded criteria, and no required run records were missing. For BIRD, the conte
 the sampled \texttt{student\_club} and \texttt{toxicology} databases. We refer to these two databases as the
 \emph{BIRD context-fit subset}. Results based on the BIRD context-fit cohort or its intersection with the
 answerable cohort therefore describe only this subset, with different question sets in the two comparisons.
+We report no confidence intervals for these two-database analyses.
 
 \input{../code/analysis/tables/experiment_outcomes}
 
@@ -122,8 +124,8 @@ the serialised database contents.
 CSV required the fewest input tokens on average, with \num{5366} per run on Spider and \num{31756} on BIRD.
 XML required the most, with \num{20186} and \num{97190}, respectively. For the same question--model pairs,
 the XML-to-CSV ratios of mean input tokens were \num{3.76} (\numrange{2.84}{4.38}) on Spider and \num{3.06}
-(\numrange{2.94}{3.20}) on BIRD. TOON was close to CSV, with ratios of \num{1.07} (\numrange{1.04}{1.12}) and
-\num{1.03} (\numrange{1.02}{1.04}). Markdown, YAML, and JSON fell between TOON and XML in mean input token use.
+on BIRD. TOON was close to CSV, with ratios of \num{1.07} (\numrange{1.04}{1.12}) and
+\num{1.03}, respectively. Markdown, YAML, and JSON fell between TOON and XML in mean input token use.
 
 Output token counts varied much less across formats. The means spanned \numrange{81.2}{119.6} tokens on
 Spider and \numrange{219.6}{260.5} on BIRD, including both reasoning traces and final answers. Formats that
@@ -133,16 +135,16 @@ output count on both datasets, even though JSON and XML required more input toke
 The differences in input token use were accompanied by differences in response time. CSV had the lowest mean
 total latency, at \qty{1.25}{\second} on Spider and \qty{8.02}{\second} on BIRD, while XML had the highest,
 at \qty{7.42}{\second} and \qty{50.88}{\second}. The paired XML-to-CSV ratios were \num{5.91}
-(\numrange{2.24}{8.31}) and \num{6.34} (\numrange{6.22}{6.47}), respectively. TOON was again close to CSV,
-with latency ratios of \num{1.09} (\numrange{1.04}{1.16}) on Spider and \num{1.031} (\numrange{1.028}{1.033}) on BIRD.
+(\numrange{2.24}{8.31}) and \num{6.34}, respectively. TOON was again close to CSV,
+with latency ratios of \num{1.09} (\numrange{1.04}{1.16}) on Spider and \num{1.031} on BIRD.
 
 Most of the latency difference between CSV and XML occurred before the first output token. Mean TTFT
 increased from \qty{0.78}{\second} for CSV to \qty{6.45}{\second} for XML on Spider, and from
 \qty{6.32}{\second} to \qty{46.87}{\second} on BIRD. Generation after the first token varied less, ranging
 from \qty{0.48}{\second} to \qty{0.97}{\second} across formats on Spider and \qtyrange{1.70}{4.00}{\second}
 on BIRD. These results show that compact formats were associated with lower token use and shorter response
-times on the shared question set. However, the BIRD context-fit subset contains only two databases, so the
-narrow intervals do not imply the same precision across the full BIRD dataset.
+times on the shared question set. The BIRD context-fit results describe only two sampled databases and do
+not establish the same pattern across the full BIRD dataset.
 
 \subsection{Retrieval accuracy}
 
@@ -363,13 +365,14 @@ questions from the BIRD context-fit subset. This restricted the comparison to qu
 reference answer and recorded context fit across both pipelines. Each of the six direct context inference
 formats was compared with text-to-SQL on the same question--model pairs across all ten retained models.
 Unsuccessful runs were retained with zero scores. Figure~\ref{fig:pipeline-retrieval-comparison} shows the mean NEM,
-BERTScore, and ROUGE-L scores and their intervals for both pipelines.
+BERTScore, and ROUGE-L scores for both pipelines, with intervals for Spider only.
 
 \begin{figure}[htbp]   \centering
   \includegraphics[width=\textwidth]{../code/analysis/figures/pipeline_retrieval_comparison.pdf}
   \caption{Mean NEM, BERTScore, and ROUGE-L for text-to-SQL and the six direct context inference formats
   on the intersection of the answerable and context-fit cohorts, averaged over the ten retained models.
-  BIRD results are based on the BIRD context-fit subset.}
+  BIRD results are descriptive point estimates for the two-database BIRD context-fit subset, without
+  confidence intervals.}
   \label{fig:pipeline-retrieval-comparison}
 \end{figure}
 
@@ -433,7 +436,8 @@ only among completed runs or a causal effect of size.
   \includegraphics[width=\textwidth]{../code/analysis/figures/common_cohort_token_usage.pdf}   \caption{Mean
     input and output tokens on the shared context-fit workload, including SQL failures and all correction
     attempts. Input tokens use a logarithmic scale; output tokens use a linear scale.
-    BIRD results are based on the BIRD context-fit subset.}   \label{fig:common-cohort-token-usage}
+    BIRD results are descriptive point estimates for the BIRD context-fit subset, without
+    confidence intervals.}   \label{fig:common-cohort-token-usage}
 \end{figure}
 
 We compared operational efficiency on the same context-fit questions used in the direct-format analysis:
@@ -444,22 +448,24 @@ latency also including SQL execution.
 
 Text-to-SQL used fewer input tokens than every direct format (Figure~\ref{fig:common-cohort-token-usage}).
 CSV required \num{7.19} times as many input tokens (\numrange{2.38}{13.17}) on Spider and \num{28.91} times
-as many (\numrange{24.71}{35.63}) on BIRD. Output differences were less consistent on Spider: the CSV-to-SQL
+as many on BIRD. Output differences were less consistent on Spider: the CSV-to-SQL
 output-token ratio of \num{0.91} (\numrange{0.65}{1.12}) did not establish a clear difference, and only XML's
-ratio interval excluded one. On BIRD, all direct formats produced more output tokens, with ratio intervals above one.
+ratio interval excluded one. On the BIRD context-fit subset, all direct formats had higher mean output-token
+counts than SQL.
 
 \begin{figure}[htbp]   \centering
   \includegraphics[width=\textwidth]{../code/analysis/figures/common_cohort_latency.pdf}   \caption{Mean
     latency components on the shared context-fit workload. SQL includes all initial and correction work,
-  including unsuccessful runs. BIRD results are based on the BIRD context-fit subset.}
+  including unsuccessful runs. BIRD results are descriptive point estimates for the BIRD
+  context-fit subset, without confidence intervals.}
   \label{fig:common-cohort-latency}
 \end{figure}
 
 Text-to-SQL also had lower mean total latency than every direct format
 (Figure~\ref{fig:common-cohort-latency}). On Spider, CSV averaged \qty{1.255}{\second}, compared with
 \qty{0.466}{\second} for SQL. The CSV-to-SQL latency ratio was \num{2.69} (\numrange{1.06}{4.27}), while
-XML's ratio was \num{15.93} (\numrange{2.60}{31.80}). On BIRD, the corresponding ratios were \num{10.43}
-(\numrange{9.54}{11.51}) for CSV and \num{66.17} (\numrange{59.32}{74.40}) for XML.
+XML's ratio was \num{15.93} (\numrange{2.60}{31.80}). On the BIRD context-fit subset, the corresponding
+ratios were \num{10.43} for CSV and \num{66.17} for XML.
 
 Most of the latency difference occurred in TTFT. Generation-time differences were less consistent on Spider,
 while all direct formats had longer mean generation times than SQL on BIRD. SQL execution contributed only
@@ -467,13 +473,13 @@ while all direct formats had longer mean generation times than SQL on BIRD. SQL 
 
 Lower mean latency did not mean faster responses in every case: SQL was faster than CSV in
 \qty{58.9}{\percent} of Spider pairs (\qtyrange{43.9}{72.3}{\percent}) and \qty{98.78}{\percent} of BIRD
-pairs (\qtyrange{98.73}{98.83}{\percent}). The small Spider tier, defined in
+pairs. The small Spider tier, defined in
 Section~\ref{sec:pipeline-accuracy-by-database-size}, contained \num{273} context-fit questions across eight
 databases. CSV was faster in \qty{68.2}{\percent} of its question--model pairs
 (\qtyrange{61.8}{75.2}{\percent}), averaging \qty{0.261}{\second} compared with \qty{0.298}{\second} for SQL.
 However, its mean advantage of \qty{0.037}{\second} (\qtyrange{-0.030}{0.121}{\second}) remained uncertain.
 SQL's lower overall mean was driven mainly by large-database pairs: they represented only
 \qty{20.2}{\percent} of the Spider workload, but their larger latency differences in SQL's favour outweighed
-CSV's smaller advantages elsewhere. The narrow BIRD interval reflects similar win rates in the two databases
-of the BIRD context-fit subset. Since accuracy and efficiency use different cohorts, these results do not
+CSV's smaller advantages elsewhere. The BIRD win rate is limited to  the context-fit
+subset. Since accuracy and efficiency use different cohorts, these results do not
 establish a joint cost--accuracy trade-off on the same question set.

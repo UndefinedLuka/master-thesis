@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from visualizations.uncertainty import mean_intervals
+from visualizations.uncertainty import interval_marks, mean_intervals, table_estimate
 
 
 def _paired_data():
@@ -60,3 +60,33 @@ def test_zero_reference_ratio_is_not_reported_as_finite():
     result = _summarize(data, effect="ratio")
     assert np.isnan(result.loc["json", "value_effect"])
     assert np.isnan(result.loc["json", "value_effect_low"])
+
+
+@pytest.mark.parametrize("effect", ["difference", "ratio"])
+def test_context_fit_threshold_omits_two_cluster_intervals_but_keeps_point_effects(effect):
+    data = _paired_data()
+    original = _summarize(data, effect=effect)
+    result = mean_intervals(
+        data, ["dataset"], {"value": "value"}, comparison="format", reference="csv",
+        effect=effect, pair_keys=("db_id", "example_id"), min_databases=3,
+    ).set_index("format")
+    assert result.filter(regex="_(low|high)$").isna().all(axis=None)
+    pd.testing.assert_series_equal(result["value_effect"], original["value_effect"])
+    assert original.filter(regex="_(low|high)$").notna().all(axis=None)
+
+
+def test_intentionally_omitted_table_interval_is_a_plain_point_estimate():
+    row = {"value": 2.0, "value_low": np.nan, "value_high": np.nan}
+    assert table_estimate(row, "value", show_interval=False) == r"\num{2.00}"
+    assert "not estimable" in table_estimate(row, "value")
+
+
+def test_interval_marks_skip_missing_endpoints_without_drawing_empty_artists():
+    import matplotlib.pyplot as plt
+
+    figure, axis = plt.subplots()
+    rows = pd.DataFrame({"value_low": [np.nan, 1.0], "value_high": [np.nan, 3.0]})
+    interval_marks(axis, [0, 1], rows, "value", horizontal=True)
+    assert len(axis.collections) == 1
+    np.testing.assert_allclose(axis.collections[0].get_segments()[0], [[1, 1], [3, 1]])
+    plt.close(figure)

@@ -39,11 +39,15 @@ def mean_intervals(
     reference: str | None = None,
     effect: str = "difference",
     pair_keys: tuple[str, ...] = (),
+    min_databases: int = 2,
 ) -> pd.DataFrame:
     """Return mean CIs and paired difference/ratio CIs, keyed like a summary.
 
     With no explicit reference, use the smallest model in each supplied family group.
-    A single database gives no between-database interval (NaN), not false precision.
+    Groups below min_databases retain point effects but have NaN interval endpoints.
+    The default preserves the existing procedure; restricted context-fit analyses use
+    three to omit intervals based on only two databases. This is an omission rule,
+    not a guarantee that larger cluster counts satisfy the bootstrap assumptions.
     Pair identities must match exactly; incomplete comparisons fail rather than silently
     changing cohorts. Ratios are ratios of means, never averages of individual ratios.
     """
@@ -92,7 +96,7 @@ def mean_intervals(
                 row["effect_reference"] = baseline
             for name in metrics:
                 low, high = bounds(samples[category][name])
-                if len(databases) < 2:
+                if len(databases) < min_databases:
                     low = high = float("nan")
                 row[f"{name}_low"], row[f"{name}_high"] = low, high
                 if comparison:
@@ -107,7 +111,7 @@ def mean_intervals(
                     else:
                         raise ValueError(f"Unknown effect: {effect}")
                     low, high = bounds(draws)
-                    if len(databases) < 2:
+                    if len(databases) < min_databases:
                         low = high = float("nan")
                     row[f"{name}_effect"] = estimate
                     row[f"{name}_effect_low"] = low
@@ -120,7 +124,13 @@ def interval_marks(axis, positions, rows, metric, *, horizontal=False, color="#3
     """Draw CI endpoints directly, including intervals not containing the estimate."""
     if f"{metric}_low" not in rows:
         return
-    low, high = rows[f"{metric}_low"], rows[f"{metric}_high"]
+    low = rows[f"{metric}_low"].to_numpy(dtype=float)
+    high = rows[f"{metric}_high"].to_numpy(dtype=float)
+    valid = np.isfinite(low) & np.isfinite(high)
+    if not valid.any():
+        return
+    positions = np.asarray(positions)[valid]
+    low, high = low[valid], high[valid]
     if horizontal:
         axis.hlines(positions, low, high, color=color, linewidth=1.2, zorder=5)
         axis.plot(low, positions, "|", color=color, markersize=5)
@@ -131,7 +141,9 @@ def interval_marks(axis, positions, rows, metric, *, horizontal=False, color="#3
         axis.plot(positions, high, "_", color=color, markersize=5)
 
 
-def table_estimate(row, metric: str, decimals=2, *, scale=1.0, suffix="") -> str:
+def table_estimate(
+    row, metric: str, decimals=2, *, scale=1.0, suffix="", show_interval=True,
+) -> str:
     """Two-line LaTeX cell, keeping intervals below their estimates to limit width."""
     if hasattr(row, "_asdict"):
         row = row._asdict()
@@ -139,7 +151,7 @@ def table_estimate(row, metric: str, decimals=2, *, scale=1.0, suffix="") -> str
     value = formatter(row[metric] * scale, decimals)
     if suffix and suffix != r"\%":
         value += suffix
-    if f"{metric}_low" not in row:
+    if not show_interval or f"{metric}_low" not in row:
         return value
     scaled = {f"{metric}_low": row[f"{metric}_low"] * scale,
               f"{metric}_high": row[f"{metric}_high"] * scale}

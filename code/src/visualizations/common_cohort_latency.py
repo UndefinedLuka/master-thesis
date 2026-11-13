@@ -5,6 +5,8 @@ from __future__ import annotations
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+import numpy as np
+
 from visualizations.common_cohort_data import CommonCohortAnalysis
 from visualizations.common_cohort_plotting import (
     cohort_datasets,
@@ -63,9 +65,12 @@ def plot_common_cohort_latency(analysis: CommonCohortAnalysis) -> Figure:
         if "average_total_latency_s_high" in panel:
             maximum = max(maximum, float(panel["average_total_latency_s_high"].max()))
         for position, method, total in zip(positions, methods, left, strict=True):
+            upper = (float(panel.loc[method, "average_total_latency_s_high"])
+                     if "average_total_latency_s_high" in panel else total)
+            if not np.isfinite(upper):
+                upper = total
             axis.text(
-                (float(panel.loc[method, "average_total_latency_s_high"])
-                 if "average_total_latency_s_high" in panel else total) + maximum * 0.02,
+                upper + maximum * 0.02,
                 position,
                 quantity(total, "\\second", 3),
                 va="center",

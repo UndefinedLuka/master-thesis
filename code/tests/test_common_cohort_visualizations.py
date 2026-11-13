@@ -9,6 +9,7 @@ import pytest
 pytest.importorskip("pandas")
 pytest.importorskip("matplotlib")
 
+import numpy as np
 import pandas as pd
 
 from visualizations.common_cohort_data import calculate_common_cohort_analysis
@@ -231,4 +232,35 @@ def test_figures_show_all_methods_and_distinguish_log_and_linear_scales(tmp_path
         assert path.name == filename
         assert path.read_bytes().startswith(b"%PDF-")
     for figure in (latency, tokens):
+        plt.close(figure)
+
+
+def test_two_database_bird_efficiency_has_no_intervals_and_keeps_all_labels() -> None:
+    import matplotlib.pyplot as plt
+
+    original = _matrix()
+    data = pd.concat([
+        original.assign(db_id=original["db_id"] + f":{index}",
+                        example_id=original["example_id"] + f":{index}")
+        .loc[original["dataset"].eq("spider") | (index < 2)]
+        for index in range(3)
+    ])
+    analysis = calculate_common_cohort_analysis(data)
+    bird = analysis.summary.query("dataset == 'bird'")
+    spider = analysis.summary.query("dataset == 'spider'")
+    assert bird.filter(regex="_(low|high)$").isna().all(axis=None)
+    for metric in ("average_input_tokens", "average_output_tokens", "average_total_latency_s"):
+        assert bird[f"{metric}_effect"].notna().all()
+        assert spider[[f"{metric}_low", f"{metric}_effect_low"]].notna().all(axis=None)
+    # Zero reference retries still give an undefined ratio, not a manufactured effect.
+    assert bird["average_retries_effect"].isna().all()
+    for plotter, expected_collections in (
+        (plot_common_cohort_latency, [1, 0]),
+        (plot_common_cohort_token_usage, [1, 0, 1, 0]),
+    ):
+        figure = plotter(analysis)
+        assert [len(axis.collections) for axis in figure.axes] == expected_collections
+        for axis in figure.axes:
+            assert len(axis.texts) == 7
+            assert all(np.isfinite(text.get_position()).all() for text in axis.texts)
         plt.close(figure)

@@ -40,20 +40,31 @@ def _matrix() -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
-def test_run_weighted_means_and_paired_database_bootstrap_all_metrics() -> None:
+def _three_database_matrix() -> pd.DataFrame:
     data = _matrix()
+    data.loc[data["example_id"].eq("large:0"), "db_id"] = "medium"
+    return data
+
+
+def test_run_weighted_means_and_paired_database_bootstrap_all_metrics() -> None:
+    data = _three_database_matrix()
     analysis = calculate_pipeline_retrieval_comparison(data.sample(frac=1, random_state=7))
     assert len(analysis.records) == len(data)
     assert len(analysis.records.query("method == 'text_to_sql'")) == 16
     assert len(analysis.summary) == 2 * 7 * 3
-    # Independent bootstrap oracle: databases sorted large, small with 6 versus 2 runs.
+    # Independent bootstrap oracle: large, medium, small with 4, 2, 2 runs.
     assert BOOTSTRAP_DRAWS == 10_000
     rng = np.random.default_rng(BOOTSTRAP_SEED)
-    weights = rng.multinomial(2, [0.5, 0.5], size=10_000)
+    weights = rng.multinomial(3, [1 / 3] * 3, size=10_000)
     for metric, (base, span) in zip(DIRECT_ACCURACY_METRIC_ORDER,
                                     ((0, 1), (0.2, 0.6), (0.1, 0.8)), strict=True):
-        direct_draws = weights @ np.array([6 * base, 2 * (base + span)]) / (weights @ [6, 2])
-        sql_draws = weights @ np.array([6 * (base + span), 2 * base]) / (weights @ [6, 2])
+        direct_draws = (
+            weights @ np.array([4 * base, 2 * base, 2 * (base + span)]) / (weights @ [4, 2, 2])
+        )
+        sql_draws = (
+            weights @ np.array([4 * (base + span), 2 * (base + span), 2 * base])
+            / (weights @ [4, 2, 2])
+        )
         for dataset in ("spider", "bird"):
             panel = analysis.summary.loc[
                 analysis.summary["dataset"].eq(dataset) & analysis.summary["metric"].eq(metric)
@@ -178,11 +189,30 @@ def test_one_database_has_no_spurious_interval() -> None:
     assert analysis.summary["mean_score_high"].isna().all()
 
 
+def test_two_database_bird_results_are_points_only_while_spider_keeps_intervals() -> None:
+    import matplotlib.pyplot as plt
+
+    data = pd.concat([
+        _three_database_matrix().query("dataset == 'spider'"),
+        _matrix().query("dataset == 'bird'"),
+    ])
+    analysis = calculate_pipeline_retrieval_comparison(data)
+    bird = analysis.summary.query("dataset == 'bird'")
+    spider = analysis.summary.query("dataset == 'spider'")
+    assert bird.filter(regex="_(low|high)$").isna().all(axis=None)
+    assert bird["mean_score_effect"].notna().all()
+    assert spider.filter(regex="_(low|high)$").notna().all(axis=None)
+    figure = plot_pipeline_retrieval_comparison(analysis)
+    assert [len(axis.collections) for axis in figure.axes] == [7, 0, 7, 0, 7, 0]
+    assert all(len(axis.texts) == 7 for axis in figure.axes)
+    plt.close(figure)
+
+
 def test_display_covers_both_datasets_all_metrics_and_formats(tmp_path) -> None:
     import matplotlib.pyplot as plt
     from matplotlib.colors import to_rgba
 
-    analysis = calculate_pipeline_retrieval_comparison(_matrix())
+    analysis = calculate_pipeline_retrieval_comparison(_three_database_matrix())
     figure = plot_pipeline_retrieval_comparison(analysis)
     assert len(figure.axes) == 6
     for index, axis in enumerate(figure.axes):

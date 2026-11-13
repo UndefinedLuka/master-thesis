@@ -23,6 +23,7 @@ def render_direct_operational_table(
     caption: str = (
         "Mean operational-efficiency measurements for Direct Context Inference on the shared "
         "recorded context-fit cohort."
+        " Intervals are omitted for the two-database BIRD context-fit subset."
     ),
     label: str = DIRECT_OPERATIONAL_TABLE_LABEL,
 ) -> str:
@@ -52,17 +53,22 @@ def render_direct_operational_table(
         ]
         for index, serialization_format in enumerate(formats):
             row = dataset_rows[dataset_rows["format"].eq(serialization_format)].iloc[0]
+            show_interval = analysis.database_counts[dataset] >= 3
             rows.append(
                 "    "
                 + " & ".join(
                     (
                         DATASET_LABELS.get(dataset, dataset) if index == 0 else "",
                         FORMAT_LABELS.get(serialization_format, serialization_format),
-                        table_estimate(row, "average_input_tokens", 0),
-                        table_estimate(row, "average_output_tokens", 1),
-                        table_estimate(row, "average_ttft_s"),
-                        table_estimate(row, "average_generation_time_s"),
-                        table_estimate(row, "average_total_latency_s"),
+                        table_estimate(row, "average_input_tokens", 0, show_interval=show_interval),
+                        table_estimate(
+                            row, "average_output_tokens", 1, show_interval=show_interval,
+                        ),
+                        table_estimate(row, "average_ttft_s", show_interval=show_interval),
+                        table_estimate(
+                            row, "average_generation_time_s", show_interval=show_interval,
+                        ),
+                        table_estimate(row, "average_total_latency_s", show_interval=show_interval),
                     )
                 )
                 + LATEX_ROW_END

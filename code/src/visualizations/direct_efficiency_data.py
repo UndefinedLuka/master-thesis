@@ -136,6 +136,7 @@ def calculate_direct_efficiency(
             "average_total_latency_s": "total_time_s",
         }, comparison="format", reference="csv", effect="ratio",
         pair_keys=("db_id", "example_id", "model_id"),
+        min_databases=3,
     )
     summary = _sort_summary(summary.merge(
         intervals, on=["dataset", "format"], validate="one_to_one"

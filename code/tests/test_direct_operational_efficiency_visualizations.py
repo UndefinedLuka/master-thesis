@@ -171,3 +171,24 @@ def test_table_contains_all_requested_metrics(tmp_path: Path) -> None:
     tables_dir = tmp_path / "tables"
     table_path = generate_direct_operational_table(analysis, tables_dir)
     assert table_path == tables_dir / DIRECT_OPERATIONAL_TABLE_FILENAME
+
+
+def test_two_database_bird_table_omits_intervals_but_retains_spider_intervals() -> None:
+    original = _complete_matrix()
+    data = pd.concat([
+        original.assign(db_id=original["db_id"] + f":{index}",
+                        example_id=original["example_id"] + f":{index}")
+        .loc[original["dataset"].eq("spider") | (index < 2)]
+        for index in range(3)
+    ])
+    analysis = calculate_direct_efficiency(data)
+    bird = analysis.summary.query("dataset == 'bird'")
+    spider = analysis.summary.query("dataset == 'spider'")
+    assert bird.filter(regex="_(low|high)$").isna().all(axis=None)
+    assert bird.filter(regex="_effect$").notna().all(axis=None)
+    assert spider.filter(regex="_(low|high)$").notna().all(axis=None)
+    latex = render_direct_operational_table(analysis)
+    spider_rows, bird_rows = latex.split("    BIRD", maxsplit=1)
+    assert r"\shortstack" in spider_rows
+    assert r"\shortstack" not in bird_rows
+    assert "not estimable" not in bird_rows
