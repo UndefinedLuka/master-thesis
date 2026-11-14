@@ -1,4 +1,4 @@
-"""Aggregate Text-to-SQL error-correction outcomes and retry-time overhead."""
+"""Aggregate Text-to-SQL error-correction outcomes, accuracy, and retry overhead."""
 
 from __future__ import annotations
 
@@ -8,13 +8,14 @@ import numpy as np
 import pandas as pd
 
 from visualizations.config import DATASET_ORDER, RETRY_OUTCOME_ORDER
+from visualizations.direct_accuracy_data import METRIC_SOURCE_COLUMNS
 from visualizations.text_to_sql_data import TextToSqlAnalysis
 from visualizations.uncertainty import bounds, database_weights, mean_intervals
 
 
 @dataclass(frozen=True, slots=True)
 class TextToSqlRetryAnalysis:
-    """Terminal attempt outcomes and generation overhead introduced by retries."""
+    """Terminal outcomes, cumulative retrieval accuracy, and retry-generation overhead."""
 
     outcome_summary: pd.DataFrame
     retry_stage_summary: pd.DataFrame
@@ -22,6 +23,7 @@ class TextToSqlRetryAnalysis:
     retried_run_count: int
     total_retry_generation_s: float
     gain_summary: pd.DataFrame = field(default_factory=pd.DataFrame)
+    accuracy_summary: pd.DataFrame = field(default_factory=pd.DataFrame)
 
 
 def calculate_text_to_sql_retry_analysis(
@@ -37,6 +39,7 @@ def calculate_text_to_sql_retry_analysis(
         "attempt_count",
         "attempt_generation_times_s",
         "retry_generation_overhead_s",
+        *METRIC_SOURCE_COLUMNS.values(),
     }
     missing = required.difference(data.columns)
     if missing:
@@ -146,7 +149,59 @@ def calculate_text_to_sql_retry_analysis(
         retried_run_count=int(data["attempt_count"].gt(1).sum()),
         total_retry_generation_s=float(data["retry_generation_overhead_s"].sum()),
         gain_summary=gain_summary,
+        accuracy_summary=_cumulative_accuracy_summary(data),
     )
+
+
+def _cumulative_accuracy_summary(data: pd.DataFrame) -> pd.DataFrame:
+    """Report cumulative recovery counts and accuracy among recovered runs only.
+
+    The pipeline stops at its first executable query, so its stored final scores
+    also describe that successful attempt. Each budget includes answers recovered
+    by that point. Unrecovered runs are counted separately and excluded from score
+    means, not assigned zero. A recovered answer with a genuine zero score remains
+    in the mean. Initial successes and fatal initial failures that never entered
+    correction are outside this analysis.
+
+    Conditional intervals retain all databases in the caller's eligible cohort,
+    including databases with no recovered runs, as in recovery_rate.
+    """
+    rows: list[dict[str, object]] = []
+    for dataset in DATASET_ORDER:
+        group = data.loc[data["dataset"].eq(dataset)]
+        if group.empty:
+            continue
+        entered = group["entered_correction"]
+        correction = group.loc[entered]
+        for budget in range(4):
+            recovered = (
+                entered & group["execution_success"] & group["attempt_count"].le(budget + 1)
+            )
+            newly_recovered = recovered & group["attempt_count"].eq(budget + 1)
+            row: dict[str, object] = {
+                "dataset": dataset,
+                "retry_budget": budget,
+                "retry_label": "Initial attempt only" if budget == 0 else f"After retry {budget}",
+                "eligible_run_count": len(group),
+                "run_count": len(correction),
+                "question_count": correction["example_id"].nunique(),
+                "database_count": correction["db_id"].nunique(),
+                "newly_executed_run_count": int(newly_recovered.sum()),
+                "cumulative_executed_run_count": int(recovered.sum()),
+                "unrecovered_run_count": int(entered.sum() - recovered.sum()),
+            }
+            stage = group.assign(
+                _execution_success=recovered.astype(float), _recovered=recovered,
+            )
+            row.update(_conditional_estimates(
+                stage, "_execution_success", "entered_correction", "execution_success_rate"
+            ))
+            for metric, source in METRIC_SOURCE_COLUMNS.items():
+                row.update(_conditional_estimates(
+                    stage, source, "_recovered", metric
+                ))
+            rows.append(row)
+    return pd.DataFrame(rows)
 
 
 def _terminal_outcome(row: pd.Series) -> str:

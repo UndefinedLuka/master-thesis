@@ -100,6 +100,7 @@ from visualizations.text_to_sql_operational_efficiency_table import (
 from visualizations.text_to_sql_retrieval_accuracy_table import (
     generate_text_to_sql_retrieval_table,
 )
+from visualizations.text_to_sql_retry_accuracy_table import generate_retry_accuracy_table
 from visualizations.text_to_sql_retry_data import calculate_text_to_sql_retry_analysis
 from visualizations.tokenizer_family_comparison import generate_tokenizer_comparison_figure
 
@@ -192,6 +193,7 @@ def generate_all(
         generate_text_to_sql_accuracy_figure(sql_analysis, figures_dir),
         generate_text_to_sql_operational_table(sql_analysis, tables_dir),
         generate_error_correction_table(retry_analysis, tables_dir),
+        generate_retry_accuracy_table(retry_analysis, tables_dir),
         generate_pipeline_retrieval_comparison_figure(retrieval, figures_dir),
         generate_pipeline_size_cohort_table(size_retrieval, tables_dir),
         generate_pipeline_size_retrieval_figure(size_retrieval, figures_dir),

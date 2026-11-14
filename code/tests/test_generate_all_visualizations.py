@@ -18,6 +18,7 @@ import pandas as pd
 from config.paths import ProjectPaths
 from visualizations import analysis_summaries
 from visualizations import generate_all as orchestration
+from visualizations import text_to_sql_retry_accuracy as retry_accuracy
 from visualizations.cohorts import DIRECT_FORMATS, RETAINED_MODELS
 
 
@@ -231,6 +232,7 @@ def test_cli_dispatches_answerable_context_fit_and_intersection_populations(
         "generate_text_to_sql_accuracy_figure": "text_to_sql_accuracy_by_model_size.pdf",
         "generate_text_to_sql_operational_table": "text_to_sql_operational_efficiency.tex",
         "generate_error_correction_table": "text_to_sql_error_correction.tex",
+        "generate_retry_accuracy_table": "text_to_sql_retry_accuracy.tex",
         "generate_pipeline_retrieval_comparison_figure": "pipeline_retrieval_comparison.pdf",
         "generate_pipeline_size_retrieval_figure": "pipeline_retrieval_by_database_size.pdf",
         "generate_pipeline_size_cohort_table": "pipeline_size_cohorts.tex",
@@ -318,7 +320,7 @@ def test_cli_dispatches_answerable_context_fit_and_intersection_populations(
         ),
         (
             "calculate_text_to_sql_retry_analysis",
-            ("generate_error_correction_table",),
+            ("generate_error_correction_table", "generate_retry_accuracy_table"),
         ),
         (
             "calculate_common_cohort_analysis",
@@ -391,14 +393,61 @@ def test_analysis_summaries_do_not_persist_pipeline_retrieval(tmp_path, monkeypa
     analysis_summaries.save_analysis_summaries(
         pd.DataFrame(), pd.DataFrame(), SimpleNamespace(summary=summary),
         SimpleNamespace(dataset_summary=summary, model_summary=summary),
-        SimpleNamespace(outcome_summary=summary, retry_stage_summary=summary, gain_summary=summary),
+        SimpleNamespace(
+            outcome_summary=summary, retry_stage_summary=summary, gain_summary=summary,
+            accuracy_summary=summary,
+        ),
         common, tmp_path,
         size_retrieval=SimpleNamespace(database_sizes=summary, coverage=summary, summary=summary),
     )
     assert not (tmp_path / "pipeline_retrieval.csv").exists()
     assert (tmp_path / "pipeline_retrieval_by_database_size.csv").is_file()
     assert (tmp_path / "pipeline_efficiency.csv").is_file()
-    assert len(list(tmp_path.glob("*.csv"))) == 16
+    assert (tmp_path / "sql_retry_accuracy.csv").is_file()
+    assert len(list(tmp_path.glob("*.csv"))) == 17
+
+
+def test_standalone_retry_accuracy_uses_answerable_cohort_and_writes_summary_and_table(
+    campaign: tuple[list[str], list[dict], Path], tmp_path: Path,
+) -> None:
+    _, _, results_path = campaign
+    output = tmp_path / "summaries" / "sql_retry_accuracy.csv"
+    assert retry_accuracy.main([
+        "--results", str(results_path),
+        "--references-dir", str(tmp_path / "references"),
+        "--output", str(output),
+        "--tables-dir", str(tmp_path / "tables"),
+    ]) == 0
+    summary = pd.read_csv(output)
+    assert len(summary) == 8
+    assert summary.groupby("dataset")["retry_budget"].apply(list).to_dict() == {
+        "spider": [0, 1, 2, 3], "bird": [0, 1, 2, 3],
+    }
+    # Both answerable and overflow questions remain; empty references are excluded.
+    assert summary["eligible_run_count"].eq(20).all()
+    assert summary["run_count"].eq(0).all()
+    assert summary["normalized_exact_match"].isna().all()
+    assert list(output.parent.iterdir()) == [output]
+    table = tmp_path / "tables" / "text_to_sql_retry_accuracy.tex"
+    assert table.is_file()
+    assert "NEM & ROUGE-L & BERTScore" in table.read_text()
+    assert not (tmp_path / "figures").exists()
+
+
+def test_standalone_retry_accuracy_rejects_incomplete_campaign(
+    campaign: tuple[list[str], list[dict], Path], tmp_path: Path,
+) -> None:
+    _, records, results_path = campaign
+    _write_records(results_path, records[:-1])
+    output = tmp_path / "sql_retry_accuracy.csv"
+    with pytest.raises(SystemExit) as exc:
+        retry_accuracy.main([
+            "--results", str(results_path),
+            "--references-dir", str(tmp_path / "references"),
+            "--output", str(output),
+        ])
+    assert exc.value.code == 2
+    assert not output.exists()
 
 
 def test_parser_defaults_use_stored_references_and_three_output_directories(tmp_path: Path) -> None:

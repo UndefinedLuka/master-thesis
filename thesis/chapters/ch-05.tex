@@ -318,8 +318,8 @@ other differences between the evaluated variants.
 
 \subsection{Error correction performance}
 
-We evaluated whether correction produced executable SQL after an initial failure and how much additional
-model-generation time it required. We used the answerable cohort and the retry policy described in
+We evaluated execution success, retrieval accuracy, and additional model-generation time after an initial
+SQL failure. We used the answerable cohort and the retry policy described in
 Section~\ref{sec:minimalist-text-to-sql}. Table~\ref{tab:text-to-sql-error-correction} groups runs by the
 attempt on which SQL first executed successfully and shows how many still failed after all three retries. The
 outcome percentages refer to all runs in the answerable cohort, while the recovery rate refers only to runs
@@ -339,6 +339,22 @@ Retries recovered \num{264} of \num{734} initially failed Spider runs, or \qty{3
 (\qtyrange{30.66}{41.49}{\percent}), and \num{833} of \num{1969} BIRD runs, or \qty{42.31}{\percent}
 (\qtyrange{38.36}{47.37}{\percent}). The first retry accounted for \num{238} of these recoveries on Spider
 and \num{680} on BIRD, with fewer additional recoveries from the remaining two retries.
+
+Recovered queries did not always produce answers that agreed with the reference.
+Table~\ref{tab:text-to-sql-retry-accuracy} reports mean retrieval scores only for runs that executed
+successfully by each retry. Runs still failing are counted separately and excluded from these means rather
+than assigned zero scores. Earlier recoveries remain included in later rows, so the number of scored runs
+can grow. These scores describe agreement among recovered answers, unlike the overall retrieval scores,
+which retain unsuccessful runs with zero scores.
+
+\input{../code/analysis/tables/text_to_sql_retry_accuracy}
+
+Among runs recovered by the first retry, mean NEM was \num{0.298} on Spider and \num{0.391} on BIRD.
+After all three retries, it was \num{0.307} and \num{0.371}, respectively. These final means represent
+\num{81} exact matches among \num{264} recovered Spider runs and \num{309} among \num{833} recovered
+BIRD runs. The third retry added no exact matches on Spider, although it recovered two more executable
+queries. Changes in the means reflect the additional recovered runs, not revisions to answers from earlier
+successful retries.
 
 All initially failed runs entered correction. Among these runs, including those that ultimately failed, the
 mean number of retries was \num{2.32} on Spider and \num{2.24} on BIRD. The mean additional model-generation

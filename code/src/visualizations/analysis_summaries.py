@@ -34,6 +34,7 @@ def save_analysis_summaries(
         "sql_retry_outcomes": retries.outcome_summary,
         "sql_retry_stages": retries.retry_stage_summary,
         "sql_retry_gains": retries.gain_summary,
+        "sql_retry_accuracy": retries.accuracy_summary,
         "pipeline_efficiency": common.summary,
         "pipeline_database_size_tiers": size_retrieval.database_sizes,
         "pipeline_size_cohorts": size_retrieval.coverage,

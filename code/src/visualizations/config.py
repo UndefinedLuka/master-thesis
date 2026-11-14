@@ -90,6 +90,8 @@ TEXT_TO_SQL_OPERATIONAL_TABLE_FILENAME = "text_to_sql_operational_efficiency.tex
 TEXT_TO_SQL_OPERATIONAL_TABLE_LABEL = "tab:text-to-sql-operational-efficiency"
 TEXT_TO_SQL_RETRY_TABLE_FILENAME = "text_to_sql_error_correction.tex"
 TEXT_TO_SQL_RETRY_TABLE_LABEL = "tab:text-to-sql-error-correction"
+TEXT_TO_SQL_RETRY_ACCURACY_TABLE_FILENAME = "text_to_sql_retry_accuracy.tex"
+TEXT_TO_SQL_RETRY_ACCURACY_TABLE_LABEL = "tab:text-to-sql-retry-accuracy"
 COMMON_COHORT_SQL_METHOD = "text_to_sql"
 COMMON_COHORT_METHOD_ORDER: tuple[str, ...] = (
     COMMON_COHORT_SQL_METHOD,

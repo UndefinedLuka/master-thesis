@@ -111,11 +111,16 @@ correction (Table~\ref{tab:text-to-sql-error-correction}). Most retry-generation
 ultimately failed. This limits the operational benefit of repeated attempts, but does not show that those
 failures could have been identified and stopped in advance.
 
+Execution recovery alone is not enough to assess the value of retries. Among runs recovered after up to
+three retries, mean NEM was \num{0.307} on Spider and \num{0.371} on sampled BIRD
+(Table~\ref{tab:text-to-sql-retry-accuracy}). An executable query with the wrong join or filter does not
+trigger another attempt, so error correction does not provide semantic checking. On BIRD, later retries
+increased the number of recovered runs but lowered their mean scores on all three measures. This reflects
+the additional recovered answers, not changes to earlier ones.
+
 One retry is worth evaluating for latency-sensitive applications. The experiments did not establish an
 optimal retry limit, and further attempts may still be useful when the additional executable-query recovery
-justifies the extra latency and token usage. Retrieval accuracy needs separate assessment: an executable query
-with the wrong join or filter does not trigger a retry, so execution-error correction does not provide
-semantic checking.
+and agreement of the recovered answers justify the extra latency and token usage.
 
 \section{Decision framework} \label{sec:decision-framework}
 

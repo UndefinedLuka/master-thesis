@@ -16,6 +16,7 @@ from visualizations.config import (
     TEXT_TO_SQL_ACCURACY_FIGURE_FILENAME,
     TEXT_TO_SQL_OPERATIONAL_TABLE_FILENAME,
     TEXT_TO_SQL_RETRIEVAL_TABLE_FILENAME,
+    TEXT_TO_SQL_RETRY_ACCURACY_TABLE_FILENAME,
     TEXT_TO_SQL_RETRY_TABLE_FILENAME,
 )
 from visualizations.text_to_sql_accuracy_by_model_size import (
@@ -34,6 +35,10 @@ from visualizations.text_to_sql_operational_efficiency_table import (
 from visualizations.text_to_sql_retrieval_accuracy_table import (
     generate_text_to_sql_retrieval_table,
     render_text_to_sql_retrieval_table,
+)
+from visualizations.text_to_sql_retry_accuracy_table import (
+    generate_retry_accuracy_table,
+    render_retry_accuracy_table,
 )
 from visualizations.text_to_sql_retry_data import calculate_text_to_sql_retry_analysis
 
@@ -432,3 +437,131 @@ def test_paired_model_effects_and_database_uncertainty_are_preserved() -> None:
     assert larger["normalized_exact_match_effect_high"] == pytest.approx(0.2)
     assert larger["normalized_exact_match_low"] == pytest.approx(0.3)
     assert larger["normalized_exact_match_high"] == pytest.approx(0.7)
+
+
+def test_retry_accuracy_scores_only_recovered_runs_and_counts_failures_separately() -> None:
+    rows = []
+    # Initial success, success on each retry, exhausted failure, fatal initial
+    # failure, and a fatal failure during retry 1 (still part of correction).
+    for index, (attempts, success, exact, rouge, bert) in enumerate([
+        (1, True, 1.0, 1.0, 1.0),
+        (2, True, 1.0, 0.8, 0.9),
+        (3, True, 0.0, 0.4, 0.7),
+        (4, True, 1.0, 0.6, 0.8),
+        (4, False, 0.0, 0.0, 0.0),
+        (1, False, 0.0, 0.0, 0.0),
+        (2, False, 0.0, 0.0, 0.0),
+    ]):
+        rows.append(_record(
+            example_id=f"spider:db:{index}", execution_success=success,
+            exact=exact, rouge=rouge, bert=bert, retry_count=attempts - 1,
+            attempt_ttft=[0.1] * attempts, attempt_generation=[2.0] * attempts,
+            model_time=2.0 * attempts,
+        ))
+    frame = pd.DataFrame(rows)
+    original = frame.copy(deep=True)
+    sql = calculate_text_to_sql_analysis(frame)
+    summary = calculate_text_to_sql_retry_analysis(sql).accuracy_summary.set_index("retry_budget")
+
+    pd.testing.assert_frame_equal(frame, original)
+    assert list(summary.index) == [0, 1, 2, 3]
+    assert summary["run_count"].eq(5).all()
+    assert summary["eligible_run_count"].eq(7).all()
+    assert summary["question_count"].eq(5).all()
+    assert summary["database_count"].eq(1).all()
+    assert list(summary["newly_executed_run_count"]) == [0, 1, 1, 1]
+    assert list(summary["cumulative_executed_run_count"]) == [0, 1, 2, 3]
+    assert list(summary["unrecovered_run_count"]) == [5, 4, 3, 2]
+    assert list(summary["execution_success_rate"]) == pytest.approx([0, 1 / 5, 2 / 5, 3 / 5])
+    for metric in ("normalized_exact_match", "rouge_l_f", "bertscore_f"):
+        assert pd.isna(summary.loc[0, metric])
+    assert list(summary.loc[1:, "normalized_exact_match"]) == pytest.approx([1, 1 / 2, 2 / 3])
+    assert list(summary.loc[1:, "rouge_l_f"]) == pytest.approx([0.8, 1.2 / 2, 1.8 / 3])
+    assert list(summary.loc[1:, "bertscore_f"]) == pytest.approx([0.9, 1.6 / 2, 2.4 / 3])
+    assert summary["normalized_exact_match_low"].isna().all()
+    for metric in ("normalized_exact_match", "rouge_l_f", "bertscore_f"):
+        first_attempt_mean = frame.loc[frame["retry_count"].eq(0), f"scores.{metric}"].sum() / 7
+        assert sql.dataset_summary.iloc[0][metric] == pytest.approx(
+            first_attempt_mean + summary.loc[3, metric] * 3 / 7
+        )
+
+
+def test_retry_accuracy_without_correction_has_undefined_means() -> None:
+    analysis = calculate_text_to_sql_retry_analysis(
+        calculate_text_to_sql_analysis(pd.DataFrame([_record()]))
+    )
+    summary = analysis.accuracy_summary
+    assert len(summary) == 4
+    assert summary["run_count"].eq(0).all()
+    assert summary["cumulative_executed_run_count"].eq(0).all()
+    assert summary["unrecovered_run_count"].eq(0).all()
+    for metric in ("execution_success_rate", "normalized_exact_match", "rouge_l_f", "bertscore_f"):
+        assert summary[metric].isna().all()
+        assert summary[f"{metric}_low"].isna().all()
+        assert summary[f"{metric}_high"].isna().all()
+
+
+def test_retry_accuracy_intervals_keep_databases_without_correction() -> None:
+    initial = _record(example_id="spider:initial")
+    recovered = _record(
+        example_id="spider:recovered", exact=1.0, rouge=0.8, bert=0.9,
+        retry_count=1, attempt_ttft=[0.1, 0.1], attempt_generation=[1.0, 1.0],
+    )
+    recovered["db_id"] = "other_db"
+    summary = calculate_text_to_sql_retry_analysis(
+        calculate_text_to_sql_analysis(pd.DataFrame([initial, recovered]))
+    ).accuracy_summary.set_index("retry_budget")
+    assert summary.loc[1, "normalized_exact_match"] == 1.0
+    assert pd.isna(summary.loc[1, "normalized_exact_match_low"])
+    assert pd.isna(summary.loc[1, "normalized_exact_match_high"])
+
+
+def test_retry_accuracy_table_reports_recovered_only_scores_and_failure_counts(tmp_path) -> None:
+    results = _results()
+    results.loc[results["retry_count"].gt(0), "execution_success"] = True
+    analysis = calculate_text_to_sql_retry_analysis(calculate_text_to_sql_analysis(results))
+    # Distinct cumulative scores make the table's values and metric order testable.
+    analysis.accuracy_summary.loc[:, "normalized_exact_match"] = 0.123
+    analysis.accuracy_summary.loc[:, "rouge_l_f"] = 0.234
+    analysis.accuracy_summary.loc[:, "bertscore_f"] = 0.345
+    latex = render_retry_accuracy_table(analysis)
+    assert "Newly executable & Recovered & Still failed & NEM & ROUGE-L & BERTScore" in latex
+    assert r"Spider (\num{1} runs entering correction)" in latex
+    assert r"BIRD (\num{1} runs entering correction)" in latex
+    assert "answerable cohort" in latex
+    assert "Mean scores include only runs recovered" in latex
+    assert "excluded rather than assigned zero scores" in latex
+    assert "Initial attempt only" not in latex
+    for retry in (1, 2, 3):
+        assert latex.count(f"After retry {retry}") == 2
+    first_row = next(line for line in latex.splitlines() if "After retry 1" in line)
+    assert first_row.index(r"\num{0.123}") < first_row.index(r"\num{0.234}")
+    assert first_row.index(r"\num{0.234}") < first_row.index(r"\num{0.345}")
+    path = generate_retry_accuracy_table(analysis, tmp_path / "tables")
+    assert path.name == TEXT_TO_SQL_RETRY_ACCURACY_TABLE_FILENAME
+    assert path.read_text() == latex
+
+
+def test_retry_accuracy_table_without_correction_shows_undefined_scores() -> None:
+    analysis = calculate_text_to_sql_retry_analysis(
+        calculate_text_to_sql_analysis(pd.DataFrame([_record()]))
+    )
+    latex = render_retry_accuracy_table(analysis)
+    assert r"Spider (\num{0} runs entering correction)" in latex
+    assert "BIRD" not in latex
+    for line in latex.splitlines():
+        if "After retry" in line:
+            assert line.count("---") == 3
+
+
+def test_retry_accuracy_without_recoveries_has_failures_and_undefined_scores() -> None:
+    analysis = calculate_text_to_sql_retry_analysis(calculate_text_to_sql_analysis(_results()))
+    summary = analysis.accuracy_summary
+    assert summary["run_count"].eq(1).all()
+    assert summary["unrecovered_run_count"].eq(1).all()
+    assert summary["cumulative_executed_run_count"].eq(0).all()
+    for metric in ("normalized_exact_match", "rouge_l_f", "bertscore_f"):
+        assert summary[metric].isna().all()
+    for line in render_retry_accuracy_table(analysis).splitlines():
+        if "After retry" in line:
+            assert r"& \num{0} & \num{0} & \num{1} & --- & --- & ---" in line
