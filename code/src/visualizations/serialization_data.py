@@ -34,6 +34,9 @@ IDENTITY_COLUMNS: tuple[str, ...] = (
 )
 
 
+TOKEN_CACHE_FILENAME: str = "serialization_tokens.csv"
+
+
 @dataclass(frozen=True, slots=True)
 class SerializationCoverageStats:
     """Dimensions of a complete serialization-token report."""
@@ -44,14 +47,42 @@ class SerializationCoverageStats:
     record_count: int
 
 
+def default_token_cache_path(paths: ProjectPaths | None = None) -> Path:
+    """Return the default disk-cache path under analysis/summaries/."""
+    project_paths = paths or ProjectPaths.discover()
+    return project_paths.root / "analysis" / "summaries" / TOKEN_CACHE_FILENAME
+
+
 def measure_token_report(
     paths: ProjectPaths | None = None,
     *,
     models_dir: Path | None = None,
+    cache_path: Path | None = None,
+    refresh_cache: bool = False,
 ) -> pd.DataFrame:
-    """Build the analysis input directly from databases and GGUFs, without a disk cache."""
+    """Build or load the serialization token report, caching to disk under analysis/summaries/.
+
+    If ``cache_path`` (or the default under ``analysis/summaries/serialization_tokens.csv``)
+    exists and ``refresh_cache`` is False, loads and validates the cached CSV.
+    Otherwise, measures payloads from databases and GGUF tokenizers, saves the CSV
+    to disk, and returns the validated report.
+    """
+    target_cache = cache_path if cache_path is not None else default_token_cache_path(paths)
+    if not refresh_cache and target_cache.is_file():
+        try:
+            cached_df = pd.read_csv(target_cache)
+            return validate_token_report(cached_df)
+        except Exception:
+            pass
+
     records = measure_serialization_tokens(paths, models_dir=models_dir)
-    return validate_token_report(pd.DataFrame(asdict(record) for record in records))
+    report = validate_token_report(pd.DataFrame(asdict(record) for record in records))
+    try:
+        target_cache.parent.mkdir(parents=True, exist_ok=True)
+        report.to_csv(target_cache, index=False)
+    except OSError:
+        pass
+    return report
 
 
 def validate_token_report(report: pd.DataFrame) -> pd.DataFrame:

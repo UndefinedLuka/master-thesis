@@ -156,6 +156,8 @@ def generate_all(
         common_cohort,
         summaries_dir,
         size_retrieval=size_retrieval,
+        intersection=intersection,
+        retrieval=retrieval,
     )
     return [
         tables_dir / "analysis_cohorts.tex",
@@ -262,6 +264,11 @@ def build_parser(paths: ProjectPaths | None = None) -> argparse.ArgumentParser:
         help=f"context-fit threshold in tokens (default: {CONTEXT_WINDOW_TOKENS:,})",
     )
     parser.add_argument(
+        "--refresh-token-cache",
+        action="store_true",
+        help="re-measure serialization tokens even if a disk cache is present in summaries-dir",
+    )
+    parser.add_argument(
         "--allow-incomplete",
         action="store_true",
         help="skip strict experiment and serialization coverage validation (smoke tests only)",
@@ -297,7 +304,12 @@ def main(argv: list[str] | None = None) -> int:
     if experiment_results.empty:
         parser.error("no scored benchmark records were found")
     try:
-        serialization_report = measure_token_report(models_dir=args.models_dir)
+        token_cache_path = args.summaries_dir / "serialization_tokens.csv"
+        serialization_report = measure_token_report(
+            models_dir=args.models_dir,
+            cache_path=token_cache_path,
+            refresh_cache=args.refresh_token_cache,
+        )
     except (FileNotFoundError, ValueError) as exc:
         parser.error(str(exc))
 
