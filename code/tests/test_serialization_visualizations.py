@@ -15,7 +15,12 @@ from visualizations.config import (
     SERIALIZATION_EFFICIENCY_TABLE_FILENAME,
     TOKENIZER_COMPARISON_FIGURE_FILENAME,
 )
-from visualizations.serialization_data import validate_complete_coverage, validate_token_report
+from visualizations.serialization_data import (
+    TOKEN_CACHE_FILENAME,
+    measure_token_report,
+    validate_complete_coverage,
+    validate_token_report,
+)
 from visualizations.serialization_efficiency_table import (
     calculate_serialization_efficiency,
     generate_serialization_efficiency_table,
@@ -261,3 +266,109 @@ def test_token_report_rejects_non_numeric_tokens() -> None:
     row["tokens"] = "not-a-number"
     with pytest.raises(ValueError, match="non-numeric token count"):
         validate_token_report(pd.DataFrame([row]))
+
+
+def test_measure_token_report_loads_from_cache(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    cache_path = tmp_path / TOKEN_CACHE_FILENAME
+    expected = _complete_small_report()
+    expected.to_csv(cache_path, index=False)
+
+    measure_called = False
+
+    def fake_measure(*args: object, **kwargs: object) -> list[object]:
+        nonlocal measure_called
+        measure_called = True
+        return []
+
+    monkeypatch.setattr(
+        "visualizations.serialization_data.measure_serialization_tokens",
+        fake_measure,
+    )
+
+    loaded = measure_token_report(cache_path=cache_path)
+    assert not measure_called
+    assert len(loaded) == len(expected)
+    assert list(loaded["tokens"]) == list(expected["tokens"])
+
+
+def test_measure_token_report_writes_to_cache_on_miss(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from serialization.tokens import TokenRecord
+
+    cache_path = tmp_path / "subdir" / TOKEN_CACHE_FILENAME
+    sample_records = [
+        TokenRecord(
+            dataset="spider",
+            database_id="s1",
+            format="csv",
+            tokenizer_family="qwen-3.5",
+            tokenizer_label="Qwen 3.5",
+            tokenizer_model="qwen.gguf",
+            table_count=1,
+            row_count=1,
+            characters=10,
+            utf8_bytes=10,
+            tokens=5,
+        )
+    ]
+
+    monkeypatch.setattr(
+        "visualizations.serialization_data.measure_serialization_tokens",
+        lambda *args, **kwargs: sample_records,
+    )
+
+    assert not cache_path.exists()
+    report = measure_token_report(cache_path=cache_path)
+    assert cache_path.is_file()
+    assert len(report) == 1
+    assert report.iloc[0]["tokens"] == 5
+
+    # Second call should read from disk without invoking measure_serialization_tokens
+    monkeypatch.setattr(
+        "visualizations.serialization_data.measure_serialization_tokens",
+        pytest.fail,
+    )
+    cached_report = measure_token_report(cache_path=cache_path)
+    assert len(cached_report) == 1
+    assert cached_report.iloc[0]["tokens"] == 5
+
+
+def test_measure_token_report_refresh_cache_forces_remeasure(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from serialization.tokens import TokenRecord
+
+    cache_path = tmp_path / TOKEN_CACHE_FILENAME
+    stale_report = _complete_small_report()
+    stale_report.to_csv(cache_path, index=False)
+
+    new_records = [
+        TokenRecord(
+            dataset="spider",
+            database_id="s1",
+            format="csv",
+            tokenizer_family="qwen-3.5",
+            tokenizer_label="Qwen 3.5",
+            tokenizer_model="qwen.gguf",
+            table_count=2,
+            row_count=2,
+            characters=20,
+            utf8_bytes=20,
+            tokens=42,
+        )
+    ]
+
+    monkeypatch.setattr(
+        "visualizations.serialization_data.measure_serialization_tokens",
+        lambda *args, **kwargs: new_records,
+    )
+
+    refreshed = measure_token_report(cache_path=cache_path, refresh_cache=True)
+    assert len(refreshed) == 1
+    assert refreshed.iloc[0]["tokens"] == 42
+    on_disk = pd.read_csv(cache_path)
+    assert len(on_disk) == 1
+    assert on_disk.iloc[0]["tokens"] == 42
