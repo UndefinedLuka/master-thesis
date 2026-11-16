@@ -2,23 +2,37 @@
 \begin{table}[htbp]
   \centering
   \small
-  \caption{Cumulative recovery and retrieval accuracy for runs entering correction in the answerable cohort. Newly executable counts refer to each retry; recovered and still failed counts are cumulative. Mean scores include only runs recovered by that point; runs still failing are excluded rather than assigned zero scores.}
+  \caption{Cumulative recovery and retrieval accuracy for runs entering correction in the answerable cohort.
+    Newly executable counts refer to each retry; recovered and still failed counts are cumulative. Mean scores
+  include only runs recovered by that point; runs still failing are excluded rather than assigned zero scores.}
   \label{tab:text-to-sql-retry-accuracy}
   \resizebox{\textwidth}{!}{%
-  \begin{tabular}{@{}lrrrrrr@{}}
-    \toprule
-    Retry budget & Newly executable & Recovered & Still failed & NEM & ROUGE-L & BERTScore \\
-    \midrule
-    \multicolumn{7}{@{}l}{\textit{Spider (\num{734} runs entering correction)}} \\
-    After retry 1 & \num{238} & \num{238} & \num{496} & \shortstack[r]{\num{0.298}\\{\scriptsize [\num{0.200}; \num{0.466}]}} & \shortstack[r]{\num{0.449}\\{\scriptsize [\num{0.345}; \num{0.593}]}} & \shortstack[r]{\num{0.913}\\{\scriptsize [\num{0.894}; \num{0.946}]}} \\
-    After retry 2 & \num{24} & \num{262} & \num{472} & \shortstack[r]{\num{0.309}\\{\scriptsize [\num{0.217}; \num{0.458}]}} & \shortstack[r]{\num{0.457}\\{\scriptsize [\num{0.355}; \num{0.595}]}} & \shortstack[r]{\num{0.914}\\{\scriptsize [\num{0.895}; \num{0.944}]}} \\
-    After retry 3 & \num{2} & \num{264} & \num{470} & \shortstack[r]{\num{0.307}\\{\scriptsize [\num{0.215}; \num{0.455}]}} & \shortstack[r]{\num{0.454}\\{\scriptsize [\num{0.350}; \num{0.592}]}} & \shortstack[r]{\num{0.913}\\{\scriptsize [\num{0.894}; \num{0.944}]}} \\
-    \midrule
-    \multicolumn{7}{@{}l}{\textit{BIRD (\num{1969} runs entering correction)}} \\
-    After retry 1 & \num{680} & \num{680} & \num{1289} & \shortstack[r]{\num{0.391}\\{\scriptsize [\num{0.320}; \num{0.450}]}} & \shortstack[r]{\num{0.402}\\{\scriptsize [\num{0.323}; \num{0.468}]}} & \shortstack[r]{\num{0.922}\\{\scriptsize [\num{0.916}; \num{0.927}]}} \\
-    After retry 2 & \num{127} & \num{807} & \num{1162} & \shortstack[r]{\num{0.375}\\{\scriptsize [\num{0.320}; \num{0.422}]}} & \shortstack[r]{\num{0.384}\\{\scriptsize [\num{0.314}; \num{0.442}]}} & \shortstack[r]{\num{0.920}\\{\scriptsize [\num{0.915}; \num{0.924}]}} \\
-    After retry 3 & \num{26} & \num{833} & \num{1136} & \shortstack[r]{\num{0.371}\\{\scriptsize [\num{0.315}; \num{0.417}]}} & \shortstack[r]{\num{0.381}\\{\scriptsize [\num{0.311}; \num{0.437}]}} & \shortstack[r]{\num{0.919}\\{\scriptsize [\num{0.915}; \num{0.924}]}} \\
-    \bottomrule
-  \end{tabular}%
+    \begin{tabular}{@{}lrrrrrr@{}}
+      \toprule
+      Retry budget & Newly executable & Recovered & Still failed & NEM & ROUGE-L & BERTScore \\
+      \midrule
+      \multicolumn{7}{@{}l}{\textit{Spider (\num{734} runs entering correction)}} \\
+      After retry 1 & \num{238} & \num{238} & \num{496} & \shortstack[r]{\num{0.298}\\{\scriptsize
+      [\num{0.200}; \num{0.466}]}} & \shortstack[r]{\num{0.450}\\{\scriptsize [\num{0.346}; \num{0.593}]}} &
+      \shortstack[r]{\num{0.913}\\{\scriptsize [\num{0.894}; \num{0.946}]}} \\
+      After retry 2 & \num{24} & \num{262} & \num{472} & \shortstack[r]{\num{0.309}\\{\scriptsize
+      [\num{0.217}; \num{0.458}]}} & \shortstack[r]{\num{0.458}\\{\scriptsize [\num{0.355}; \num{0.595}]}} &
+      \shortstack[r]{\num{0.914}\\{\scriptsize [\num{0.895}; \num{0.944}]}} \\
+      After retry 3 & \num{2} & \num{264} & \num{470} & \shortstack[r]{\num{0.307}\\{\scriptsize
+      [\num{0.215}; \num{0.455}]}} & \shortstack[r]{\num{0.454}\\{\scriptsize [\num{0.351}; \num{0.592}]}} &
+      \shortstack[r]{\num{0.913}\\{\scriptsize [\num{0.894}; \num{0.944}]}} \\
+      \midrule
+      \multicolumn{7}{@{}l}{\textit{BIRD (\num{1969} runs entering correction)}} \\
+      After retry 1 & \num{680} & \num{680} & \num{1289} & \shortstack[r]{\num{0.391}\\{\scriptsize
+      [\num{0.320}; \num{0.450}]}} & \shortstack[r]{\num{0.402}\\{\scriptsize [\num{0.323}; \num{0.468}]}} &
+      \shortstack[r]{\num{0.922}\\{\scriptsize [\num{0.916}; \num{0.927}]}} \\
+      After retry 2 & \num{127} & \num{807} & \num{1162} & \shortstack[r]{\num{0.375}\\{\scriptsize
+      [\num{0.320}; \num{0.422}]}} & \shortstack[r]{\num{0.384}\\{\scriptsize [\num{0.314}; \num{0.442}]}} &
+      \shortstack[r]{\num{0.920}\\{\scriptsize [\num{0.915}; \num{0.924}]}} \\
+      After retry 3 & \num{26} & \num{833} & \num{1136} & \shortstack[r]{\num{0.371}\\{\scriptsize
+      [\num{0.315}; \num{0.417}]}} & \shortstack[r]{\num{0.381}\\{\scriptsize [\num{0.311}; \num{0.437}]}} &
+      \shortstack[r]{\num{0.919}\\{\scriptsize [\num{0.915}; \num{0.924}]}} \\
+      \bottomrule
+    \end{tabular}%
   }
 \end{table}

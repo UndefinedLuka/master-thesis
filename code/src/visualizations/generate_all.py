@@ -156,8 +156,6 @@ def generate_all(
         common_cohort,
         summaries_dir,
         size_retrieval=size_retrieval,
-        intersection=intersection,
-        retrieval=retrieval,
     )
     return [
         tables_dir / "analysis_cohorts.tex",
