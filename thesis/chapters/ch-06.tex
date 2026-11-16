@@ -27,15 +27,13 @@ agreement with processing feasibility.
 When we restrict these questions to those where all configurations fit within the context window, the
 rankings change (Figure~\ref{fig:pipeline-retrieval-comparison}). JSON still had the highest observed Spider
 NEM, but Markdown led Spider ROUGE-L. YAML led NEM and ROUGE-L on the BIRD context-fit subset, while CSV
-retained the highest BERTScore on both datasets. Unsuccessful runs remain zero-scored. These observed mean rankings do not
+retained the highest BERTScore on both datasets. Unsuccessful runs remain zero-scored. These observed mean
+rankings do not
 by themselves establish clear pairwise advantages, and the metrics measure textual agreement rather than
 correctness directly.
 
 The BIRD context-fit subset contains only two sampled databases, so its results are reported descriptively
-without confidence intervals. Changes from the broader results therefore
-cannot be attributed solely to removing context failures, nor are the rankings guaranteed on new workloads.
-Requiring every configuration to fit created a common comparison; an application only needs its candidates
-to fit.
+without confidence intervals.
 
 CSV was the most operationally efficient direct format and led most retrieval-accuracy measures in the broader
 answerable cohort. When all configurations fit within the context window, however, no single format led across
