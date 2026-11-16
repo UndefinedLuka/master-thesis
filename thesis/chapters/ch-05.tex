@@ -289,7 +289,7 @@ limit. These measurements distinguish agreement with the reference answer from t
 \input{../code/analysis/tables/text_to_sql_retrieval_accuracy}
 
 Spider had higher mean scores than BIRD on all three measures. NEM was \num{0.634}, BERTScore was
-\num{0.916}, and ROUGE-L was \num{0.740} on Spider, compared with \num{0.501}, \num{0.848}, and \num{0.517}
+\num{0.916}, and ROUGE-L was \num{0.736} on Spider, compared with \num{0.501}, \num{0.848}, and \num{0.517}
 on BIRD, respectively. The Executed column reports final execution-success rates of \qty{95.23}{\percent} on
 Spider and \qty{89.75}{\percent} on BIRD. On both datasets, successful execution was more common than
 normalised exact agreement with the reference. A query that executes without error can still return a
@@ -437,7 +437,7 @@ pipelines also had lower mean NEM there.
 
 The other metrics showed a different pattern in the size of the gap. The highest-scoring direct format's
 BERTScore was about \numrange{0.053}{0.054} below SQL in the small and medium tiers, compared with
-\num{0.345} in the large tier. The corresponding ROUGE-L gaps were \num{0.356}, \num{0.366}, and \num{0.445}.
+\num{0.345} in the large tier. The corresponding ROUGE-L gaps were \num{0.356}, \num{0.366}, and \num{0.443}.
 These contrasts describe observed gaps rather than establishing differences between tiers, and the direct
 format with the highest mean varied by metric and tier.
 
