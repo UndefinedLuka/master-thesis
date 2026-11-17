@@ -22,7 +22,7 @@
     Preferred at any database size
   };
   \node[box, minimum height=1.8cm] (direct) at (3.1,-2.35) {
-    \textbf{Direct Context Inference}\\[2pt]
+    \textbf{Direct context inference}\\[2pt]
     Flat: \textbf{CSV}\\
     Nested: \textbf{TOON}\\
     Preserve required structure
@@ -62,12 +62,12 @@
   \draw[arrow] (direct.south) -- (fit.north -| direct.south);
   \draw[arrow] (fit.south) -- node[answer, midway] {Yes} (accept.north);
   \draw[arrow] (fit.east) -- node[answer, midway] {No}
-    (6.8,-4.8) -- (6.8,-10.7) -- (retry.east);
+  (6.8,-4.8) -- (6.8,-10.7) -- (retry.east);
   \draw[arrow] (accept.south -| select.north) -- node[answer, midway] {Pass} (select.north);
   \draw[arrow] (accept.south -| retry.north) -- node[answer, midway] {Fail} (retry.north);
   \draw[arrow] (retry.west) -- node[answer, midway] {Yes} (adjust.east);
   \draw[arrow] (adjust.west) -- (-6.8,-10.7) -- (-6.8,-4.8)
-    -- node[answer, midway] {Recheck} (fit.west);
+  -- node[answer, midway] {Recheck} (fit.west);
   \draw[arrow] (retry.south) -- node[answer, midway] {No} (other.north);
 \end{tikzpicture}
 \endgroup
