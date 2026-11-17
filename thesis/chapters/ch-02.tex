@@ -86,7 +86,7 @@ operated primarily on rigid, handcrafted grammar rules and pattern-matching fram
 warren1982efficient}, which worked reasonably well on a narrow domain, but each new schema required a new set
 of rules. With the rise of neural networks, researchers began applying them for this task, through methods
 based on long short-term memory networks \cite{graves2012long} and transformers \cite{vaswani2017attention}.
-However these two methods faced similar problems: they could not generalise to unseen schemas. State-of-the-art
+However, these two methods faced similar problems: they could not generalise to unseen schemas. State-of-the-art
 text-to-SQL systems use LLMs as query generators, often within larger workflows that retrieve relevant
 context, generate alternative queries, and verify their outputs \cite{hong2025next}. Their performance
 therefore depends on both the underlying language model and the architecture surrounding it.
@@ -94,9 +94,9 @@ therefore depends on both the underlying language model and the architecture sur
 When optimising for text-to-SQL accuracy, there are multiple strategies to achieve it \cite{zhu2024large}:
 \begin{itemize}
   \item \textbf{Prompt:} By using a well-crafted prompt, we attempt to guide LLMs to generate more
-    accurate queries: zero-shot~\cite{rajkumar2022evaluating, liu2023comprehensive}, or few-shot
+    accurate queries: zero-shot~\cite{rajkumar2022evaluating, liu2023comprehensive} or few-shot
     \cite{brown2020language, lee2025mcs} prompting.
-  \item \textbf{Fine-tuning:} LLMs to adapt to the text-to-SQL task, including full-parameter fine-tuning
+  \item \textbf{Fine-tuning:} Adapting LLMs to the text-to-SQL task, including full-parameter fine-tuning
     \cite{hong2024knowledge, zhang2024structure} and parameter-efficient fine-tuning \cite{song2022learning,
     gao2023text}.
   \item \textbf{Task-training:} A task-specific text-to-SQL model is trained with training strategies similar
@@ -274,7 +274,7 @@ dependence on the textual representation limits conclusions about factual correc
 An alternative is to ask an LLM to judge answer quality. G-Eval \cite{liu2023g} uses explicit evaluation
 criteria and structured scoring, while the MT-Bench study \cite{zheng2023judging} examines grading and
 pairwise judgements. These approaches can capture qualities beyond reference overlap, but introduce an
-additional model, evaluation prompts, and potential judgment biases. They provide useful context for answer
+additional model, evaluation prompts, and potential judgement biases. They provide useful context for answer
 evaluation, although the experiments here use the three reference-based measures above.
 
 \subsection{SQL execution and error correction} \label{sec:sql-execution-metrics}

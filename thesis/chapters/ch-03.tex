@@ -90,7 +90,7 @@ each table, $n$ random rows are extracted; to maintain a level playing field, th
 
 \subsection{Structural integrity} While deeply nested relational data would provide a closer simulation of
 complex real-world data, constructing such data would introduce significant technical trade-offs. Generating
-such data through table joins often leads to dropped rows, compromising datasets' integrity. We prioritise
+such data through table joins often leads to dropped rows, compromising the datasets’ integrity. We prioritise
 data integrity over its complexity; thus, when serialising databases into a specific format, each table is
 transformed and appended sequentially to a list structure. One more thing to note is that some serialisation
 formats do not support deeply nested data, and this would raise additional concerns for the integrity of our
@@ -140,7 +140,7 @@ between structural and positional representations introduced in Chapter~\ref{ch:
 \begin{itemize}
   \item \textbf{CSV:} It is a very simple format, with minimal overhead. Unlike JSON, column headers are only
     written once at the top of the file. The format relies on the positional convention, assuming the reader
-    knows to map the $n$-th value in a row to the $n$-th header column. However it has, one significant
+    knows to map the $n$-th value in a row to the $n$-th header column. However, it has one significant
     limitation: it cannot support deeply nested data.
   \item \textbf{Markdown:} Markdown is included due to its widespread presence and the preference that the
     LLMs show during text generation. While the Markdown standard does not explicitly define tables, many
@@ -260,10 +260,11 @@ one unweighted observation.
 
 Model selection considers three key aspects: reproducibility, quantisation, and parameter scale.
 
-\emph{Open-weight models}: support experimental reproducibility, as compared to proprietary cloud-based
+\emph{Open-weight models}: open-weight models support experimental reproducibility, as compared to
+proprietary cloud-based
 models. This mitigates the risk of unannounced upstream model updates.
 
-\emph{Quantisasion level}: model quantisation is highly effective for reducing memory usage, but it can
+\emph{Quantisation level}: model quantisation is highly effective for reducing memory usage, but it can
 introduce variation in reasoning performance. To prevent quantisation from acting as a variable between our
 models, we run all our experiments on models with the same level of quantisation. This isolates architecture
 and size of the model as the primary performance variables.
