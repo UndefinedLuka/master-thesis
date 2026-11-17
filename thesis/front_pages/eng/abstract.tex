@@ -14,13 +14,12 @@ using large language models. We evaluated \num{10} locally deployed open-weight 
 serialisation formats on Spider and subsampled BIRD databases. When failed and context-exceeded runs were
 scored as zero, text-to-SQL exceeded the strongest direct format in mean normalised exact match by \num{46.5}
 and \num{44.7} percentage points, respectively, end-to-end on the answerable cohort, and by \num{45.8} and
-\num{38.0} percentage points on the context-fit intersection, where all configurations fit within the context
-window; however, the corresponding BERTScore advantage on this intersection was only \num{0.049} and
-\num{0.020}. Operational efficiency comparisons on the context-fit cohort showed lower input-token consumption
-and mean latency for text-to-SQL. Among direct formats, CSV was the most efficient, with Token-Oriented Object
-Notation (TOON) as a close alternative. These findings inform a decision framework that prioritises
-extraction-method selection before serialisation and favours text-to-SQL when SQL execution is available and
-applicable.
+\num{38.0} percentage points on the context-fit intersection; however, the BERTScore advantage there was only
+\num{0.049} and \num{0.020}. Operational efficiency comparisons on the context-fit cohort showed lower
+input-token consumption and mean latency for text-to-SQL. Among direct formats, CSV was the most efficient,
+with Token-Oriented Object Notation (TOON) as a close alternative. These findings inform a decision framework
+that prioritises extraction-method selection before serialisation and favours text-to-SQL when SQL execution
+is available and applicable.
 
 \subsection*{Keywords}
 \textit{\tkeywordsEn}
