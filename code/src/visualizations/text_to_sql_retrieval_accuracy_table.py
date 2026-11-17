@@ -42,7 +42,7 @@ def render_text_to_sql_retrieval_table(
             r"\begin{table}[htbp]",
             r"  \centering",
             (
-                r"  \caption{Mean Text-to-SQL retrieval scores and query-execution outcomes "
+                r"  \caption{Mean text-to-SQL retrieval scores and query-execution outcomes "
                 r"by dataset on the answerable cohort.}"
             ),
             f"  \\label{{{label}}}",

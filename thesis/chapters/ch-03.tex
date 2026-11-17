@@ -10,7 +10,7 @@ The experiment compares two information-extraction pipelines:
 
 \begin{itemize}
   \item \textbf{Direct context inference:} The model receives task instructions, the complete contents of the
-    experimental database serialized in the selected format, and the natural-language question, in that
+    experimental database serialised in the selected format, and the natural-language question, in that
     order. It produces a free-text answer directly from the supplied data.
   \item \textbf{Text-to-SQL:} The model receives the database schema and the natural-language question and
     generates an SQL query. The query is executed against the experimental database to retrieve the answer.
@@ -22,7 +22,7 @@ text-to-SQL, the returned rows are converted to text and compared with the same 
 itself is not the object of this comparison. Token consumption and response latency are recorded for both
 pipelines, with execution success and query-execution time additionally recorded for text-to-SQL.
 
-Figure~\ref{fig:experimental-workflow} summarizes the workflow from dataset preparation to metric calculation.
+Figure~\ref{fig:experimental-workflow} summarises the workflow from dataset preparation to metric calculation.
 
 \begin{figure}[htbp]   \centering   \resizebox{\textwidth}{!}{\input{figures/experimental_workflow}}
   \caption{Workflow from dataset preparation to metric calculation.}   \label{fig:experimental-workflow}
@@ -49,7 +49,7 @@ to interpret.
 This design also makes resource use easier to compare. Both pipelines begin with one generation by the same
 evaluated model, while any SQL correction attempts are recorded as additional work. Multiple candidates and
 selection calls would introduce a further inference-budget dimension; metadata extraction and index
-construction would introduce preprocessing costs requiring a separate amortization policy. The simpler design
+construction would introduce preprocessing costs requiring a separate amortisation policy. The simpler design
 provides a reproducible baseline for the accuracy--resource trade-off on local hardware.
 
 Accordingly, we distinguish three meanings of state of the art:
@@ -61,7 +61,7 @@ Accordingly, we distinguish three meanings of state of the art:
     state-of-the-art architecture. Its error-recovery loop addresses execution failures, but does not search
     alternative candidates or revise an executable query on the basis of semantic verification.
   \item \textbf{Benchmark scope:} Spider and BIRD provide established evaluation tasks, but the experiments
-    exclude Spider~2.0 and modify BIRD through subsampling. The results therefore characterize the evaluated
+    exclude Spider~2.0 and modify BIRD through subsampling. The results therefore characterise the evaluated
     setup rather than state-of-the-art performance under official leaderboard protocols.
 \end{itemize}
 
@@ -74,7 +74,7 @@ This section outlines our reasoning for choosing these two datasets.
 
 \subsubsection{Spider} The Spider dataset was selected because it contains a diverse range of databases that
 span multiple domains. This ensures that the models are actually extracting information from the provided
-data, and not relying on the memorized knowledge from the training data. We use all the databases in their
+data, and not relying on the memorised knowledge from the training data. We use all the databases in their
 entirety without any subsampling, following the pipeline and answer-comparison protocol defined in
 Section~\ref{sec:pipeline-comparison}.
 
@@ -83,16 +83,16 @@ types are correct, and column names are descriptive. This is not something we ca
 
 \subsubsection{BIRD}
 
-To counteract the clean nature of the Spider dataset, we utilize BIRD. It provides unsanitized real-world
+To counteract the clean nature of the Spider dataset, we use BIRD. It provides unsanitised real-world
 data, which requires external knowledge and deeper logical deduction for information retrieval. Because BIRD
 databases are too large to fit into the context window of an LLM in their entirety, we subsample them. For
 each table, $n$ random rows are extracted; to maintain a level playing field, the same data is used for both pipelines.
 
 \subsection{Structural integrity} While deeply nested relational data would provide a closer simulation of
 complex real-world data, constructing such data would introduce significant technical trade-offs. Generating
-such data through table joins often leads to dropped rows, compromising datasets' integrity. We prioritize
-data integrity over its complexity; thus, when serializing databases into a specific format, each format is
-transformed and appended sequentially to a list structure. One more thing to note is that some serialization
+such data through table joins often leads to dropped rows, compromising datasets' integrity. We prioritise
+data integrity over its complexity; thus, when serialising databases into a specific format, each table is
+transformed and appended sequentially to a list structure. One more thing to note is that some serialisation
 formats do not support deeply nested data, and this would raise additional concerns for the integrity of our
 experiments.
 
@@ -100,29 +100,29 @@ experiments.
 
 \begin{itemize}
   \item \textbf{StrucText-Eval:} The main reason for excluding this dataset is that it is entirely synthetic,
-    and it does not accurately present the real-world challenges. Furthermore, converting its synthetic data
+    and it does not accurately represent real-world challenges. Furthermore, converting its synthetic data
     into databases compatible with SQL engines would present a significant technical challenge. Another
     significant factor is that it generates inconsistent data across different formats, which would prevent a
     level playing field between different formats.
   \item \textbf{Spider 2.0:} This benchmark evaluates enterprise-scale workflows involving large schemas,
     multiple SQL dialects, and external documentation \cite{lei2025spider}. These tasks would require a
     different experimental setup, including context selection and multi-step tool use, to compare the two
-    pipelines meaningfully. We exclude it to retain the controlled comparison of complete serialized data and
+    pipelines meaningfully. We exclude it to retain the controlled comparison of complete serialised data and
     schema-driven SQL generation within the selected context budget.
 \end{itemize}
 
-\section{Data serialization formats}
+\section{Data serialisation formats}
 
-This section presents data serialization formats selected for the experiment. Choosing an optimal format
+This section presents data serialisation formats selected for the experiment. Choosing an optimal format
 requires balancing the model's familiarity with the structure against token efficiency and character
-overhead. For the experiments, we have chosen six different serialization formats, applying the distinction
+overhead. For the experiments, we have chosen six different serialisation formats, applying the distinction
 between structural and positional representations introduced in Chapter~\ref{ch:related_work}.
 
 \subsection{Structural formats}
 
 \begin{itemize}
   \item \textbf{JSON:} As the primary exchange format on the internet, JSON is abundant in LLM training data,
-    giving it the edge over the other formats. JSON utilizes explicit key-value pairs, and it supports deeply
+    giving it the edge over the other formats. JSON uses explicit key-value pairs, and it supports deeply
     nested structures. On the other hand, it is highly verbose, repeating key names for every single entry,
     thus inflating the character count.
 
@@ -131,7 +131,7 @@ between structural and positional representations introduced in Chapter~\ref{ch:
     every data entry.
 
   \item \textbf{YAML:} It is commonly used for configuration files; it is intended to be a human-readable
-    superset of JSON. Instead of relying on braces and brackets, YAML uses indentation to define the
+    superset of JSON. Instead of relying on braces and square brackets, YAML uses indentation to define the
     hierarchy. This significantly reduces the character count compared to the other two formats.
 \end{itemize}
 
@@ -140,22 +140,22 @@ between structural and positional representations introduced in Chapter~\ref{ch:
 \begin{itemize}
   \item \textbf{CSV:} It is a very simple format, with minimal overhead. Unlike JSON, column headers are only
     written once at the top of the file. The format relies on the positional convention, assuming the reader
-    knows to map the $n$-th value in a row to the $n$-th header column. But it has one significant
+    knows to map the $n$-th value in a row to the $n$-th header column. However it has, one significant
     limitation: it cannot support deeply nested data.
   \item \textbf{Markdown:} Markdown is included due to its widespread presence and the preference that the
     LLMs show during text generation. While the Markdown standard does not explicitly define tables, many
     variations of it have introduced table layouts, which have become the norm.
 \end{itemize}
 
-\subsection{Token-optimized formats}
+\subsection{Token-optimised formats}
 
 \begin{itemize}
-  \item \textbf{TOON:} TOON presents a direct response to the need for a token-efficient data serialization
-    format in the LLM context. It minimizes character overhead by separating the schema from the records,
+  \item \textbf{TOON:} TOON presents a direct response to the need for a token-efficient data serialisation
+    format in the LLM context. It minimises character overhead by separating the schema from the records,
     thus compressing redundant keys.
     \begin{itemize}
       \item TOON was selected over ONTO because tools supporting its implementation were already available.
-      \item \emph{Consideration:} Because token-optimized formats are a new invention, they are yet to enter
+      \item \emph{Consideration:} Because token-optimised formats are a new invention, they are yet to enter
         the standard training corpus for LLMs. This may impair LLMs' ability to perform inference because of
         the lack of representation.
     \end{itemize}
@@ -187,14 +187,14 @@ extraction. The following considerations guide the experimental design.
     times larger than the context window of the model.
   \item \textbf{Semantic limitations:} Because the model does not have access to real data examples, it must
     infer the content of the tables entirely from the database schema, including column names and their data
-    types. Consequently, if table or column names are poorly named or non-descriptive, we can expect the
+    types. Consequently, if tables or columns are poorly named or non-descriptive, we can expect the
     model's ability to produce a correct query to degrade.
 \end{itemize}
 
 \section{Evaluation metrics} \label{sec:evaluation-metrics-implementation}
 
 When evaluating the two ways of retrieving information, we measure their operational efficiency (resource
-utilization and time required) and retrieval accuracy (accuracy when compared against the reference answer).
+use and time required) and retrieval accuracy (accuracy when compared against the reference answer).
 This allows us to consider both economic viability and information correctness when designing our decision framework.
 
 \subsubsection{Operational efficiency} We measure token consumption and response latency using the concepts
@@ -210,7 +210,7 @@ token, and the remaining post-first-token generation interval. The first token c
 trace, and subsequent reasoning is included in the generation interval. For text-to-SQL, measured total
 response latency sums model time and SQL execution time across the initial attempt and all correction
 attempts. This includes the time needed to retrieve the answer after generation. These measurements exclude
-preprocessing before request submission, such as database sampling, reference generation, and serialization preparation.
+preprocessing before request submission, such as database sampling, reference generation, and serialisation preparation.
 
 \subsubsection{Retrieval accuracy}
 
@@ -229,7 +229,7 @@ Section~\ref{sec:minimalist-text-to-sql}.
 
 Alongside the reported metrics, we report \qty{95}{\percent} confidence intervals and effect sizes. These
 help us understand the uncertainty in the results and the size of the observed differences between
-serialization formats, models, and extraction methods. This provides a clearer picture of the trade-offs
+serialisation formats, models, and extraction methods. This provides a clearer picture of the trade-offs
 between accuracy, latency, and token consumption.
 
 We use a database-level bootstrap with \num{10000} repetitions. Within each dataset and analysis cohort, each
@@ -248,24 +248,24 @@ with interval interpretation subject to each analysis's cluster count and bootst
 
 Tokenizer comparisons instead use the median of database-wise paired token-count ratios within each dataset and format.
 
-Both configurations use matched observations and the same sampled databases. The corresponding effect-size
-statistic is recomputed in each bootstrap repetition, and its confidence interval is calculated using the
-same percentile method.
+In paired comparisons, both configurations use matched observations and the same sampled databases. The
+corresponding effect-size statistic is recomputed in each bootstrap repetition, and its confidence interval
+is calculated using the same percentile method.
 
 For the exploratory database-size analysis, Pearson's $r$ is computed across database-level mean accuracy and
-the base-\num{10} logarithm of each database-format's mean serialized token count. Each database contributes
+the base-\num{10} logarithm of each database-format's mean serialised token count. Each database contributes
 one unweighted observation.
 
 \section{LLM selection}
 
-Model selection considers three key aspects: reproducibility, quantization, and parameter scale.
+Model selection considers three key aspects: reproducibility, quantisation, and parameter scale.
 
-\emph{Open-weight models} support experimental reproducibility, as compared to proprietary cloud-based
+\emph{Open-weight models}: support experimental reproducibility, as compared to proprietary cloud-based
 models. This mitigates the risk of unannounced upstream model updates.
 
-\emph{Quantization level}: model quantization is highly effective for reducing memory usage, but it can
-introduce variation in reasoning performance. To prevent quantization from acting as a variable between our
-models, we run all our experiments on models with the same level of quantization. This isolates architecture
+\emph{Quantisasion level}: model quantisation is highly effective for reducing memory usage, but it can
+introduce variation in reasoning performance. To prevent quantisation from acting as a variable between our
+models, we run all our experiments on models with the same level of quantisation. This isolates architecture
 and size of the model as the primary performance variables.
 
 \emph{Parameter scale}: we include a wide variety of models at different parameter scales. This range allows
@@ -275,9 +275,9 @@ us to examine how model scale relates to information-extraction performance.
 
 This chapter establishes the experimental design to evaluate and compare direct context inference and
 text-to-SQL workflows using local, open-weight LLMs. By benchmarking these models across six distinct
-serialization formats using the Spider and BIRD datasets, the study isolates how data presentation and
+serialisation formats using the Spider and BIRD datasets, the study isolates how data presentation and
 parameter scale influence extraction performance.
 
 The collected latency, token-efficiency, and retrieval-accuracy metrics, together with the SQL
 error-correction results, inform the decision framework. This framework maps the practical trade-offs between
-local hardware constraints, serialization overhead, and data extraction correctness to guide real-world implementation.
+local hardware constraints, serialisation overhead, and data extraction correctness to guide real-world implementation.

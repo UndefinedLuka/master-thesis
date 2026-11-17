@@ -6,10 +6,10 @@ context inference, text-to-SQL, and a comparison of the two pipelines. The resul
 efficiency and retrieval accuracy as described in Section~\ref{sec:evaluation-metrics-implementation}.
 Estimates retain equal weight per run within each reported analysis group. Intervals are pointwise
 \qty{95}{\percent} database-bootstrap intervals, as presented in Section~\ref{sec:confidence-intervals}
-(table cells show these intervals in brackets). Intervals are omitted for the BIRD context-fit
+(table cells show these intervals in square brackets). Intervals are omitted for the BIRD context-fit
 subset and its intersection with the answerable cohort; these results are descriptive point estimates.
 
-\section{Serialization efficiency} \label{sec:serialization-results}
+\section{Serialisation efficiency} \label{sec:serialization-results}
 
 \input{../code/analysis/tables/serialization_efficiency}
 
@@ -136,7 +136,7 @@ The differences in input token use were accompanied by differences in response t
 total latency, at \qty{1.25}{\second} on Spider and \qty{8.02}{\second} on BIRD, while XML had the highest,
 at \qty{7.42}{\second} and \qty{50.88}{\second}. The paired XML-to-CSV ratios were \num{5.91}
 (\numrange{2.24}{8.31}) and \num{6.34}, respectively. TOON was again close to CSV,
-with latency ratios of \num{1.09} (\numrange{1.04}{1.16}) on Spider and \num{1.031} on BIRD.
+with latency ratios of \num{1.09} (\numrange{1.04}{1.16}) on Spider and \num{1.03} on BIRD.
 
 Most of the latency difference between CSV and XML occurred before the first output token. Mean TTFT
 increased from \qty{0.78}{\second} for CSV to \qty{6.45}{\second} for XML on Spider, and from
@@ -189,7 +189,7 @@ not measure accuracy only among runs that completed successfully.
 We also compared model sizes within each family, averaging scores across all six formats
 (Figure~\ref{fig:direct-accuracy-by-model-size}). Larger variants generally had higher mean scores, but the
 differences varied between model families and datasets. On Spider, Gemma~4 26B-A4B exceeded E2B by
-\num{15.52} NEM percentage points (\numrange{10.19}{21.78}), while Qwen~3.5 9B exceeded 0.8B by \num{14.45}
+\num{15.52} NEM percentage points (\numrange{10.19}{21.78}), while Qwen~3.5 9B exceeded \num{0.8}B by \num{14.45}
 percentage points (\numrange{9.60}{20.16}). On BIRD, these gains were smaller: \num{1.58} percentage points
 (\numrange{-0.02}{3.29}) for Gemma and \num{4.18} (\numrange{1.48}{7.02}) for Qwen. The Gemma interval
 included zero, so the BIRD comparison does not establish a clear advantage for its larger variant.
@@ -266,15 +266,15 @@ smaller amount: \qty{0.010}{\second} on Spider and \qty{0.008}{\second} on BIRD.
 also higher on BIRD, at \num{0.399}, compared with \num{0.173} on Spider.
 
 The smallest model did not necessarily require the fewest tokens across the complete run. When Qwen~3.5 2B
-was compared with 0.8B on the same questions, the 2B-to-0.8B ratios of mean input tokens were \num{0.589}
+was compared with \num{0.8}B on the same questions, the 2B-to-\num{0.8}B ratios of mean input tokens were \num{0.589}
 (\numrange{0.490}{0.699}) on Spider and \num{0.556} (\numrange{0.484}{0.621}) on BIRD. The corresponding
 output-token ratios were \num{0.379} (\numrange{0.184}{0.614}) and \num{0.293} (\numrange{0.207}{0.400}). All
-four intervals were below one, showing that 2B required fewer input and output tokens on average than 0.8B on
+four intervals were below one, showing that 2B required fewer input and output tokens on average than \num{0.8}B on
 both datasets, including repeated prompts and correction outputs.
 
-Qwen~3.5 2B also had lower mean total latency than 0.8B. The 0.8B model averaged \qty{1.662}{\second} and
+Qwen~3.5 2B also had lower mean total latency than \num{0.8}B. The \num{0.8}B model averaged \qty{1.662}{\second} and
 \num{0.990} retries per run on Spider, and \qty{3.754}{\second} and \num{1.819} retries on BIRD. On the same
-questions, the 2B-to-0.8B ratios of mean total latency were \num{0.432} (\numrange{0.207}{0.702}) on Spider
+questions, the 2B-to-\num{0.8}B ratios of mean total latency were \num{0.432} (\numrange{0.207}{0.702}) on Spider
 and \num{0.333} (\numrange{0.233}{0.457}) on BIRD. Both intervals were below one. Lower latency therefore
 coincided with lower token use and fewer retries in this comparison; it does not show that a single
 generation attempt was faster for the larger model.
@@ -306,7 +306,7 @@ the mean scores for each model on the same answerable questions, including zero 
 \end{figure}
 
 Within each family, larger variants had higher observed mean scores on all three measures, but the gains
-varied. On the same questions, Qwen~3.5 9B exceeded 0.8B by \num{44.06} NEM percentage points on Spider
+varied. On the same questions, Qwen~3.5 9B exceeded \num{0.8}B by \num{44.06} NEM percentage points on Spider
 (\numrange{39.24}{48.61}) and \num{46.03} on BIRD (\numrange{39.80}{52.86}), with most of the observed
 increase occurring by 4B. Gemma~4 26B-A4B had the highest observed means, with NEM of \num{0.774} on Spider
 and \num{0.669} on BIRD. Its gains over E2B were \num{9.34} percentage points (\numrange{5.35}{13.59}) and
@@ -386,8 +386,8 @@ BERTScore, and ROUGE-L scores for both pipelines, with intervals for Spider only
 \begin{figure}[htbp]   \centering
   \includegraphics[width=\textwidth]{../code/analysis/figures/pipeline_retrieval_comparison.pdf}
   \caption{Mean NEM, BERTScore, and ROUGE-L for text-to-SQL and the six direct context inference formats
-  on the intersection of the answerable and context-fit cohorts, averaged over the ten retained models.
-  BIRD results are descriptive point estimates for the two-database BIRD context-fit subset, without
+    on the intersection of the answerable and context-fit cohorts, averaged over the ten retained models.
+    BIRD results are descriptive point estimates for the two-database BIRD context-fit subset, without
   confidence intervals.}
   \label{fig:pipeline-retrieval-comparison}
 \end{figure}
@@ -453,7 +453,7 @@ only among completed runs or a causal effect of size.
     input and output tokens on the shared context-fit workload, including SQL failures and all correction
     attempts. Input tokens use a logarithmic scale; output tokens use a linear scale.
     BIRD results are descriptive point estimates for the BIRD context-fit subset, without
-    confidence intervals.}   \label{fig:common-cohort-token-usage}
+  confidence intervals.}   \label{fig:common-cohort-token-usage}
 \end{figure}
 
 We compared operational efficiency on the same context-fit questions used in the direct-format analysis:
@@ -472,7 +472,7 @@ counts than SQL.
 \begin{figure}[htbp]   \centering
   \includegraphics[width=\textwidth]{../code/analysis/figures/common_cohort_latency.pdf}   \caption{Mean
     latency components on the shared context-fit workload. SQL includes all initial and correction work,
-  including unsuccessful runs. BIRD results are descriptive point estimates for the BIRD
+    including unsuccessful runs. BIRD results are descriptive point estimates for the BIRD
   context-fit subset, without confidence intervals.}
   \label{fig:common-cohort-latency}
 \end{figure}
@@ -488,7 +488,7 @@ while all direct formats had longer mean generation times than SQL on BIRD. SQL 
 \qty{0.005}{\second} per run on Spider and \qty{0.007}{\second} on BIRD.
 
 Lower mean latency did not mean faster responses in every case: SQL was faster than CSV in
-\qty{58.9}{\percent} of Spider pairs (\qtyrange{43.9}{72.3}{\percent}) and \qty{98.78}{\percent} of BIRD
+\qty{58.9}{\percent} of Spider pairs (\qtyrange{43.9}{72.3}{\percent}) and \qty{98.8}{\percent} of BIRD
 pairs. The small Spider tier, defined in
 Section~\ref{sec:pipeline-accuracy-by-database-size}, contained \num{273} context-fit questions across eight
 databases. CSV was faster in \qty{68.2}{\percent} of its question--model pairs

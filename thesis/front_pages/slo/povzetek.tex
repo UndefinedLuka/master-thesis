@@ -9,20 +9,20 @@
 \noindent\textbf{Naslov:} \ttitle
 \bigskip
 
-Magistrsko delo primerja neposredno sklepanje iz konteksta in pretvorbo besedila v SQL pri pridobivanju
+Magistrsko delo primerja neposredno sklepanje iz konteksta in pretvarjanje besedila v SQL pri pridobivanju
 informacij iz strukturiranih podatkov z velikimi jezikovnimi modeli. Ovrednotili smo \num{10} lokalno
 nameščenih modelov z odprtimi utežmi in \num{6} serializacijskih formatov na podatkovnih bazah iz zbirke
-Spider in podvzorčenih bazah iz zbirke BIRD. Če neuspele zagone in zagone s preseženim kontekstnim oknom
-ovrednotimo z ničlo, je pretvorba besedila v SQL najboljši neposredni format v povprečnem normaliziranem
-natančnem ujemanju v celoti na kohorti odgovorljivih vprašanj presegla za \num{46.5} oziroma \num{44.7}
-odstotne točke, na preseku s kontekstno ustrezno kohorto, kjer vse konfiguracije ustrezajo kontekstnemu
-oknu, pa za \num{45.8} oziroma \num{38.0} odstotne točke; pri tem je bila ustrezna prednost po meri
-BERTScore na tem preseku le \num{4.9} oziroma \num{2.0} odstotne točke. Primerjave operativne učinkovitosti
-na kontekstno ustrezni kohorti so pri pretvorbi besedila v SQL pokazale manjšo porabo vhodnih žetonov in
-krajši povprečni odzivni čas. Med neposrednimi formati je bil najučinkovitejši CSV, sledil mu je TOON
-(Token-Oriented Object Notation). Ugotovitve so podlaga za odločitveni okvir, ki daje prednost izbiri
-metode pred serializacijo ter priporoča pretvorbo besedila v SQL, kadar je izvajanje poizvedb SQL na voljo
-in primerno za nalogo.
+Spider in podvzorčenih bazah iz zbirke BIRD. Ko smo neuspele zagone in zagone s preseženim kontekstnim oknom
+ocenili z ničlo, je pretvarjanje besedila v SQL v povprečnem normaliziranem natančnem ujemanju preseglo
+najboljši neposredni format za \num{46.5} oziroma \num{44.7} odstotne točke pri celostnem vrednotenju na
+kohorti odgovorljivih vprašanj ter za \num{45.8} oziroma \num{38.0} odstotne točke na preseku s kontekstno
+ustrezno kohorto, kjer vse konfiguracije ustrezajo kontekstnemu oknu; vendar je bila ustrezna prednost pri
+meri BERTScore na tem preseku le \num{0.049} oziroma \num{0.020}. Primerjave operativne učinkovitosti na
+kontekstno ustrezni kohorti so pri pretvarjanju besedila v SQL pokazale manjšo porabo vhodnih žetonov in
+krajši povprečni odzivni čas. Med neposrednimi formati je bil najučinkovitejši CSV, tesno pa mu je kot
+primerljiva alternativa sledil TOON (Token-Oriented Object Notation). Te ugotovitve so podlaga za odločitveni
+okvir, ki daje prednost izbiri metode pridobivanja informacij pred serializacijo ter priporoča pretvarjanje
+besedila v SQL, kadar je izvajanje poizvedb SQL na voljo in primerno za nalogo.
 
 \subsection*{Ključne besede}
 \textit{\tkeywords}

@@ -37,7 +37,7 @@ def calculate_serialization_efficiency(
     *,
     context_window_tokens: int = CONTEXT_WINDOW_TOKENS,
 ) -> SerializationEfficiencyAnalysis:
-    """Calculate mean token use and context-window fit by serialization format."""
+    """Calculate mean token use and context-window fit by serialisation format."""
     if context_window_tokens <= 0:
         raise ValueError("Context-window size must be positive")
     require_columns(
@@ -126,7 +126,7 @@ def render_serialization_efficiency_table(
         raise ValueError("Context-window size must be positive")
     if caption is None:
         caption = (
-            "Serialization efficiency by dataset and format. "
+            "Serialisation efficiency by dataset and format. "
             f"Context fit reports payloads at or below {num(context_window_tokens)} tokens."
         )
 

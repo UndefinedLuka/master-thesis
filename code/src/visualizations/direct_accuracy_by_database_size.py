@@ -282,7 +282,7 @@ def plot_database_size_accuracy(
     for axis in axes[len(formats) :]:
         axis.set_visible(False)
     figure.supxlabel(
-        "Serialized database size (tokens, log scale)",
+        "Serialised database size (tokens, log scale)",
     )
     for axis in axes[::2]:
         if axis.get_visible():

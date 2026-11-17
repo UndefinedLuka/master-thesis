@@ -4,7 +4,7 @@ This chapter discusses the findings from Chapter~\ref{ch:results} and their impl
 serialisation format, model choice, and SQL retry policy. It brings these findings together in a decision framework,
 relates them to prior work, and discusses the study’s limitations.
 
-\section{Serialization trade-offs} \label{sec:serialization-trade-offs}
+\section{Serialisation trade-offs} \label{sec:serialization-trade-offs}
 
 \subsection{Operational efficiency}
 
@@ -96,7 +96,7 @@ consistent across datasets, so model size alone is not a reliable guide to the e
 and training also differ between variants, preventing us from attributing the gains to parameter count alone.
 
 Smaller models were not necessarily more efficient over a complete SQL run. Qwen~3.5 2B used fewer input and
-output tokens and had lower mean total latency than 0.8B on both datasets, alongside fewer retries
+output tokens and had lower mean total latency than \num{0.8}B on both datasets, alongside fewer retries
 (Section~\ref{sec:text-to-sql-results}). This comparison shows that a larger model can require
 less work overall, not that its individual generation attempts are faster. Model selection should therefore
 use measured retrieval accuracy and complete-run latency and token consumption on representative tasks.
@@ -159,7 +159,7 @@ model's context window. Database size becomes especially important here because 
 to the model. The fit check should include the serialised data, instructions, question, and chat-template
 overhead, while reserving space for the answer and any reasoning tokens. For text-to-SQL, the corresponding
 check uses the schema rather than the database contents. Text-to-SQL remains the preferred approach overall
-when SQL is supported. However, the comparison for Spider's small database in
+when SQL is supported. However, the comparison for Spider’s small databases in
 Section~\ref{sec:pipeline-operational-efficiency} suggests that CSV may be worth considering when response
 time is the main priority.
 
@@ -180,7 +180,7 @@ accuracy justifies the additional resources.
 \subsection{Decision tree}
 
 \begin{figure}[p]   \centering   \resizebox{\textwidth}{!}{\input{figures/decision_framework}}
-  \caption{Pipeline and serialization format selection. The TOON recommendation for nested data is based on
+  \caption{Pipeline and serialisation format selection. The TOON recommendation for nested data is based on
   format capabilities, not evaluated retrieval performance.}   \label{fig:decision-framework}
 \end{figure}
 
@@ -204,7 +204,7 @@ ONTO and TOON aim to reduce the tokens needed to represent data
 \cite{onto-serialization-format,toon-format-2025}. In our experiments, CSV required the fewest tokens on
 average, with TOON close behind. Both also had low mean latency and competitive accuracy. These findings
 support using compact representations, but show that a format designed for token efficiency does not
-necessarily outperform CSV on relational tables. The choice still depends on the data structure, serializer,
+necessarily outperform CSV on relational tables. The choice still depends on the data structure, serialiser,
 and tokenizer.
 
 Research on long contexts shows that fitting data within the context window does not guarantee that an LLM
@@ -262,7 +262,7 @@ do not establish a causal effect or a universal switching threshold
 
 \subsection{Deployment and framework validity}
 
-The recommendations apply to the models, quantization, prompts, relational tasks, and local inference
+The recommendations apply to the models, quantisation, prompts, relational tasks, and local inference
 conditions evaluated here. The decision framework has not yet been validated on new application workloads. We did
 not evaluate production-scale serving and SQL execution.
 We measured token consumption as a resource measure, not monetary cost.

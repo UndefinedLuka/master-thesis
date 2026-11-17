@@ -3,14 +3,14 @@
 \section{Motivation}
 
 In the current age of information technology, the amount of generated and stored information is increasing
-rapidly. A lot of this data comes in a structured form, which allows for easier processing, searching,
+rapidly. Much of this data comes in a structured form, which allows for easier processing, searching,
 and exchange of information between different systems. Alongside the speed of data creation, we are
 witnessing the rise of large language models (LLMs). These models show a promising ability in understanding
-natural language, generating text, analyzing code, and coming to conclusions.
+natural language, generating text, analysing code, and coming to conclusions.
 
-Thus far, LLMs have shown great promise when utilized for the purposes of extracting and processing
+Thus far, LLMs have shown great promise when used for the purposes of extracting and processing
 information from structured and unstructured data. When trying to utilize these models for such use cases,
-engineers and researchers have to carefully balance the three key aspects: accuracy, latency, and cost.
+engineers and researchers have to carefully balance three key aspects: accuracy, latency, and cost.
 
 For an LLM to answer questions about structured data, it first needs a way to access that data. One option
 is to convert the data into a text format and include it in the model’s input, allowing the model to read it
@@ -24,10 +24,10 @@ To examine the two approaches outlined above, this thesis compares direct contex
 text-to-SQL, which is used as a representative of indirect, tool-based information extraction.
 
 This comparison requires considering retrieval accuracy and operational efficiency together.
-Research on structured-text understanding \cite{struct-text-eval}, token-efficient serialization
+Research on structured-text understanding \cite{struct-text-eval}, token-efficient serialisation
 \cite{toon-format-2025}, and inference efficiency \cite{fernandez2025energy} provides relevant evidence for
 individual aspects of this comparison. The problem addressed in this thesis is how to bring these aspects
-together to support the selection of an extraction pipeline and, where applicable, a serialization format.
+together to support the selection of an extraction pipeline and, where applicable, a serialisation format.
 
 Neither the most compact representation nor the approach with the highest retrieval accuracy is
 necessarily the most suitable choice under all operating constraints. A representation may reduce
@@ -39,12 +39,12 @@ inferred from any single measure.
 This thesis therefore addresses three questions:
 
 \begin{enumerate}
-  \item How does serialization format affect retrieval accuracy, token consumption, and response latency
+  \item How does serialisation format affect retrieval accuracy, token consumption, and response latency
     in direct context inference?
   \item How do direct context inference and text-to-SQL compare in terms of retrieval accuracy, token
     consumption, and response latency?
   \item What evidence-based guidelines can be derived for selecting an extraction pipeline and, when using
-    direct context inference, a serialization format?
+    direct context inference, a serialisation format?
 \end{enumerate}
 
 Together, these questions connect the evaluation of retrieval accuracy and operational efficiency to
@@ -55,18 +55,18 @@ workloads, models, and deployment conditions, rather than to identify a universa
 
 The main contribution of this thesis is an empirical comparison of direct context inference and
 text-to-SQL using local open-weight LLMs under shared experimental conditions. The evaluation considers
-retrieval accuracy, token consumption, and response latency together, and examines how serialization
+retrieval accuracy, token consumption, and response latency together, and examines how serialisation
 format affects these measures in direct context inference. Based on the empirical findings, the thesis
 develops a decision framework that provides guidance for selecting an extraction pipeline and, where
-applicable, a serialization format. This guidance is grounded in the evaluated workloads, models, and
+applicable, a serialisation format. This guidance is grounded in the evaluated workloads, models, and
 deployment conditions rather than intended as a universally applicable selection rule.
 
 \section{Structure}
 
-The remainder of this thesis is organized as follows. Chapter~\ref{ch:related_work} reviews related work on
+The remainder of this thesis is organised as follows. Chapter~\ref{ch:related_work} reviews related work on
 structured data representations, text-to-SQL, and evaluation methods. Chapter~\ref{ch:methodolgy} presents
 the methodology and experimental design, while Chapter~\ref{ch:implementation} describes the implementation
 of the benchmarking framework. Chapter~\ref{ch:results} presents the results on retrieval accuracy, latency,
 and token usage. Chapter~\ref{ch:discussion} interprets these findings, develops a decision framework, and
-discusses the study limitations. Finally, Chapter~\ref{ch:conclusion} summarizes the main conclusions and
+discusses the study limitations. Finally, Chapter~\ref{ch:conclusion} summarises the main conclusions and
 outlines directions for future work.

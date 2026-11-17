@@ -23,10 +23,10 @@
 
   \node[stage, minimum height=2.2cm] (serialize) at (-2.9,-3.7) {
     \textbf{Direct Context}\\\textbf{Inference}\\[3pt]
-    Serialize tables\\
+    Serialise tables\\
     {\fontsize{9}{10.5}\selectfont
       JSON, XML, YAML\\
-      CSV, Markdown, TOON}
+    CSV, Markdown, TOON}
   };
   \node[stage, minimum height=2.2cm] (schema) at (2.9,-3.7) {
     \textbf{Text-to-SQL}\\[3pt]
@@ -73,8 +73,8 @@
   \draw[arrow] (schema.south) -- (sqlllm.north);
   \draw[arrow] (sqlllm.south) -- node[note, midway] {Generated query} (execute.north);
   \draw[arrow] (execute.west) -- (0,-8)
-    -- node[note, left, text width=2.1cm] {Error: up to\\three retries}
-    (0,-5.9) -- (sqlllm.west);
+  -- node[note, left, text width=2.1cm] {Error: up to\\three retries}
+  (0,-5.9) -- (sqlllm.west);
   \draw[arrow] (execute.south) -- node[note, midway] {Success / limit} (sqlanswer.north);
   \draw[arrow] (directllm.south) -- (directanswer.north);
   \draw[arrow] (gold.east) -- (reference.west);

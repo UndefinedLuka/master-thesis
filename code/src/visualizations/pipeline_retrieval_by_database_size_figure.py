@@ -93,7 +93,7 @@ def plot_pipeline_size_retrieval_comparison(analysis: PipelineSizeRetrievalAnaly
     ]
     figure.legend(handles=handles, loc="upper center", ncol=4, frameon=False,
                   handletextpad=0.4, columnspacing=1.3)
-    figure.supxlabel("Database-size tier (mean serialized payload tokens)")
+    figure.supxlabel("Database-size tier (mean serialised payload tokens)")
     tight_layout(figure, rect=(0, 0.025, 1, 0.88), h_pad=2.0, w_pad=1.2)
     return figure
 

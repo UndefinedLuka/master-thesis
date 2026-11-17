@@ -65,7 +65,7 @@ def calculate_database_size_tiers(serialization_report: pd.DataFrame) -> pd.Data
     if not data["dataset"].isin(DATASET_ORDER).all():
         raise ValueError("Unsupported dataset in serialization-token report")
     if not data["format"].isin(SERIALIZATION_FORMAT_ORDER).all():
-        raise ValueError("Unsupported serialization format in token report")
+        raise ValueError("Unsupported serialisation format in token report")
     if not data["tokenizer_family"].isin(TOKENIZER_FAMILY_ORDER).all():
         raise ValueError("Unsupported tokenizer family in token report")
     if data.duplicated(identity).any():

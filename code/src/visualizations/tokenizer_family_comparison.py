@@ -178,7 +178,7 @@ def plot_tokenizer_comparison(summary: pd.DataFrame) -> Figure:
         x_positions,
         [FORMAT_LABELS.get(value, value) for value in formats],
     )
-    axes[-1, 0].set_xlabel("Serialization format")
+    axes[-1, 0].set_xlabel("Serialisation format")
     figure.supylabel("Excess tokens over best tokenizer (%)")
     handles, labels = axes[0, 0].get_legend_handles_labels()
     figure.legend(

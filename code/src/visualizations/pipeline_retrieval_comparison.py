@@ -81,9 +81,9 @@ def calculate_pipeline_retrieval_comparison(
     if not (sql | direct).all():
         raise ValueError("Unsupported pipeline in retrieval comparison")
     if not data.loc[direct, "format"].isin(SERIALIZATION_FORMAT_ORDER).all():
-        raise ValueError("Unsupported direct serialization format")
+        raise ValueError("Unsupported direct serialisation format")
     if data.loc[sql, "format"].notna().any():
-        raise ValueError("Text-to-SQL records must have no serialization format")
+        raise ValueError("Text-to-SQL records must have no serialisation format")
     if not data.loc[sql, "execution_success"].map(
         lambda value: isinstance(value, (bool, np.bool_))
     ).all():

@@ -160,6 +160,9 @@ def test_table_contains_all_requested_metrics(tmp_path: Path) -> None:
     analysis = calculate_direct_efficiency(_complete_matrix())
     latex = render_direct_operational_table(analysis)
 
+    assert "for direct context inference on the shared recorded context-fit cohort." in latex
+    assert "Intervals are omitted for the BIRD context-fit subset." in latex
+    assert "two-database" not in latex
     assert "Input tokens" in latex
     assert "Output tokens" in latex
     assert "TTFT (s)" in latex

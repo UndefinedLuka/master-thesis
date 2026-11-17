@@ -8,7 +8,7 @@ reproducibility.
 
 All experiments are executed on the FRIDA \cite{ulfri_rdc} high-performance computing cluster operated by the
 Research Data Centre at the Faculty of Computer and Information Science, University of Ljubljana. FRIDA is
-managed by the Slurm workload scheduler, which provides GPU allocation and walltime-based job preemption. The
+managed by the Slurm workload scheduler, which provides GPU allocation and walltime-based job pre-emption. The
 primary compute target is a single NVIDIA H100 GPU with \qty{80}{\giga\byte} of high-bandwidth memory, which
 provides sufficient capacity to hold even the largest quantised model (\num{27} billion parameters) entirely
 in GPU memory while maintaining a \num{128}K-token key-value (KV) cache.
@@ -27,12 +27,12 @@ We evaluate three families of open-weight instruction-tuned language models, cho
 range while remaining recent enough to reflect current architectural advances:
 
 \begin{itemize}
-  \item \textbf{Ministral~3} \cite{liu2026ministral} : available at \num{8}B and \num{14}B parameters. This
+  \item \textbf{Ministral~3}~\cite{liu2026ministral}: available at \num{8}B and \num{14}B parameters. This
     family uses a sliding-window attention mechanism and is optimised for low-latency deployment.
-  \item \textbf{Qwen~3.5} \cite{qwen3.5} : available at \num{0.8}B, \num{2}B, \num{4}B, \num{9}B, and
+  \item \textbf{Qwen~3.5}~\cite{qwen3.5}: available at \num{0.8}B, \num{2}B, \num{4}B, \num{9}B, and
     \num{27}B parameters. Qwen~3.5 models feature hybrid thinking capabilities with explicit reasoning traces
     enclosed in \texttt{<think>} blocks.
-  \item \textbf{Gemma~4} \cite{gemmateam2026gemma4technicalreport}: a family of open-weight models designed
+  \item \textbf{Gemma~4}~\cite{gemmateam2026gemma4technicalreport}: a family of open-weight models designed
     for efficient on-device and server-side deployment. We evaluate the E2B and E4B variants, with effective
     parameter counts of \num{2.3}B and \num{4.5}B, respectively; the dense \num{12}B model; and the 26B-A4B
     mixture-of-experts model, with \num{26}B total parameters and \num{3.8}B activated per token.
@@ -41,7 +41,7 @@ range while remaining recent enough to reflect current architectural advances:
 Together, these three families give us eleven distinct model sizes ranging from sub-\num{1}B to \num{27}B
 parameters, enabling fine-grained analysis of the relationship between model scale and information extraction accuracy.
 
-\subsection{Quantization strategy}
+\subsection{Quantisation strategy}
 
 All models are served in the GGUF format \cite{llamacpp} using the \textbf{Q4\_K\_M} quantisation scheme.
 Q4\_K\_M belongs to the k-quant family introduced in the \texttt{llama.cpp} \cite{llamacpp} ecosystem,
@@ -103,7 +103,7 @@ it includes TTFT and all generation after the first token.
 When explicit \texttt{<think>...</think>} blocks are present, they are removed from the recorded answer
 before downstream evaluation. Output-token counts and total model time cover the complete generated response.
 
-\subsection{Serialization}
+\subsection{Serialisation}
 
 The six serialisation formats defined in Chapter~\ref{ch:methodolgy} are implemented as encoder functions,
 each accepting the database's contents and returning a formatted string. Tables are serialised independently
@@ -121,7 +121,7 @@ databases are small enough to fit within the \num{128}K context window when seri
 \subsection{BIRD}
 
 The BIRD dataset is downloaded from its official benchmark
-site\footnote{\url{https://bird-bench.github.io/}}. Unlike Spider, BIRD's databases contain real-world data
+site.\footnote{\url{https://bird-bench.github.io/}} Unlike Spider, BIRD's databases contain real-world data
 with tables spanning tens of thousands of rows, far exceeding the context capacity of the evaluated models.
 We therefore subsample each table to a maximum of \num{500} rows using deterministic random sampling. Tables
 with fewer rows are retained in full. The cap balances two competing requirements: retaining enough data for

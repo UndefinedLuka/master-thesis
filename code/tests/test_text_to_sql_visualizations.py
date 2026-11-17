@@ -168,6 +168,8 @@ def test_text_to_sql_tables_report_accuracy_execution_and_operations(tmp_path: P
     retrieval = render_text_to_sql_retrieval_table(analysis)
     operational = render_text_to_sql_operational_table(analysis)
 
+    assert "Mean text-to-SQL retrieval scores" in retrieval
+    assert "Mean text-to-SQL operational-efficiency" in operational
     assert "NEM" in retrieval
     assert "BERTScore & ROUGE-L" in retrieval
     for table in (retrieval, operational):
@@ -222,6 +224,7 @@ def test_error_correction_table(tmp_path: Path) -> None:
     )
     latex = render_error_correction_table(retry_analysis)
 
+    assert r"\begin{table}[htb]" in latex
     assert "First attempt" in latex
     assert "Complete failure" in latex
     assert "/ eligible run" not in latex

@@ -21,9 +21,9 @@ def render_direct_operational_table(
     analysis: DirectEfficiencyAnalysis,
     *,
     caption: str = (
-        "Mean operational-efficiency measurements for Direct Context Inference on the shared "
+        "Mean operational-efficiency measurements for direct context inference on the shared "
         "recorded context-fit cohort."
-        " Intervals are omitted for the two-database BIRD context-fit subset."
+        " Intervals are omitted for the BIRD context-fit subset."
     ),
     label: str = DIRECT_OPERATIONAL_TABLE_LABEL,
 ) -> str:

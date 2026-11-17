@@ -45,7 +45,7 @@ def render_text_to_sql_operational_table(
             r"\begin{table}[htbp]",
             r"  \centering",
             r"  \small",
-            r"  \caption{Mean Text-to-SQL operational-efficiency measurements by dataset "
+            r"  \caption{Mean text-to-SQL operational-efficiency measurements by dataset "
             r"on the answerable cohort.}",
             f"  \\label{{{label}}}",
             r"  \resizebox{\textwidth}{!}{%",
