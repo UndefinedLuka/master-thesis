@@ -1,61 +1,46 @@
-# Master's Thesis Repository
+# Analysis of Approaches for Extracting Information from Structured Data Using Large Language Models
 
-This repository contains the research, codebase, and document sources for the Master's Thesis titled **"Analysis of approaches for extracting information from structured data using large language models"** .
+Repository for the Master's thesis at the University of Ljubljana, Faculty of Computer and Information Science (2026). It contains the LaTeX sources for the thesis and administrative documents, the Python evaluation framework, raw benchmark results, and the generated tables and figures.
 
-## About the Thesis
-The thesis focuses on evaluating and benchmarking how various Large Language Model (LLM) architectures perform when extracting information from structured data sources (such as SQLite databases, JSON, and CSV files). The goal is to analyze the impact of different data serialization methods and model capabilities to determine the most effective approaches for reliable information extraction.
-
-## Required Programs & Setup
-
-To use the code and compile the thesis in this repository, you will need the following programs:
-
-### 1. `uv` (Python Package Manager)
-The Python codebase relies on `uv` for environment and dependency management.
-
-**Setup Instructions:**
-- Install `uv` by following the instructions on their [official GitHub](https://github.com/astral-sh/uv)
-- Navigate to the `code/` directory and install the project dependencies:
-  ```bash
-  cd code
-  uv sync
-  ```
-- You can then run scripts using `uv run <script_path>`.
-
-### 2. LaTeX
-The thesis document is written in LaTeX. You will need a LaTeX distribution (like TeX Live, MiKTeX, or MacTeX) and `latexmk` to compile it.
-
-**Setup Instructions:**
-- Install a full LaTeX distribution for your operating system (e.g., `sudo apt install texlive-full latexmk` on Ubuntu/Debian).
-- Navigate to the `thesis/` directory and compile the document using:
-  ```bash
-  cd thesis
-  latexmk -pdf thesis_template.tex
-  ```
-
-### Number formatting
-
-The thesis and generated figures share `thesis/style/number_formatting.tex`, which
-configures **siunitx v3** to print decimal commas and thousands dots
-(for example, `\num{1234.56}` renders as **1.234,56**). Install `siunitx` with your
-LaTeX distribution if it is not already available.
-
-- Enter numeric quantities with ungrouped, decimal-dot input: `\num{1034}`,
-  `\num{0.598}`, `\qty{95}{\percent}`, or `\qty{1.25}{\second}`.
-- Use `\numrange{1.04}{1.12}` or `\qtyrange{5}{6}{\percent}` for ranges.
-  Separate bracketed confidence-interval endpoints with a semicolon, so decimal
-  commas cannot be confused with the endpoint separator.
-- Keep model/version identifiers, code literals, URLs, and automatic section,
-  reference, and bibliography numbering in their original form. For a displayed
-  year, use `\num[group-digits=none]{2026}` to suppress thousands grouping.
-
-The table generators emit siunitx commands, and the figure generators render their
-numbers through LaTeX's PGF backend using the same configuration. To regenerate
-both, run `uv run --extra visualizations thesis-visualize-all` from `code/`.
+The research benchmarks local open-weight LLMs (Qwen 3.5, Ministral 3, and Gemma 4 families) on relational question answering over **Spider** and **BIRD**, comparing **Direct Context Inference** across six serialization formats (CSV, JSON, Markdown, TOON, XML, YAML) against **Text-to-SQL** with bounded error-correction retries.
 
 ## Repository Structure
 
-- **/code**: Contains the Python implementation of the LLM benchmarking framework, data processing scripts, and raw benchmark results.
-- **/thesis**: Contains the LaTeX source code, chapters, styling, and figures for the final Master's thesis document.
-- **/thesis-proposal**: Includes the initial topic proposal documents and associated references.
-- **/literature**: A collection of PDF research papers and surveys referenced throughout the thesis.
-- **/declaration**: Contains formal declarations and administrative LaTeX/PDF files.
+```text
+.
+├── code/               # Python evaluation framework (thesis-eval)
+│   ├── src/            # Pipelines, LLM backends, serializers, metrics, visualizations, CLI
+│   ├── deploy/         # Slurm + Enroot/Pyxis job scripts for the FRIDA cluster
+│   ├── results/        # Raw benchmark outputs (*.ndjson)
+│   ├── analysis/       # Generated LaTeX tables, PDF figures, and summary CSV/JSON files
+│   └── tests/          # Test suite
+├── thesis/             # Master's thesis LaTeX sources (thesis_template.tex, chapters/, style/)
+├── thesis-proposal/    # Thesis topic proposal LaTeX source and PDF
+├── declaration/        # Authorship declaration LaTeX source and PDF
+└── LICENSE             # GNU Affero General Public License v3.0
+```
+
+- Evaluation codebase and CLI usage: [`code/README.md`](code/README.md)
+- FRIDA cluster deployment: [`code/deploy/README.md`](code/deploy/README.md)
+
+## Quick Start
+
+**Compile the thesis** (requires a LaTeX distribution with `latexmk`; generated tables and figures in `code/analysis/` are already included):
+
+```bash
+cd thesis
+latexmk -pdf thesis_template.tex
+```
+
+**Set up the Python environment** (requires Python 3.12+ and [`uv`](https://docs.astral.sh/uv/)):
+
+```bash
+cd code
+uv sync
+```
+
+See [`code/README.md`](code/README.md) for dataset preparation, benchmarking, scoring, and regenerating thesis figures and tables.
+
+## License
+
+Licensed under the [GNU Affero General Public License v3.0](LICENSE).
